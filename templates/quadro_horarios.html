@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Quadro de horários{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Quadro de horários</h4>
+  <div>
+    <a href="{{ url_for('horario_novo') }}" class="btn btn-primary">+ Novo horário</a>
+  </div>
+</div>
+
+<div class="row">
+  {% for h in horarios %}
+    <div class="col-md-4 mb-3">
+      <div class="card bg-dark text-white h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <strong>{{ h.inicio }} às {{ h.fim }}</strong>
+          <form method="post"
+                action="{{ url_for('horario_excluir', horario_id=h.id) }}"
+                onsubmit="return confirm('Excluir horário {{ h.inicio }} às {{ h.fim }}?');"
+                class="d-inline">
+            <button class="btn btn-sm btn-outline-danger">Excluir</button>
+          </form>
+        </div>
+        <div class="card-body">
+          {% set lista = alunos_por_horario.get(h.id, []) %}
+          {% if lista %}
+            <ul class="list-unstyled mb-0">
+              {% for a in lista %}
+                <li class="mb-2 d-flex align-items-center">
+                  {% if a.foto %}
+                    <img src="{{ url_for('uploads', filename=a.foto) }}"
+                         alt="Foto de {{ a.nome }}"
+                         class="rounded-circle me-2"
+                         style="width:32px;height:32px;object-fit:cover;">
+                  {% else %}
+                    <span class="badge bg-secondary me-2">{{ a.nome[0]|upper }}</span>
+                  {% endif %}
+                  {{ a.nome }}
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">Nenhum aluno neste horário.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <p class="text-center">Nenhum horário cadastrado.</p>
+  {% endfor %}
+</div>
+{% endblock %}

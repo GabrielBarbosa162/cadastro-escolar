@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+{% block title %}{{ title or "Sistema Escolar" }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  {# ====== DETECÇÃO DO PAPEL E CONTEXTO ====== #}
+  {% set papel =
+        (current_user.papel if current_user is defined and current_user.papel is not none else
+        (current_user.role if current_user is defined and current_user.role is not none else
+        (current_user.perfil if current_user is defined and current_user.perfil is not none else
+        (current_user.tipo if current_user is defined and current_user.tipo is not none else
+        (current_user.tipo_perfil if current_user is defined and current_user.tipo_perfil is not none else None))))) %}
+
+  {# context: informe na rota algo como context='alunos' | 'escolas' | 'series' | 'atividades' | 'horarios' | 'turmas' | 'usuarios' #}
+  {% set ctx = (context or page_context or page or '')|lower %}
+
+  {# ====== MAPA DE ENDPOINTS E RÓTULOS PADRÃO DO BOTÃO NOVO ====== #}
+  {% set endpoints = {
+    'alunos':     'alunos.novo',
+    'escolas':    'escolas.novo',
+    'series':     'series.novo',
+    'atividades': 'atividades.novo',
+    'horarios':   'horarios.novo',
+    'turmas':     'turmas.novo',
+    'usuarios':   'usuarios.novo'
+  } %}
+
+  {% set labels = {
+    'alunos':     'Cadastrar aluno',
+    'escolas':    'Adicionar nova escola',
+    'series':     'Adicionar nova série',
+    'atividades': 'Adicionar atividade',
+    'horarios':   'Adicionar novo horário',
+    'turmas':     'Adicionar turma',
+    'usuarios':   'Novo usuário'
+  } %}
+
+  {# Tenta descobrir automaticamente o new_url se não vier da rota #}
+  {% set auto_new_url = None %}
+  {% if not new_url and ctx in endpoints %}
+    {% set _endpoint = endpoints[ctx] %}
+    {% set auto_new_url = url_for(_endpoint) %}
+  {% endif %}
+  {% set resolved_new_url = new_url or auto_new_url %}
+
+  {# Label automático caso não venha da rota #}
+  {% set resolved_new_label = new_label or labels.get(ctx, 'Novo') %}
+
+  {# ====== REGRA DE PERMISSÃO PADRÃO ====== #}
+  {% if can_create is defined %}
+    {% set permitir_criar = can_create %}
+  {% else %}
+    {% set permitir_criar =
+      (papel == 'DIRETORIA') or
+      (papel == 'PROFESSOR' and ctx in ['alunos','atividades','turmas'])
+    %}
+  {% endif %}
+
+  <!-- Cabeçalho -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h3 class="mb-0">{{ header or title or page_title or "Painel" }}</h3>
+      {% if subtitle %}<small class="text-secondary">{{ subtitle }}</small>{% endif %}
+    </div>
+
+    {# Só depende de ter rota e permissão #}
+    {% if resolved_new_url and permitir_criar %}
+      <a href="{{ resolved_new_url }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> {{ resolved_new_label }}
+      </a>
+    {% endif %}
+  </div>
+
+  {# ALERTAS #}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ msg }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {# ===================== FORM (WTForms ou dict) ===================== #}
+  {% if form is defined and form %}
+    <form method="{{ form_method or 'post' }}" action="{{ form_action or request.path }}" enctype="{{ form_enctype or 'application/x-www-form-urlencoded' }}" class="card border-0 shadow-sm rounded-3">
+      <div class="card-body">
+        {% if csrf_token is defined %}{{ csrf_token() }}{% endif %}
+        {% if form.hidden_tag is defined %}{{ form.hidden_tag() }}{% endif %}
+
+        <div class="row g-3">
+          {% for field in (form if form.hidden_tag is defined else []) %}
+            {% if field.type not in ['CSRFTokenField','HiddenField','SubmitField'] %}
+              <div class="col-12 col-md-6">
+                <label class="form-label">{{ field.label.text }}</label>
+                {{ field(class_="form-control" + (' is-invalid' if field.errors else '')) }}
+                {% if field.description %}<small class="text-secondary">{{ field.description }}</small>{% endif %}
+                {% for e in field.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+            {% endif %}
+          {% endfor %}
+
+          {% if form.hidden_tag is not defined %}
+            {% for k, v in form.items() %}
+              <div class="col-12 col-md-6">
+                <label class="form-label">{{ k|replace('_',' ')|title }}</label>
+                <input name="{{ k }}" value="{{ v }}" class="form-control" />
+              </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+      <div class="card-footer d-flex gap-2 justify-content-end">
+        <a href="{{ cancel_url or back_url or list_url or url_for('index') }}" class="btn btn-outline-secondary">Cancelar</a>
+        <button class="btn btn-success" type="submit">
+          <i class="bi bi-check2-circle me-1"></i> {{ submit_label or "Salvar" }}
+        </button>
+      </div>
+    </form>
+
+  {# ===================== LISTAS: ALUNOS ===================== #}
+  {% elif alunos is defined %}
+    <div class="card border-0 shadow-sm rounded-3">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-dark table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Série</th>
+                <th>Turma</th>
+                <th>Responsável</th>
+                <th>Atualização</th>
+                <th class="text-end">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in alunos %}
+                <tr>
+                  <td>{{ a.nome }}</td>
+                  <td>{{ a.serie.nome if a.serie is defined else a.serie }}</td>
+                  <td>{{ a.turma.nome if a.turma is defined else a.turma }}</td>
+                  <td>{{ a.responsavel.nome if a.responsavel is defined else a.responsavel }}</td>
+                  <td><small class="text-secondary">{{ (a.atualizado_em or a.updated_at)|default('', true) }}</small></td>
+                  <td class="text-end">
+                    <div class="btn-group">
+                      <a class="btn btn-sm btn-outline-info" href="{{ url_for('alunos.detalhe', id=a.id) if url_for is defined else '#' }}"><i class="bi bi-eye"></i></a>
+                      {% if papel in ['DIRETORIA','PROFESSOR'] %}
+                        <a class="btn btn-sm btn-outline-warning" href="{{ url_for('alunos.editar', id=a.id) if url_for is defined else '#' }}"><i class="bi bi-pencil"></i></a>
+                      {% endif %}
+                      {% if papel == 'DIRETORIA' %}
+                        <form method="post" action="{{ url_for('alunos.excluir', id=a.id) if url_for is defined else '#' }}" onsubmit="return confirm('Excluir este aluno?')">
+                          {% if csrf_token is defined %}{{ csrf_token() }}{% endif %}
+                          <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="6" class="text-center text-secondary py-4">Nenhum aluno encontrado.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  {# ===================== LISTAS: USUÁRIOS ===================== #}
+  {% elif usuarios is defined %}
+    <div class="card border-0 shadow-sm rounded-3">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-dark table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Papel</th>
+                <th>Ativo?</th>
+                <th>Último Login</th>
+                <th class="text-end">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in usuarios %}
+                <tr>
+                  <td>{{ u.nome or u.name }}</td>
+                  <td>{{ u.email }}</td>
+                  <td><span class="badge bg-secondary">{{ u.papel or u.role }}</span></td>
+                  <td>{{ "Sim" if (u.ativo if u.ativo is not none else u.is_active) else "Não" }}</td>
+                  <td><small class="text-secondary">{{ u.ultimo_login or u.last_login }}</small></td>
+                  <td class="text-end">
+                    <div class="btn-group">
+                      <a class="btn btn-sm btn-outline-info" href="{{ url_for('usuarios.painel', id=u.id) if url_for is defined else '#' }}"><i class="bi bi-person"></i></a>
+                      {% if papel == 'DIRETORIA' %}
+                        <a class="btn btn-sm btn-outline-warning" href="{{ url_for('usuarios.editar', id=u.id) if url_for is defined else '#' }}"><i class="bi bi-pencil"></i></a>
+                        <form method="post" action="{{ url_for('usuarios.excluir', id=u.id) if url_for is defined else '#' }}" onsubmit="return confirm('Excluir este usuário?')">
+                          {% if csrf_token is defined %}{{ csrf_token() }}{% endif %}
+                          <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="6" class="text-center text-secondary py-4">Nenhum usuário encontrado.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  {# ===================== LISTAS: TURMAS ===================== #}
+  {% elif turmas is defined %}
+    <div class="row g-3">
+      {% for t in turmas %}
+        <div class="col-12 col-md-6 col-xl-4">
+          <div class="card border-0 shadow-sm h-100 rounded-3">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h5 class="mb-0">{{ t.nome }}</h5>
+                  <small class="text-secondary">Série: {{ t.serie.nome if t.serie is defined else t.serie }}</small>
+                </div>
+                <span class="badge bg-dark">{{ (t.alunos|length) if t.alunos is defined else (t.qtd_alunos or 0) }} alunos</span>
+              </div>
+              {% if t.professor %}<div class="mt-2"><small>Professor: {{ t.professor.nome if t.professor is defined else t.professor }}</small></div>{% endif %}
+            </div>
+            <div class="card-footer d-flex gap-2 justify-content-end">
+              <a class="btn btn-sm btn-outline-info" href="{{ url_for('turmas.detalhe', id=t.id) if url_for is defined else '#' }}">Abrir</a>
+              {% if papel in ['DIRETORIA','PROFESSOR'] %}
+                <a class="btn btn-sm btn-outline-warning" href="{{ url_for('turmas.editar', id=t.id) if url_for is defined else '#' }}">Editar</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="col-12"><div class="alert alert-secondary">Nenhuma turma cadastrada.</div></div>
+      {% endfor %}
+    </div>
+
+  {# ===================== LISTAS: ATIVIDADES ===================== #}
+  {% elif atividades is defined %}
+    <div class="card border-0 shadow-sm rounded-3">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-dark table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Título</th>
+                <th>Turma</th>
+                <th>Entrega</th>
+                <th>Criada por</th>
+                <th class="text-end">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for at in atividades %}
+                <tr>
+                  <td>{{ at.titulo }}</td>
+                  <td>{{ at.turma.nome if at.turma is defined else at.turma }}</td>
+                  <td><small>{{ at.data_entrega|default('', true) }}</small></td>
+                  <td><small>{{ at.criado_por.nome if at.criado_por is defined else at.criado_por }}</small></td>
+                  <td class="text-end">
+                    <div class="btn-group">
+                      <a class="btn btn-sm btn-outline-info" href="{{ url_for('atividades.detalhe', id=at.id) if url_for is defined else '#' }}"><i class="bi bi-eye"></i></a>
+                      {% if papel in ['DIRETORIA','PROFESSOR'] %}
+                        <a class="btn btn-sm btn-outline-warning" href="{{ url_for('atividades.editar', id=at.id) if url_for is defined else '#' }}"><i class="bi bi-pencil"></i></a>
+                        <form method="post" action="{{ url_for('atividades.excluir', id=at.id) if url_for is defined else '#' }}" onsubmit="return confirm('Excluir esta atividade?')">
+                          {% if csrf_token is defined %}{{ csrf_token() }}{% endif %}
+                          <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="5" class="text-center text-secondary py-4">Nenhuma atividade encontrada.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  {# ===================== QUADRO DE HORÁRIOS ===================== #}
+  {% elif horarios is defined %}
+    <div class="card border-0 shadow-sm rounded-3">
+      <div class="card-body">
+        {% for turma, blocos in horarios.items() %}
+          <div class="mb-4">
+            <h5 class="mb-2">{{ turma }}</h5>
+            <div class="table-responsive">
+              <table class="table table-dark table-sm align-middle">
+                <thead><tr>
+                  <th>Dia</th><th>Início</th><th>Fim</th><th>Disciplina</th><th>Professor</th>
+                </tr></thead>
+                <tbody>
+                  {% for h in blocos %}
+                    <tr>
+                      <td>{{ h.dia }}</td>
+                      <td>{{ h.inicio }}</td>
+                      <td>{{ h.fim }}</td>
+                      <td>{{ h.disciplina }}</td>
+                      <td>{{ h.professor }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {% else %}
+          <div class="text-secondary">Sem horários cadastrados.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+  {# ===================== CARDS/DASHBOARD ===================== #}
+  {% else %}
+    <div class="row g-3">
+      {% if cards is defined %}
+        {% for c in cards %}
+          <div class="col-12 col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h6 class="text-secondary mb-1">{{ c.label }}</h6>
+                    <h3 class="mb-0">{{ c.value }}</h3>
+                  </div>
+                  {% if c.icon %}<i class="bi {{ c.icon }} fs-3 text-secondary"></i>{% endif %}
+                </div>
+                {% if c.help %}<small class="text-secondary d-block mt-2">{{ c.help }}</small>{% endif %}
+              </div>
+              {% if c.url %}
+                <div class="card-footer text-end"><a class="btn btn-sm btn-outline-info" href="{{ c.url }}">Abrir</a></div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="col-12">
+          <div class="alert alert-secondary mb-0">
+            Painel carregado. Esta tela agora é real e pronta para receber os dados da rota.
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Escolas{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Escolas</h4>
+  <a href="{{ url_for('escolas_nova') }}" class="btn btn-primary">+ Nova escola</a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th style="width:60%">Nome</th>
+            <th style="width:40%" class="text-end">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if escolas %}
+            {% for escola in escolas %}
+              <tr>
+                <td>{{ escola.nome }}</td>
+                <td class="text-end">
+                  <form method="post"
+                        action="{{ url_for('escola_excluir', escola_id=escola.id) }}"
+                        class="d-inline"
+                        onsubmit="return confirm('Excluir a escola \"{{ escola.nome }}\"?');">
+                    <button class="btn btn-sm btn-outline-danger">Excluir</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="2" class="text-center text-secondary py-4">
+                Nenhuma escola cadastrada.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+                        

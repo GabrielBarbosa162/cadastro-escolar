@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex align-items-center mb-3">
+  <h2 class="mb-0">Turmas</h2>
+  <a href="{{ url_for('nova_turma') }}" class="btn btn-brand ms-auto"><i class="bi bi-plus-lg"></i> Cadastrar turma</a>
+</div>
+<hr>
+
+<div class="card-soft p-0">
+  <div class="table-responsive">
+    <table class="table table-modern align-middle">
+      <thead>
+        <tr>
+          <th>Turma</th>
+          <th>Escola</th>
+          <th>Série</th>
+          <th>Turno</th>
+          <th class="text-end actions">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in turmas %}
+          <tr>
+            <td><a class="text-decoration-none fw-semibold" href="{{ url_for('turma_detalhe', turma_id=t.id) }}">{{ t.nome or '—' }}</a></td>
+            <td>{{ t.escola.nome }}</td>
+            <td>{{ t.serie.nome }}</td>
+            <td>{{ t.turno or '—' }}</td>
+            <td class="text-end actions">
+              <form method="post" action="{{ url_for('excluir_turma', turma_id=t.id) }}" onsubmit="return confirm('Excluir esta turma?');" class="d-inline">
+                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Excluir</button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="text-center text-muted py-4">Nenhuma turma cadastrada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

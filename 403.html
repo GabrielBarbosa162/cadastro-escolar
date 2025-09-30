@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Sem permissão{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+      <h4 class="mb-3">Acesso negado</h4>
+      <p class="mb-4 text-danger fw-semibold">Você não possui permissão para esta tarefa.</p>
+      <div class="d-flex gap-2">
+        <a class="btn btn-outline-dark" href="javascript:history.back()">Voltar</a>
+        <a class="btn btn-primary" href="{{ url_for('index.html') }}">Ir para o início</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

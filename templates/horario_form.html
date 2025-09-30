@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar Horário' if h else 'Novo Horário' }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">{{ 'Editar Horário' if h else 'Novo Horário' }}</h3>
+    <a href="{{ url_for('horarios.listar') }}" class="btn btn-outline-light">Voltar</a>
+  </div>
+
+  <form method="post" class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-6 col-md-3">
+          <label class="form-label">Hora início</label>
+          <input type="time" name="hora_inicio" class="form-control" required
+                 value="{{ hi if hi is defined else (h.hora_inicio if h else '') }}">
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label">Hora fim</label>
+          <input type="time" name="hora_fim" class="form-control" required
+                 value="{{ hf if hf is defined else (h.hora_fim if h else '') }}">
+        </div>
+      </div>
+      <small class="text-secondary">A hora fim deve ser maior que a hora início.</small>
+    </div>
+    <div class="card-footer d-flex justify-content-between">
+      {% if h %}
+        <span class="text-secondary small">ID {{ h.id }}</span>
+      {% else %}
+        <span></span>
+      {% endif %}
+      <button class="btn btn-success">
+        <i class="bi bi-check2 me-1"></i> Salvar
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

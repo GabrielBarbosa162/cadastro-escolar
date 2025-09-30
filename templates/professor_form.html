@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex align-items-center mb-3">
+  <a href="{{ url_for('lista_professores') }}" class="btn btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
+  <h2 class="mb-0">{{ 'Editar professor' if modo=='editar' else 'Novo professor' }}</h2>
+</div>
+<hr>
+
+<form method="post" class="row g-4">
+  <div class="col-12">
+    <div class="card-soft p-4">
+      <h5 class="mb-3">Dados</h5>
+      <div class="row g-3">
+        <div class="col-12 col-lg-6">
+          <label class="form-label">Nome completo *</label>
+          <input name="nome_completo" class="form-control" required
+                 value="{{ professor.nome_completo if professor else '' }}">
+        </div>
+        <div class="col-6 col-lg-3">
+          <label class="form-label">Data de nascimento *</label>
+          <input type="date" name="data_nascimento" id="dt_nasc" class="form-control" required
+                 value="{{ professor.data_nascimento.strftime('%Y-%m-%d') if professor else hoje }}">
+        </div>
+        <div class="col-6 col-lg-3">
+          <label class="form-label">Idade</label>
+          <div class="input-group">
+            <input name="idade" id="idade" class="form-control" readonly
+                   value="{{ professor.idade if professor and professor.idade is not none else '' }}">
+            <span class="input-group-text">anos</span>
+          </div>
+        </div>
+        <div class="col-12 col-lg-3">
+          <label class="form-label d-block">Sexo</label>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="sexo" id="sx_m" value="M"
+              {% if professor and professor.sexo=='M' %}checked{% endif %}>
+            <label class="form-check-label" for="sx_m">Masculino</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="sexo" id="sx_f" value="F"
+              {% if professor and professor.sexo=='F' %}checked{% endif %}>
+            <label class="form-check-label" for="sx_f">Feminino</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card-soft p-4">
+      <h5 class="mb-3">Senha</h5>
+      <div class="row g-3">
+        <div class="col-12 col-lg-4">
+          <label class="form-label">{{ 'Nova senha' if modo=='editar' else 'Senha' }} *</label>
+          <input type="password" name="senha" class="form-control" {{ '' if modo=='editar' else 'required' }}>
+        </div>
+        <div class="col-12 col-lg-4">
+          <label class="form-label">{{ 'Confirmar nova senha' if modo=='editar' else 'Confirmar senha' }} *</label>
+          <input type="password" name="confirmar" class="form-control" {{ '' if modo=='editar' else 'required' }}>
+        </div>
+        {% if modo=='editar' %}
+          <div class="col-12">
+            <div class="form-text">Deixe os campos de senha em branco se não quiser alterar.</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 d-flex gap-2">
+    <button class="btn btn-brand"><i class="bi bi-check2-circle"></i> Salvar</button>
+    <a href="{{ url_for('lista_professores') }}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+
+<script>
+  // calcula idade automaticamente quando a data muda
+  const dt = document.getElementById('dt_nasc');
+  const idade = document.getElementById('idade');
+  function calcIdade(){
+    if(!dt.value) return;
+    const d = new Date(dt.value);
+    const t = new Date();
+    let anos = t.getFullYear() - d.getFullYear();
+    const m = t.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && t.getDate() < d.getDate())) anos--;
+    idade.value = Math.max(0, anos);
+  }
+  if(dt){ dt.addEventListener('change', calcIdade); if(!idade.value) calcIdade(); }
+</script>
+
+{% endblock %}

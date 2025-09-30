@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Séries{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Séries</h3>
+    <a href="{{ url_for('series.novo') }}" class="btn btn-primary">
+      <i class="bi bi-plus-circle me-1"></i> Nova Série
+    </a>
+  </div>
+
+  <form class="mb-3" method="get">
+    <div class="input-group">
+      <input name="q" class="form-control" placeholder="Buscar..." value="{{ request.args.get('q','') }}">
+      <button class="btn btn-outline-light">Buscar</button>
+    </div>
+  </form>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <table class="table table-dark align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th style="width:180px">Criada em</th>
+            <th class="text-end" style="width:140px">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for it in itens %}
+            <tr>
+              <td class="fw-semibold">{{ it.nome }}</td>
+              <td class="text-secondary">{{ it.criado_em.strftime('%d/%m/%Y %H:%M') if it.criado_em else '—' }}</td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm">
+                  <a href="{{ url_for('series.editar', id=it.id) }}" class="btn btn-outline-light" title="Editar">
+                    <i class="bi bi-pencil-square"></i>
+                  </a>
+                  <form method="post" action="{{ url_for('series.excluir', id=it.id) }}"
+                        onsubmit="return confirm('Excluir esta série?');">
+                    <button class="btn btn-outline-danger" title="Excluir">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="3" class="text-center text-secondary py-4">Nenhuma série cadastrada.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

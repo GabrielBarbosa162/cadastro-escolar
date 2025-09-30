@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Usuários & Permissões{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Usuários & Permissões</h3>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('usuarios_novo') }}" class="btn btn-primary">
+        <i class="bi bi-person-plus me-1"></i> Novo usuário
+      </a>
+      <a href="{{ url_for('alunos.listar') }}" class="btn btn-outline-light">
+        <i class="bi bi-people-fill me-1"></i> Alunos
+      </a>
+    </div>
+  </div>
+
+  <form class="mb-3">
+    {% if mostrar_todos %}
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('usuarios_list') }}">Mostrar apenas ativos</a>
+    {% else %}
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('usuarios_list', mostrar='todos') }}">Mostrar todos</a>
+    {% endif %}
+  </form>
+
+  <div class="table-responsive card border-0 shadow-sm">
+    <table class="table table-dark align-middle mb-0">
+      <thead>
+        <tr>
+          <th style="min-width:220px">Usuário (e-mail)</th>
+          <th style="width:120px">Papel</th>
+          <th style="width:120px">Status</th>
+          <th style="width:200px">Último visto</th>
+          <th>Permissões</th>
+          <th style="width:110px" class="text-end">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for u in usuarios %}
+        <tr>
+          <td class="fw-semibold">
+            <i class="bi bi-person me-1"></i> {{ u.email }}
+          </td>
+          <td>{{ u.papel }}</td>
+          <td>
+            {% if active_map.get(u.id) %}
+              <span class="badge bg-success">Ativo</span>
+            {% else %}
+              <span class="badge bg-secondary">Inativo</span>
+            {% endif %}
+          </td>
+          <td class="text-secondary">
+            {% if last_seen_map.get(u.id) %}
+              {{ last_seen_map[u.id].strftime("%d/%m/%Y %H:%M") }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>
+            {% if u.papel == 'DIRETORIA' %}
+              <span class="text-success">Diretoria possui todas as permissões.</span>
+            {% else %}
+              <form method="post" action="{{ url_for('usuarios_salvar_permissoes', usuario_id=u.id, mostrar=request.args.get('mostrar')) }}">
+                <div class="row g-2">
+                  {% for cod in permissoes_codigos %}
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="p_{{ u.id }}_{{ cod }}" name="permissoes[]" value="{{ cod }}"
+                               {% if permissoes_por_usuario[u.id][cod] %}checked{% endif %}>
+                        <label class="form-check-label small" for="p_{{ u.id }}_{{ cod }}">{{ permissoes_nomes[cod] }}</label>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+                <div class="mt-2">
+                  <button class="btn btn-sm btn-success">
+                    <i class="bi bi-check2 me-1"></i> Salvar permissões
+                  </button>
+                </div>
+              </form>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-light" href="{{ url_for('usuario_painel', usuario_id=u.id) }}">
+              <i class="bi bi-speedometer2"></i>
+            </a>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="text-center text-secondary py-4">Nenhum usuário encontrado.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

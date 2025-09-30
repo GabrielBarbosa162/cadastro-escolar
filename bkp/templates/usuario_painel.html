@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Painel do Usuário{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Painel do Usuário</h3>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('usuarios_list') }}" class="btn btn-outline-light">
+        <i class="bi bi-people me-1"></i> Usuários
+      </a>
+      <a href="{{ url_for('alunos.listar') }}" class="btn btn-primary">
+        <i class="bi bi-people-fill me-1"></i> Alunos
+      </a>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <div class="mb-2"><span class="text-secondary">E-mail:</span> <strong>{{ user.email }}</strong></div>
+          <div class="mb-2"><span class="text-secondary">Papel:</span> <strong>{{ user.papel }}</strong></div>
+          <div class="mb-2"><span class="text-secondary">Ativo:</span>
+            {% if user.ativo %}<span class="badge bg-success">Sim</span>{% else %}<span class="badge bg-secondary">Não</span>{% endif %}
+          </div>
+        </div>
+        <div class="col-12 col-md-6">
+          <h6 class="text-secondary">Permissões efetivas</h6>
+          <ul class="mb-0">
+            {% for cod, tem in has_perm.items() %}
+              <li class="small">
+                {% if tem %}<i class="bi bi-check2-circle text-success"></i>{% else %}<i class="bi bi-x-circle text-danger"></i>{% endif %}
+                {{ cod }}
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

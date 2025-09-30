@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex align-items-center mb-3">
+  <a href="{{ url_for('home') }}" class="btn btn-outline-secondary me-2" title="Início">
+    <i class="bi bi-house"></i>
+  </a>
+  <h2 class="mb-0">{{ 'Editar Atividade' if atividade.id else 'Nova Atividade' }}</h2>
+</div>
+<hr>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <form method="post" action="" class="row g-3">
+
+      <div class="col-md-6">
+        <label class="form-label">Aluno <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <select name="aluno_id" class="form-select" required>
+            <option value="">— Selecione —</option>
+            {% for a in alunos %}
+              <option value="{{ a.id }}" {{ 'selected' if (atividade.aluno_id == a.id) else '' }}>
+                {{ a.nome_completo }}
+              </option>
+            {% endfor %}
+          </select>
+          <a class="btn btn-outline-secondary" target="_blank" title="Novo aluno"
+             href="{{ url_for('novo_aluno') }}">
+            <i class="bi bi-plus-lg"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Data <span class="text-danger">*</span></label>
+        <input type="date" name="data" class="form-control" required
+               value="{{ atividade.data.strftime('%Y-%m-%d') if atividade.id else atividade.data }}">
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">O que estudou no dia <span class="text-danger">*</span></label>
+        <textarea name="conteudo" class="form-control" rows="4" required>{{ atividade.conteudo }}</textarea>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Observação do professor <span class="text-danger">*</span></label>
+        <textarea name="observacao" class="form-control" rows="4" required>{{ atividade.observacao }}</textarea>
+      </div>
+
+      <div class="col-12 d-flex gap-2 mt-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check2-circle"></i> {{ 'Salvar alterações' if atividade.id else 'Registrar' }}
+        </button>
+        <a href="{{ url_for('lista_atividades') }}" class="btn btn-outline-secondary">Voltar para a lista</a>
+
+        {% if atividade.id %}
+          <form method="post" action="{{ url_for('excluir_atividade', ativ_id=atividade.id) }}"
+                onsubmit="return confirm('Excluir esta atividade?');" class="ms-auto">
+            <button class="btn btn-outline-danger"><i class="bi bi-trash"></i> Excluir</button>
+          </form>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

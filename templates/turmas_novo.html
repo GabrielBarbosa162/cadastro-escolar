@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex align-items-center mb-3">
+  <a href="{{ url_for('lista_turmas') }}" class="btn btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
+  <h2 class="mb-0">Cadastrar turma</h2>
+</div>
+<hr>
+
+<div class="card-soft p-4">
+  <form method="post" class="row g-3">
+    <div class="col-12 col-lg-6">
+      <label class="form-label">Escola *</label>
+      <select name="escola_id" class="form-select" required>
+        <option value="">— Selecione —</option>
+        {% for e in escolas %}<option value="{{ e.id }}">{{ e.nome }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-lg-6">
+      <label class="form-label">Série *</label>
+      <select name="serie_id" class="form-select" required>
+        <option value="">— Selecione —</option>
+        {% for s in series %}<option value="{{ s.id }}">{{ s.nome }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-lg-6">
+      <label class="form-label">Nome da turma</label>
+      <input name="nome" class="form-control" placeholder="Ex.: Turma A, 5ºB, Infantil II...">
+    </div>
+    <div class="col-12 col-lg-6">
+      <label class="form-label">Turno</label>
+      <select name="turno" class="form-select">
+        <option value="">—</option>
+        <option>Manhã</option><option>Tarde</option><option>Noite</option><option>Integral</option>
+      </select>
+    </div>
+    <div class="col-12 d-flex gap-2">
+      <button class="btn btn-brand"><i class="bi bi-check2-circle"></i> Salvar</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('lista_turmas') }}">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

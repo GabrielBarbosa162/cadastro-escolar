@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Quadro de horários{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Quadro de horários</h4>
+</div>
+
+<!-- Formulário de novo horário (aparece aqui nesta página) -->
+<div class="card mb-3">
+  <div class="card-body">
+    <form class="row g-2 align-items-end" method="post" action="{{ url_for('horario_novo') }}">
+      <div class="col-auto">
+        <label class="form-label">Hora início</label>
+        <input type="time" class="form-control" name="inicio" required>
+      </div>
+      <div class="col-auto">
+        <label class="form-label">Hora fim</label>
+        <input type="time" class="form-control" name="fim" required>
+      </div>
+      <div class="col-auto pt-2">
+        <button class="btn btn-primary mt-4">+ Cadastrar horário</button>
+      </div>
+      <div class="col-12">
+        <small class="text-muted">A hora fim deve ser maior que a hora início.</small>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Colunas (kanban) por horário -->
+<div class="kanban">
+  {% for col in colunas %}
+    <div class="kanban-col">
+      <h6>{{ col.titulo }}</h6>
+      <div class="kanban-items">
+        {% for a in col.alunos %}
+          <div class="border rounded p-2 mb-2">
+            <div class="fw-semibold">{{ a.nome }}</div>
+            <div class="small text-muted">
+              {{ a.escola.nome if a.escola else "—" }} • {{ a.serie.nome if a.serie else "—" }}
+            </div>
+          </div>
+        {% else %}
+          <div class="text-muted small">Sem alunos</div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

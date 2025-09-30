@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex align-items-center mb-3">
+  <h2 class="mb-0">Atividade por turma</h2>
+</div>
+<hr>
+
+<div class="card-soft p-4">
+  {% if step==1 %}
+    <form method="post" class="row g-3">
+      <div class="col-12 col-md-6">
+        <label class="form-label">Turma</label>
+        <select name="turma_id" id="turma_id" class="form-select" required>
+          <option value="">— selecione —</option>
+          {% for t in turmas %}
+            <option value="{{ t.id }}">{{ t.nome or ('Turma #' ~ t.id) }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Aluno</label>
+        <select name="aluno_id" id="aluno_id" class="form-select" required></select>
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label">Data</label>
+        <input type="date" name="data" value="{{ data }}" class="form-control" required>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Conteúdo</label>
+        <textarea name="conteudo" class="form-control" rows="2" required></textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Observação</label>
+        <textarea name="observacao" class="form-control" rows="3" required></textarea>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-brand"><i class="bi bi-check2"></i> Registrar</button>
+      </div>
+    </form>
+  {% endif %}
+</div>
+
+<script>
+document.getElementById('turma_id').addEventListener('change', function(){
+  let turmaId = this.value;
+  let sel = document.getElementById('aluno_id');
+  if(!turmaId){ sel.innerHTML = '<option>— selecione a turma —</option>'; return; }
+  sel.innerHTML = '<option>Carregando...</option>';
+  fetch(`/turmas/${turmaId}/alunos.json`)
+    .then(r => r.json())
+    .then(lista => {
+      sel.innerHTML = '<option value="">— selecione —</option>';
+      lista.forEach(a => sel.innerHTML += `<option value="${a.id}">${a.nome}</option>`);
+    });
+});
+</script>
+
+{% endblock %}

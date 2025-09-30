@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Séries{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Séries</h4>
+</div>
+
+<form class="row g-2 mb-3" method="post" action="{{ url_for('series_nova') }}">
+  <div class="col-sm-8 col-md-6 col-lg-4">
+    <input name="nome" class="form-control" placeholder="Nome da série" required>
+  </div>
+  <div class="col-auto">
+    <button class="btn btn-primary">+ Cadastrar série</button>
+  </div>
+</form>
+
+<div class="table-responsive">
+  <table class="table align-middle">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th style="width:140px;">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in series %}
+      <tr>
+        <td>{{ s.nome }}</td>
+        <td>
+          <form method="post"
+                action="{{ url_for('series_excluir', serie_id=s.id) }}"
+                onsubmit="return confirm('Excluir a série \"{{ s.nome }}\"?');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="2" class="text-center text-muted">Nenhuma série cadastrada.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

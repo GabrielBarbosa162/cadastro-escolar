@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="h4 mb-3">{{ 'Editar Aluno' if aluno else 'Novo Aluno' }}</h1>
+
+<form method="post">
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Nome completo</label>
+      <input type="text" name="nome" class="form-control" required
+             value="{{ aluno.nome if aluno else '' }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Data de nascimento</label>
+      <input type="date" name="data_nascimento" class="form-control"
+             value="{{ aluno.data_nascimento if aluno else '' }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Sexo</label>
+      <select name="sexo" class="form-select">
+        <option value="">—</option>
+        <option value="M" {{ 'selected' if aluno and aluno.sexo=='M' else '' }}>Masculino</option>
+        <option value="F" {{ 'selected' if aluno and aluno.sexo=='F' else '' }}>Feminino</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Telefone celular</label>
+      <input type="text" name="telefone_celular" class="form-control"
+             value="{{ aluno.telefone_celular if aluno else '' }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Telefone fixo</label>
+      <input type="text" name="telefone_fixo" class="form-control"
+             value="{{ aluno.telefone_fixo if aluno else '' }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Nome do pai</label>
+      <input type="text" name="nome_pai" class="form-control"
+             value="{{ aluno.nome_pai if aluno else '' }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Nome da mãe</label>
+      <input type="text" name="nome_mae" class="form-control"
+             value="{{ aluno.nome_mae if aluno else '' }}">
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Escola</label>
+      <select name="escola_id" class="form-select">
+        <option value="">—</option>
+        {% for e in escolas %}
+        <option value="{{ e.id }}" {% if aluno and aluno.escola_id==e.id %}selected{% endif %}>{{ e.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Série</label>
+      <select name="serie_id" class="form-select">
+        <option value="">—</option>
+        {% for s in series %}
+        <option value="{{ s.id }}" {% if aluno and aluno.serie_id==s.id %}selected{% endif %}>{{ s.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Horário</label>
+      <select name="horario" class="form-select">
+        <option value="">—</option>
+        {% for h in horarios %}
+        <option value="{{ h }}" {% if aluno and aluno.horario==h %}selected{% endif %}>{{ h }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="mt-4 d-flex gap-2">
+    <button type="submit" class="btn btn-success">Salvar</button>
+    <!-- CORRIGIDO: cancelar volta para a lista -->
+    <a href="{{ url_for('alunos_list') }}" class="btn btn-secondary">Cancelar</a>
+  </div>
+</form>
+<a href="{{ url_for('alunos_list') }}" class="btn btn-secondary">Cancelar</a>
+{% endblock %}

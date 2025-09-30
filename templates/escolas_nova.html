@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Nova escola{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Nova escola</h4>
+  <a href="{{ url_for('escolas') }}" class="btn btn-outline-secondary">← Voltar</a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="post" action="{{ url_for('escolas_nova') }}" class="row g-3">
+      <div class="col-12">
+        <label class="form-label">Nome da escola</label>
+        <input type="text" name="nome" class="form-control" required placeholder="Ex.: Escola Municipal Centro">
+      </div>
+      <div class="col-12">
+        <button class="btn btn-primary">Cadastrar escola</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

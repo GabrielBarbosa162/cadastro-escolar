@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ title or "Conta" }}{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 520px;">
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body">
+      <h4 class="mb-3">{{ header or title or "Minha Conta" }}</h4>
+
+      {# Se a rota fornecer um formulário (ex.: reset de senha, confirmação, etc.) #}
+      {% if form is defined and form %}
+        <form method="{{ form_method or 'post' }}" action="{{ form_action or request.path }}">
+          {% if csrf_token is defined %}{{ csrf_token() }}{% endif %}
+          {% if form.hidden_tag is defined %}{{ form.hidden_tag() }}{% endif %}
+
+          {% for field in (form if form.hidden_tag is defined else []) %}
+            {% if field.type not in ['CSRFTokenField','HiddenField','SubmitField'] %}
+              <div class="mb-3">
+                <label class="form-label">{{ field.label.text }}</label>
+                {{ field(class_="form-control" + (' is-invalid' if field.errors else '')) }}
+                {% for e in field.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+            {% endif %}
+          {% endfor %}
+
+          <div class="d-flex justify-content-between">
+            <a class="btn btn-outline-secondary" href="{{ back_url or url_for('auth.login') }}">Voltar</a>
+            <button class="btn btn-primary" type="submit">{{ submit_label or "Continuar" }}</button>
+          </div>
+        </form>
+
+      {% else %}
+        <p class="text-secondary">
+          Esta página foi convertida em tela real. Use o menu para acessar <a href="{{ url_for('auth.login') }}">Login</a>,
+          <a href="{{ url_for('auth.esqueci') }}">Esqueci a senha</a> ou outras opções de conta.
+        </p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

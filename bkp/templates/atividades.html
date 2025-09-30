@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Atividades{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Atividades</h4>
+</div>
+
+{% if current_user.papel in ['DIRETORIA', 'PROFESSOR'] %}
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Aluno</label>
+        <select name="aluno_id" class="form-select" required>
+          <option value="">Selecione...</option>
+          {% for a in alunos %}
+            <option value="{{ a.id }}">{{ a.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Data da atividade</label>
+        <input type="date" name="data_atividade" class="form-control" value="{{ ('' ) }}" />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Conteúdo</label>
+        <textarea name="conteudo" class="form-control" rows="2" required placeholder="O que o aluno estudou hoje..."></textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Observação</label>
+        <textarea name="observacao" class="form-control" rows="2" placeholder="Avaliação/comentários do professor..."></textarea>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-primary">Salvar atividade</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th style="width:25%">Aluno</th>
+            <th style="width:15%">Data</th>
+            <th style="width:35%">Conteúdo</th>
+            <th style="width:10%">Obs</th>
+            <th style="width:15%" class="text-end">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if atividades %}
+            {% for at in atividades %}
+              <tr>
+                <td>
+                  {% if at.aluno.foto %}
+                    <img src="{{ url_for('uploads', filename=at.aluno.foto) }}"
+                         alt="Foto de {{ at.aluno.nome }}" class="avatar me-2">
+                  {% endif %}
+                  {{ at.aluno.nome }}
+                </td>
+                <td>{{ at.data_atividade.strftime('%d/%m/%Y') }}</td>
+                <td class="text-wrap">{{ at.conteudo }}</td>
+                <td class="text-truncate" style="max-width: 160px;">
+                  {{ at.observacao or '—' }}
+                </td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm">
+                    {% if current_user.papel in ['DIRETORIA','PROFESSOR'] %}
+                      <a href="{{ url_for('atividade_whatsapp', atividade_id=at.id) }}"
+                         class="btn btn-outline-success">WhatsApp</a>
+                      <form method="post"
+                            action="{{ url_for('atividade_excluir', atividade_id=at.id) }}"
+                            onsubmit="return confirm('Excluir esta atividade?');">
+                        <button class="btn btn-outline-danger">Excluir</button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="5" class="text-center text-secondary py-4">
+                Nenhuma atividade registrada.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

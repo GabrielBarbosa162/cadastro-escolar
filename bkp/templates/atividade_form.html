@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar Atividade' if a else 'Nova Atividade' }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">{{ 'Editar Atividade' if a else 'Nova Atividade' }}</h3>
+    <a href="{{ url_for('atividades.listar') }}" class="btn btn-outline-light">Voltar</a>
+  </div>
+
+  <form method="post" class="card border-0 shadow-sm" id="formAtividade">
+    <div class="card-body">
+      <div class="row g-3">
+
+        <!-- Nome do aluno -->
+        <div class="col-12 col-md-6">
+          <label class="form-label">Nome do aluno</label>
+          <select class="form-select" name="aluno_id" id="aluno_id" required>
+            <option value="">— Selecione —</option>
+            {% for al in alunos %}
+              <option
+                value="{{ al.id }}"
+                data-phone="{{ (al.telefone_mae or al.telefone_celular or '')|e }}"
+                {% if a and a.aluno_id==al.id %}selected{% endif %}
+              >{{ al.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Data da atividade -->
+        <div class="col-6 col-md-3">
+          <label class="form-label">Data da atividade</label>
+          <input type="date" class="form-control" name="data_atividade"
+                 id="data_atividade"
+                 value="{{ a.data_atividade.isoformat() if a and a.data_atividade else '' }}">
+        </div>
+
+        <!-- Botão WhatsApp Web -->
+        <div class="col-6 col-md-3 d-flex align-items-end">
+          <a href="#" class="btn btn-success w-100" id="btnWhatsapp" target="_blank" rel="noopener">
+            <i class="bi bi-whatsapp me-1"></i> WhatsApp Web
+          </a>
+        </div>
+
+        <!-- Título / Nome da atividade -->
+        <div class="col-12 col-md-6">
+          <label class="form-label">Nome da atividade (título)</label>
+          <input class="form-control" name="nome" id="nome"
+                 placeholder="Ex.: Revisão de Matemática"
+                 required value="{{ a.nome if a else '' }}">
+        </div>
+
+        <!-- Conteúdo estudado -->
+        <div class="col-12">
+          <label class="form-label">Conteúdo estudado</label>
+          <textarea class="form-control" name="conteudo" id="conteudo" rows="3"
+                    placeholder="Descreva o conteúdo trabalhado...">{{ a.conteudo if a else '' }}</textarea>
+        </div>
+
+        <!-- Observação -->
+        <div class="col-12">
+          <label class="form-label">Observação</label>
+          <textarea class="form-control" name="observacao" id="observacao" rows="3"
+                    placeholder="Observações adicionais...">{{ a.observacao if a else '' }}</textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card-footer d-flex justify-content-between">
+      {% if a %}
+        <span class="text-secondary small">ID {{ a.id }}</span>
+      {% else %}
+        <span></span>
+      {% endif %}
+      <button class="btn btn-success">
+        <i class="bi bi-check2 me-1"></i> Salvar
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  (function(){
+    const selAluno = document.getElementById('aluno_id');
+    const nome = document.getElementById('nome');
+    const dataAtv = document.getElementById('data_atividade');
+    const conteudo = document.getElementById('conteudo');
+    const observacao = document.getElementById('observacao');
+    const btnWpp = document.getElementById('btnWhatsapp');
+
+    function onlyDigits(s){ return (s || '').replace(/\D+/g, ''); }
+    function normalizePhone(p){
+      let d = onlyDigits(p);
+      if (!d) return '';
+      if (d.startsWith('55')) return d;
+      if (d.length >= 10) return '55' + d;
+      return d;
+    }
+
+    function buildMsg() {
+      const alunoOpt = selAluno.options[selAluno.selectedIndex];
+      const alunoNome = alunoOpt ? alunoOpt.text : '';
+      const dt = dataAtv.value ? new Date(dataAtv.value + 'T12:00:00') : null;
+      const dataTxt = dt ? dt.toLocaleDateString('pt-BR') : '';
+
+      const msg =
+        `*Atividade:* ${nome.value || ''}\n` +
+        `*Aluno:* ${alunoNome}\n` +
+        `*Data:* ${dataTxt}\n` +
+        `*Conteúdo:* ${conteudo.value || ''}\n` +
+        `*Obs.:* ${observacao.value || ''}`;
+
+      const phoneRaw = alunoOpt ? alunoOpt.getAttribute('data-phone') : '';
+      const phone = normalizePhone(phoneRaw || '');
+
+      if (!phone) {
+        btnWpp.classList.add('disabled');
+        btnWpp.setAttribute('aria-disabled', 'true');
+        btnWpp.href = '#';
+      } else {
+        btnWpp.classList.remove('disabled');
+        btnWpp.removeAttribute('aria-disabled');
+        // >>>>>> Linka DIRETO no WhatsApp Web
+        btnWpp.href = `https://web.whatsapp.com/send?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(msg)}`;
+      }
+    }
+
+    ['change','keyup'].forEach(evt=>{
+      selAluno.addEventListener(evt, buildMsg);
+      nome.addEventListener(evt, buildMsg);
+      dataAtv.addEventListener(evt, buildMsg);
+      conteudo.addEventListener(evt, buildMsg);
+      observacao.addEventListener(evt, buildMsg);
+    });
+
+    // inicializa
+    buildMsg();
+  })();
+</script>
+{% endblock %}

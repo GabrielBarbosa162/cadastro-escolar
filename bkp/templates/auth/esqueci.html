@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Esqueci minha senha{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center">
+  <div class="card" style="max-width:480px; width:100%;">
+    <div class="card-body">
+      <h5 class="mb-3">Esqueci minha senha</h5>
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">E-mail</label>
+          <input name="email" type="email" class="form-control" required>
+        </div>
+        <button class="btn btn-primary w-100">Enviar instruções</button>
+      </form>
+      {% if dev_link %}
+        <div class="alert alert-info mt-3">
+          <div class="fw-semibold">DEV:</div>
+          Link de redefinição (sem SMTP configurado):<br>
+          <a class="text-break" href="{{ dev_link }}">{{ dev_link }}</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}{% block title %}Novo Usuário{% endblock %}{% block content %}
+<div class="container py-4 text-white">
+  <h3 class="mb-4">Cadastrar novo usuário</h3>
+  <form method="post" class="row g-3" autocomplete="off">
+    <div class="col-12 col-md-6"><label class="form-label">E-mail</label><input type="email" name="email" class="form-control" required></div>
+    <div class="col-6 col-md-3"><label class="form-label">Senha</label><input type="password" name="senha" class="form-control" required></div>
+    <div class="col-6 col-md-3"><label class="form-label">Confirmar</label><input type="password" name="confirmar" class="form-control" required></div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">Papel</label>
+      <select name="papel" class="form-select">
+        <option value="DIRETORIA">Diretoria</option>
+        <option value="PROFESSOR">Professor</option>
+        <option value="RESPONSAVEL" selected>Responsável</option>
+        <option value="ALUNO">Aluno</option>
+      </select>
+    </div>
+    <div class="col-12 text-end">
+      <a href="{{ url_for('usuarios_list') }}" class="btn btn-outline-light">Voltar</a>
+      <button class="btn btn-light">Cadastrar usuário</button>
+    </div>
+  </form>
+</div>{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <a href="{{ url_for('home') }}" class="btn btn-outline-secondary me-2"><i class="bi bi-house"></i></a>
+  <h2 class="mb-0">Turmas</h2>
+</div>
+<hr>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title">Cadastrar nova turma</h5>
+        <form method="post" action="{{ url_for('nova_turma') }}" class="row g-2">
+          <div class="col-12">
+            <label class="form-label">Escola</label>
+            <select class="form-select" name="escola_id" required>
+              <option value="">— Selecione —</option>
+              {% for e in escolas %}
+                <option value="{{ e.id }}">{{ e.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Série</label>
+            <select class="form-select" name="serie_id" required>
+              <option value="">— Selecione —</option>
+              {% for s in series %}
+                <option value="{{ s.id }}">{{ s.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-8">
+            <label class="form-label">Nome (opcional)</label>
+            <input type="text" class="form-control" name="nome" placeholder="Ex.: Turma A">
+          </div>
+          <div class="col-4">
+            <label class="form-label">Turno</label>
+            <input type="text" class="form-control" name="turno" placeholder="Manhã/Tarde/Noite">
+          </div>
+          <div class="col-12 d-flex gap-2">
+            <button class="btn btn-primary"><i class="bi bi-plus-lg"></i> Cadastrar</button>
+            <a href="{{ url_for('atividade_por_turma_aluno') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-clipboard2-plus"></i> Atividade por turma
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-7">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title">Lista de turmas</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Escola</th>
+                <th>Série</th>
+                <th>Nome</th>
+                <th>Turno</th>
+                <th class="text-end">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in turmas %}
+                <tr>
+                  <td>{{ t.escola.nome }}</td>
+                  <td>{{ t.serie.nome }}</td>
+                  <td>{{ t.nome or '—' }}</td>
+                  <td>{{ t.turno or '—' }}</td>
+                  <td class="text-end">
+                    <form method="post" action="{{ url_for('excluir_turma', turma_id=t.id) }}"
+                          onsubmit="return confirm('Excluir esta turma?');" class="d-inline">
+                      <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Excluir</button>
+                    </form>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Nenhuma turma cadastrada.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
