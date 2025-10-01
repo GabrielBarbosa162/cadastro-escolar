@@ -12,17 +12,33 @@ from flask_login import (
 )
 from functools import wraps
 from werkzeug.exceptions import Forbidden, Unauthorized, NotFound
+
+# ---- seus modelos centralizados em models.py ----
 from models import (
     db, Usuario, Permissao, UsuarioPermissao, UserSession,
     Escola, Serie, Horario, Mensalidade
 )
 
-# -----------------------------------------------------------------------------
-# Config básica
-# -----------------------------------------------------------------------------
+# =============================================================================
+# APP & CONFIG
+# =============================================================================
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-keep-it-safe")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///alunos.db")
+
+# --- Normalização do DATABASE_URL para Psycopg 3 (Render usa Python 3.13) ---
+def _normalize_db_url(url: str) -> str:
+    """Converte postgres:// -> postgresql+psycopg:// para o SQLAlchemy usar Psycopg 3."""
+    if not url:
+        return "sqlite:///alunos.db"
+    # Render às vezes fornece 'postgres://' (antigo); convertemos para 'postgresql://'
+    url = url.replace("postgres://", "postgresql://", 1)
+    # força driver psycopg (psycopg 3)
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return url
+
+db_url_env = os.environ.get("DATABASE_URL", "sqlite:///alunos.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = _normalize_db_url(db_url_env)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 UPLOAD_DIR = os.path.join(app.root_path, "uploads")
@@ -30,9 +46,9 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 db.init_app(app)
 
-# -----------------------------------------------------------------------------
-# Login Manager
-# -----------------------------------------------------------------------------
+# =============================================================================
+# LOGIN
+# =============================================================================
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
@@ -56,9 +72,9 @@ def inject_blueprints_and_perms():
         "can_aluno_excluir": papel_ok or _has("ALUNO_EXCLUIR"),
     }
 
-# -----------------------------------------------------------------------------
-# Permissões
-# -----------------------------------------------------------------------------
+# =============================================================================
+# PERMISSÕES
+# =============================================================================
 PERMISSOES_NOMES = {
     "ALUNO_EDITAR": "Alterar cadastro de aluno",
     "ALUNO_CRIAR": "Cadastrar novo aluno",
@@ -101,9 +117,9 @@ def perm_required(codigo: str):
         return wrapper
     return deco
 
-# -----------------------------------------------------------------------------
-# Sessão (presença)
-# -----------------------------------------------------------------------------
+# =============================================================================
+# SESSÕES
+# =============================================================================
 SESS_ACTIVE_MINUTES = 15
 
 @app.before_request
@@ -134,9 +150,9 @@ def registrar_logout_sessao():
             db.session.commit()
     flask_session.pop("session_id", None)
 
-# -----------------------------------------------------------------------------
-# Seeds
-# -----------------------------------------------------------------------------
+# =============================================================================
+# SEEDS
+# =============================================================================
 def seed_permissoes():
     criadas = 0
     for cod, nome in PERMISSOES_NOMES.items():
@@ -152,7 +168,7 @@ def seed_admin():
         admin.set_password(os.environ.get("ADMIN_PASS", "Trocar123"))
         db.session.add(admin)
         db.session.commit()
-        print("Usuário DIRETORIA criado: admin@escola.com / Trocar123")
+        print("Usuário DIRETORIA criado: admin@escola.com / (ADMIN_PASS)")
 
 def seed_mensalidades():
     if Mensalidade.query.count() == 0:
@@ -163,16 +179,16 @@ def seed_mensalidades():
         ])
         db.session.commit()
 
-# -----------------------------------------------------------------------------
-# Uploads
-# -----------------------------------------------------------------------------
+# =============================================================================
+# UPLOADS
+# =============================================================================
 @app.route("/uploads/<path:filename>")
 def uploads(filename):
     return send_from_directory(UPLOAD_DIR, filename, as_attachment=False)
 
-# -----------------------------------------------------------------------------
-# Auth
-# -----------------------------------------------------------------------------
+# =============================================================================
+# AUTH
+# =============================================================================
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -195,9 +211,9 @@ def logout():
     flash("Sessão encerrada.", "info")
     return redirect(url_for("login"))
 
-# -----------------------------------------------------------------------------
-# Usuários (lista / novo / salvar permissões / painel)
-# -----------------------------------------------------------------------------
+# =============================================================================
+# USUÁRIOS (LISTA / NOVO / PERMISSÕES / PAINEL)
+# =============================================================================
 @app.route("/usuarios")
 @login_required
 def usuarios_list():
@@ -339,17 +355,17 @@ def usuario_painel(usuario_id):
     has_perm = {cod: usuario_tem_permissao(u, cod) for cod in PERMISSOES_CODIGOS}
     return render_template("usuario_painel.html", user=u, has_perm=has_perm)
 
-# -----------------------------------------------------------------------------
-# Index
-# -----------------------------------------------------------------------------
+# =============================================================================
+# INDEX
+# =============================================================================
 @app.route("/")
 @login_required
 def index():
     return render_template("index.html")
 
-# -----------------------------------------------------------------------------
-# Handlers de erro (alerta no topo + redirect)
-# -----------------------------------------------------------------------------
+# =============================================================================
+# HANDLERS DE ERRO (aviso no topo + redirect)
+# =============================================================================
 @app.errorhandler(Forbidden)
 @app.errorhandler(403)
 def handle_forbidden(e):
@@ -374,9 +390,9 @@ def handle_not_found(e):
         return redirect(ref)
     return redirect(url_for("index"))
 
-# -----------------------------------------------------------------------------
-# Blueprints
-# -----------------------------------------------------------------------------
+# =============================================================================
+# BLUEPRINTS
+# =============================================================================
 from alunos import bp as alunos_bp
 app.register_blueprint(alunos_bp)
 
@@ -392,13 +408,35 @@ app.register_blueprint(atividades_bp)
 from horarios import bp as horarios_bp
 app.register_blueprint(horarios_bp)
 
-# -----------------------------------------------------------------------------
-# Boot
-# -----------------------------------------------------------------------------
-if __name__ == "__main__":
+# =============================================================================
+# INIT DB AUTOMÁTICO (sem Pre-Deploy do Render)
+# =============================================================================
+def init_db_if_needed():
+    """Cria tabelas e executa seeds, tanto localmente quanto no Render."""
     with app.app_context():
         db.create_all()
-        seed_permissoes()
-        seed_admin()
-        seed_mensalidades()
+        try:
+            seed_permissoes()
+        except Exception as e:
+            print("seed_permissoes:", e)
+        try:
+            seed_admin()
+        except Exception as e:
+            print("seed_admin:", e)
+        try:
+            seed_mensalidades()
+        except Exception as e:
+            print("seed_mensalidades:", e)
+
+# Chamado quando o app é importado pelo Gunicorn (Render) e também no dev.
+if os.environ.get("RUN_INIT_ON_BOOT", "1") == "1":
+    try:
+        init_db_if_needed()
+    except Exception as e:
+        print("Init-on-boot falhou:", e)
+
+# Execução local (desenvolvimento)
+if __name__ == "__main__":
+    with app.app_context():
+        init_db_if_needed()
     app.run(debug=True)
