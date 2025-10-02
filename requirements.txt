@@ -2,7 +2,7 @@ Flask==3.0.3
 Flask-Login==0.6.3
 Flask-SQLAlchemy==3.1.1
 SQLAlchemy==2.0.34
-psycopg[binary]==3.1.19
+psycopg[binary]==3.2.10
 gunicorn==21.2.0
 python-dotenv==1.0.1
 Pillow==11.0.0
