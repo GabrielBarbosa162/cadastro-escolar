@@ -1,38 +1,36 @@
 import os
 import uuid
+import ssl
+import smtplib
+from email.message import EmailMessage
 from datetime import datetime, timedelta
+from functools import wraps
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
     flash, abort, session as flask_session, send_from_directory
 )
+from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
-    LoginManager, login_user, logout_user,
+    LoginManager, UserMixin, login_user, logout_user,
     login_required, current_user
 )
-from functools import wraps
+from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import UniqueConstraint
 from werkzeug.exceptions import Forbidden, Unauthorized, NotFound
-
-# ---- seus modelos centralizados em models.py ----
-from models import (
-    db, Usuario, Permissao, UsuarioPermissao, UserSession,
-    Escola, Serie, Horario, Mensalidade
-)
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
 # =============================================================================
-# APP & CONFIG
+# APP & DB CONFIG
 # =============================================================================
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-keep-it-safe")
 
-# --- Normalização do DATABASE_URL para Psycopg 3 (Render usa Python 3.13) ---
 def _normalize_db_url(url: str) -> str:
-    """Converte postgres:// -> postgresql+psycopg:// para o SQLAlchemy usar Psycopg 3."""
+    """Normaliza DATABASE_URL para psycopg3."""
     if not url:
         return "sqlite:///alunos.db"
-    # Render às vezes fornece 'postgres://' (antigo); convertemos para 'postgresql://'
     url = url.replace("postgres://", "postgresql://", 1)
-    # força driver psycopg (psycopg 3)
     if url.startswith("postgresql://"):
         url = url.replace("postgresql://", "postgresql+psycopg://", 1)
     return url
@@ -41,40 +39,93 @@ db_url_env = os.environ.get("DATABASE_URL", "sqlite:///alunos.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = _normalize_db_url(db_url_env)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-UPLOAD_DIR = os.path.join(app.root_path, "uploads")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-db.init_app(app)
-
-# =============================================================================
-# LOGIN
-# =============================================================================
+db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
+UPLOAD_DIR = os.path.join(app.root_path, "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# =============================================================================
+# MODELOS
+# =============================================================================
+class Usuario(db.Model, UserMixin):
+    __tablename__ = "usuario"
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(180), unique=True, nullable=False)
+    senha_hash = db.Column(db.String(255), nullable=False)
+    papel = db.Column(db.String(20), nullable=False, default="RESPONSAVEL")  # DIRETORIA|PROFESSOR|RESPONSAVEL|ALUNO
+    ativo = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def set_password(self, senha: str):
+        self.senha_hash = generate_password_hash(senha)
+
+    def check_password(self, senha: str) -> bool:
+        return check_password_hash(self.senha_hash, senha)
+
+    def get_id(self):
+        return str(self.id)
+
+class Permissao(db.Model):
+    __tablename__ = "permissao"
+    id = db.Column(db.Integer, primary_key=True)
+    codigo = db.Column(db.String(50), unique=True, nullable=False)
+    nome_exibicao = db.Column(db.String(120), nullable=False)
+
+class UsuarioPermissao(db.Model):
+    __tablename__ = "usuario_permissao"
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey("usuario.id", ondelete="CASCADE"), nullable=False)
+    permissao_id = db.Column(db.Integer, db.ForeignKey("permissao.id", ondelete="CASCADE"), nullable=False)
+    __table_args__ = (UniqueConstraint("usuario_id", "permissao_id", name="_usuario_permissao_uc"),)
+
+    usuario = db.relationship("Usuario", backref=db.backref("permissoes_rel", cascade="all, delete-orphan"))
+    permissao = db.relationship("Permissao")
+
+class UserSession(db.Model):
+    __tablename__ = "user_session"
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey("usuario.id", ondelete="CASCADE"), nullable=False)
+    session_id = db.Column(db.String(60), unique=True, nullable=False)
+    login_em = db.Column(db.DateTime, default=datetime.utcnow)
+    ultimo_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+
+    usuario = db.relationship("Usuario")
+
+    def marcar_seen(self):
+        self.ultimo_seen = datetime.utcnow()
+
+class Aluno(db.Model):
+    __tablename__ = "aluno"
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(200), nullable=False)
+    escola = db.Column(db.String(200))
+    horario = db.Column(db.String(50))
+    telefone_mae = db.Column(db.String(30))
+    foto_path = db.Column(db.String(255))
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+    atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+# =============================================================================
+# LOGIN MANAGER
+# =============================================================================
 @login_manager.user_loader
 def load_user(user_id):
     return Usuario.query.get(int(user_id))
 
-@app.context_processor
-def inject_blueprints_and_perms():
-    from flask import current_app
-    def _has(code):
-        try:
-            return current_user.is_authenticated and usuario_tem_permissao(current_user, code)
-        except Exception:
-            return False
-    papel_ok = current_user.is_authenticated and (getattr(current_user, "papel", "") in ("DIRETORIA", "PROFESSOR"))
-    return {
-        "bp_names": set(current_app.blueprints.keys()),
-        "can_aluno_criar": papel_ok or _has("ALUNO_CRIAR"),
-        "can_aluno_editar": papel_ok or _has("ALUNO_EDITAR"),
-        "can_aluno_excluir": papel_ok or _has("ALUNO_EXCLUIR"),
-    }
-
 # =============================================================================
 # PERMISSÕES
 # =============================================================================
+PERMISSOES_CODIGOS = [
+    "ALUNO_EDITAR", "ALUNO_CRIAR", "ALUNO_EXCLUIR",
+    "ATIVIDADE_ADICIONAR", "ATIVIDADE_EXCLUIR",
+    "HORARIO_ADICIONAR", "HORARIO_EXCLUIR",
+    "ESCOLA_ADICIONAR", "ESCOLA_EXCLUIR",
+    "SERIE_ADICIONAR", "SERIE_EXCLUIR",
+    "USUARIO_CRIAR"
+]
 PERMISSOES_NOMES = {
     "ALUNO_EDITAR": "Alterar cadastro de aluno",
     "ALUNO_CRIAR": "Cadastrar novo aluno",
@@ -89,7 +140,6 @@ PERMISSOES_NOMES = {
     "SERIE_EXCLUIR": "Excluir série escolar",
     "USUARIO_CRIAR": "Cadastrar novo usuário",
 }
-PERMISSOES_CODIGOS = list(PERMISSOES_NOMES.keys())
 
 def usuario_tem_permissao(usuario: Usuario, codigo: str) -> bool:
     if not usuario or not usuario.ativo:
@@ -118,7 +168,7 @@ def perm_required(codigo: str):
     return deco
 
 # =============================================================================
-# SESSÕES
+# SESSÃO
 # =============================================================================
 SESS_ACTIVE_MINUTES = 15
 
@@ -129,7 +179,7 @@ def _atualiza_ultimo_seen():
         if sid:
             us = UserSession.query.filter_by(session_id=sid).first()
             if us:
-                us.ultimo_seen = datetime.utcnow()
+                us.marcar_seen()
                 db.session.commit()
 
 def registrar_login_sessao(usuario: Usuario):
@@ -137,8 +187,12 @@ def registrar_login_sessao(usuario: Usuario):
     if not sid:
         sid = str(uuid.uuid4())
         flask_session["session_id"] = sid
-    us = UserSession(usuario_id=usuario.id, session_id=sid, is_active=True)
-    db.session.add(us)
+    # evita colisão com unique(session_id)
+    existe = UserSession.query.filter_by(session_id=sid).first()
+    if existe:
+        sid = f"{sid}-{uuid.uuid4().hex[:6]}"
+        flask_session["session_id"] = sid
+    db.session.add(UserSession(usuario_id=usuario.id, session_id=sid, is_active=True))
     db.session.commit()
 
 def registrar_logout_sessao():
@@ -151,13 +205,24 @@ def registrar_logout_sessao():
     flask_session.pop("session_id", None)
 
 # =============================================================================
+# CONTEXT PROCESSOR (flags usadas no Jinja)
+# =============================================================================
+@app.context_processor
+def inject_blueprints_and_perms():
+    from flask import current_app
+    # Flags não vão mais esconder botões; ficam só para outras telas se quiser.
+    return {
+        "bp_names": set(current_app.blueprints.keys()),
+    }
+
+# =============================================================================
 # SEEDS
 # =============================================================================
 def seed_permissoes():
     criadas = 0
-    for cod, nome in PERMISSOES_NOMES.items():
+    for cod in PERMISSOES_CODIGOS:
         if not Permissao.query.filter_by(codigo=cod).first():
-            db.session.add(Permissao(codigo=cod, nome_exibicao=nome))
+            db.session.add(Permissao(codigo=cod, nome_exibicao=PERMISSOES_NOMES[cod]))
             criadas += 1
     if criadas:
         db.session.commit()
@@ -168,27 +233,15 @@ def seed_admin():
         admin.set_password(os.environ.get("ADMIN_PASS", "Trocar123"))
         db.session.add(admin)
         db.session.commit()
-        print("Usuário DIRETORIA criado: admin@escola.com / (ADMIN_PASS)")
-
-def seed_mensalidades():
-    if Mensalidade.query.count() == 0:
-        db.session.add_all([
-            Mensalidade(faixa="PRE_1_5", label="Pré 1 a 5º ano – 170,00 R$", valor=170.00),
-            Mensalidade(faixa="6_7",   label="6º a 7º ano – 180,00 R$", valor=180.00),
-            Mensalidade(faixa="8_9",   label="8º a 9º ano – 190,00 R$", valor=190.00),
-        ])
-        db.session.commit()
+        print("Usuário DIRETORIA criado: admin@escola.com / ADMIN_PASS")
 
 # =============================================================================
-# UPLOADS
+# AUTENTICAÇÃO + ESQUECI/RESET SENHA
 # =============================================================================
-@app.route("/uploads/<path:filename>")
-def uploads(filename):
-    return send_from_directory(UPLOAD_DIR, filename, as_attachment=False)
+@login_manager.user_loader
+def load_user(user_id):
+    return Usuario.query.get(int(user_id))
 
-# =============================================================================
-# AUTH
-# =============================================================================
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -211,160 +264,188 @@ def logout():
     flash("Sessão encerrada.", "info")
     return redirect(url_for("login"))
 
-# =============================================================================
-# USUÁRIOS (LISTA / NOVO / PERMISSÕES / PAINEL)
-# =============================================================================
-@app.route("/usuarios")
-@login_required
-def usuarios_list():
-    if current_user.papel != "DIRETORIA":
-        abort(403)
+# --- Recuperação de senha ---
+def _ts() -> URLSafeTimedSerializer:
+    salt = os.environ.get("SECURITY_PASSWORD_SALT", "salt-reset")
+    return URLSafeTimedSerializer(app.config["SECRET_KEY"] + salt)
 
-    mostrar_todos = request.args.get("mostrar") == "todos"
-    usuarios = Usuario.query.order_by(Usuario.email.asc()).all()
+def gerar_token(email: str) -> str:
+    return _ts().dumps({"email": email})
 
-    last_seen_map, active_map = {}, {}
-    def _is_active_session(sess: UserSession) -> bool:
-        return sess.is_active and (datetime.utcnow() - sess.ultimo_seen) <= timedelta(minutes=SESS_ACTIVE_MINUTES)
+def validar_token(token: str, max_age_sec: int = 3600) -> str | None:
+    try:
+        data = _ts().loads(token, max_age=max_age_sec)
+        return data.get("email")
+    except (BadSignature, SignatureExpired):
+        return None
 
-    if not mostrar_todos:
-        filtrados = []
-        for u in usuarios:
-            s = (UserSession.query
-                 .filter_by(usuario_id=u.id, is_active=True)
-                 .order_by(UserSession.ultimo_seen.desc())
-                 .first())
-            if s and _is_active_session(s):
-                filtrados.append(u)
-                last_seen_map[u.id] = s.ultimo_seen
-                active_map[u.id] = True
-        usuarios = filtrados
-    else:
-        for u in usuarios:
-            s = (UserSession.query
-                 .filter_by(usuario_id=u.id, is_active=True)
-                 .order_by(UserSession.ultimo_seen.desc())
-                 .first())
-            if s:
-                last_seen_map[u.id] = s.ultimo_seen
-                active_map[u.id] = _is_active_session(s)
-            else:
-                last_seen_map[u.id] = None
-                active_map[u.id] = False
+def enviar_email(destinatario: str, assunto: str, html: str, texto: str | None = None):
+    host = os.environ.get("SMTP_HOST")
+    port = int(os.environ.get("SMTP_PORT", "587"))
+    user = os.environ.get("SMTP_USER")
+    pwd  = os.environ.get("SMTP_PASS")
+    sender = os.environ.get("SMTP_SENDER", user)
 
-    permissoes_por_usuario = {}
-    for u in usuarios:
-        if u.papel == "DIRETORIA":
-            permissoes_por_usuario[u.id] = {cod: True for cod in PERMISSOES_CODIGOS}
-        else:
-            marcadas = set(
-                p.codigo for p in (
-                    Permissao.query
-                    .join(UsuarioPermissao, UsuarioPermissao.permissao_id == Permissao.id)
-                    .filter(UsuarioPermissao.usuario_id == u.id)
-                    .all()
-                )
-            )
-            permissoes_por_usuario[u.id] = {cod: (cod in marcadas) for cod in PERMISSOES_CODIGOS}
+    if not (host and user and pwd and sender):
+        print("[DEBUG] SMTP não configurado. E-mail NÃO enviado.")
+        print("To:", destinatario)
+        print("Assunto:", assunto)
+        print("HTML:", html)
+        return
 
-    return render_template("usuarios_list.html",
-        usuarios=usuarios,
-        permissoes_codigos=PERMISSOES_CODIGOS,
-        permissoes_nomes=PERMISSOES_NOMES,
-        mostrar_todos=mostrar_todos,
-        last_seen_map=last_seen_map,
-        active_map=active_map,
-        permissoes_por_usuario=permissoes_por_usuario
-    )
+    msg = EmailMessage()
+    msg["From"] = sender
+    msg["To"] = destinatario
+    msg["Subject"] = assunto
+    if texto:
+        msg.set_content(texto)
+    msg.add_alternative(html, subtype="html")
 
-@app.route("/usuarios/novo", methods=["GET", "POST"])
-@login_required
-@perm_required("USUARIO_CRIAR")
-def usuarios_novo():
-    if current_user.papel != "DIRETORIA":
-        abort(403)
+    context = ssl.create_default_context()
+    with smtplib.SMTP(host, port) as server:
+        server.starttls(context=context)
+        server.login(user, pwd)
+        server.send_message(msg)
+
+@app.route("/auth/esqueci", methods=["GET", "POST"], endpoint="forgot_password")
+def forgot_password():
     if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
-        senha = request.form.get("senha", "")
-        confirmar = request.form.get("confirmar", "")
-        papel = request.form.get("papel", "RESPONSAVEL")
+        email = request.form.get("email","").strip().lower()
+        if not email:
+            flash("Informe seu e-mail.", "warning")
+            return render_template("auth/esqueci.html")
+        token = gerar_token(email)
+        reset_url = url_for("reset_password", token=token, _external=True)
+        html = render_template("auth/email_reset.html", reset_url=reset_url)
+        enviar_email(email, "Redefinição de senha", html, texto=f"Redefina sua senha: {reset_url}")
+        flash("Se o e-mail estiver cadastrado, enviaremos um link de redefinição.", "info")
+        return redirect(url_for("login"))
+    return render_template("auth/esqueci.html")
 
-        if not email or not senha or not confirmar:
-            flash("Preencha todos os campos.", "warning")
-            return render_template("usuario_form.html")
+@app.route("/auth/reset/<token>", methods=["GET", "POST"], endpoint="reset_password")
+def reset_password(token):
+    email = validar_token(token, max_age_sec=3600)  # 1 hora
+    if not email:
+        flash("Link inválido ou expirado. Solicite novamente.", "danger")
+        return redirect(url_for("forgot_password"))
+
+    if request.method == "POST":
+        senha = request.form.get("senha","")
+        confirmar = request.form.get("confirmar","")
+        if not senha or not confirmar:
+            flash("Preencha a nova senha e a confirmação.", "warning")
+            return render_template("auth/reset.html", token=token)
         if senha != confirmar:
-            flash("A confirmação de senha não confere.", "warning")
-            return render_template("usuario_form.html")
+            flash("Confirmação não confere.", "warning")
+            return render_template("auth/reset.html", token=token)
         if len(senha) < 8 or not any(ch.isdigit() for ch in senha):
-            flash("Senha deve ter ao menos 8 caracteres e 1 dígito.", "warning")
-            return render_template("usuario_form.html")
-        if Usuario.query.filter_by(email=email).first():
-            flash("E-mail já cadastrado.", "warning")
-            return render_template("usuario_form.html")
+            flash("Senha deve ter ao menos 8 caracteres e 1 número.", "warning")
+            return render_template("auth/reset.html", token=token)
 
-        u = Usuario(email=email, papel=papel, ativo=True)
-        u.set_password(senha)
-        db.session.add(u)
+        user = Usuario.query.filter_by(email=email).first()
+        if not user:
+            flash("Conta não encontrada.", "danger")
+            return redirect(url_for("login"))
+        user.set_password(senha)
         db.session.commit()
-        flash("Usuário criado com sucesso.", "success")
-        return redirect(url_for("usuarios_list"))
-    return render_template("usuario_form.html")
+        flash("Senha alterada com sucesso! Faça login.", "success")
+        return redirect(url_for("login"))
 
-@app.route("/usuarios/<int:usuario_id>/permissoes", methods=["POST"])
-@login_required
-def usuarios_salvar_permissoes(usuario_id):
-    if current_user.papel != "DIRETORIA":
-        abort(403)
-    u = Usuario.query.get_or_404(usuario_id)
-
-    if u.papel == "DIRETORIA":
-        flash("Diretoria já possui todas as permissões por padrão.", "info")
-        return redirect(url_for("usuarios_list", mostrar=request.args.get("mostrar")))
-
-    enviados = set(request.form.getlist("permissoes[]"))
-    for cod in enviados:
-        if cod not in PERMISSOES_CODIGOS:
-            abort(400, f"Código de permissão inválido: {cod}")
-
-    atuais = {
-        p.codigo: up for (p, up) in db.session.query(Permissao, UsuarioPermissao)
-        .join(UsuarioPermissao, UsuarioPermissao.permissao_id == Permissao.id, isouter=True)
-        .all()
-        if up is not None and up.usuario_id == u.id
-    }
-    cache_perm = {p.codigo: p for p in Permissao.query.all()}
-
-    for cod, up in list(atuais.items()):
-        if cod not in enviados:
-            db.session.delete(up)
-    for cod in enviados:
-        if cod not in atuais:
-            perm = cache_perm.get(cod)
-            if perm:
-                db.session.add(UsuarioPermissao(usuario_id=u.id, permissao_id=perm.id))
-    db.session.commit()
-    flash("Permissões atualizadas.", "success")
-    return redirect(url_for("usuarios_list", mostrar=request.args.get("mostrar")))
-
-@app.route("/usuarios/<int:usuario_id>/painel")
-@login_required
-def usuario_painel(usuario_id):
-    if current_user.papel != "DIRETORIA":
-        abort(403)
-    u = Usuario.query.get_or_404(usuario_id)
-    has_perm = {cod: usuario_tem_permissao(u, cod) for cod in PERMISSOES_CODIGOS}
-    return render_template("usuario_painel.html", user=u, has_perm=has_perm)
+    return render_template("auth/reset.html", token=token)
 
 # =============================================================================
-# INDEX
+# ROTAS PRINCIPAIS / ALUNOS
 # =============================================================================
 @app.route("/")
 @login_required
 def index():
     return render_template("index.html")
 
+@app.route("/uploads/<path:filename>")
+@login_required
+def uploads(filename):
+    return send_from_directory(UPLOAD_DIR, filename, as_attachment=False)
+
+# LISTAR
+@app.route("/alunos")
+@login_required
+def listar_alunos():
+    alunos = Aluno.query.order_by(Aluno.nome.asc()).all()
+    return render_template("alunos/listar.html", alunos=alunos)
+
+# NOVO
+@app.route("/alunos/novo", methods=["GET", "POST"])
+@login_required
+@perm_required("ALUNO_CRIAR")
+def novo_aluno():
+    if request.method == "POST":
+        nome = request.form.get("nome","").strip()
+        escola = request.form.get("escola","").strip()
+        horario = request.form.get("horario","").strip()
+        telefone_mae = request.form.get("telefone_mae","").strip()
+
+        foto_file = request.files.get("foto")
+        foto_path = None
+        if foto_file and foto_file.filename:
+            fname = f"{uuid.uuid4().hex}_{foto_file.filename}"
+            save_path = os.path.join(UPLOAD_DIR, fname)
+            foto_file.save(save_path)
+            foto_path = fname
+
+        if not nome:
+            flash("Informe o nome do aluno.", "warning")
+            return render_template("alunos/novo.html")
+
+        db.session.add(Aluno(nome=nome, escola=escola, horario=horario,
+                             telefone_mae=telefone_mae, foto_path=foto_path))
+        db.session.commit()
+        flash("Aluno cadastrado com sucesso!", "success")
+        return redirect(url_for("listar_alunos"))
+
+    return render_template("alunos/novo.html")
+
+# EDITAR
+@app.route("/alunos/<int:id>/editar", methods=["GET", "POST"])
+@login_required
+@perm_required("ALUNO_EDITAR")
+def editar_aluno(id):
+    aluno = Aluno.query.get_or_404(id)
+    if request.method == "POST":
+        aluno.nome = request.form.get("nome","").strip()
+        aluno.escola = request.form.get("escola","").strip()
+        aluno.horario = request.form.get("horario","").strip()
+        aluno.telefone_mae = request.form.get("telefone_mae","").strip()
+
+        foto_file = request.files.get("foto")
+        if foto_file and foto_file.filename:
+            fname = f"{uuid.uuid4().hex}_{foto_file.filename}"
+            save_path = os.path.join(UPLOAD_DIR, fname)
+            foto_file.save(save_path)
+            aluno.foto_path = fname
+
+        if not aluno.nome:
+            flash("Informe o nome do aluno.", "warning")
+            return render_template("alunos/editar.html", aluno=aluno)
+
+        db.session.commit()
+        flash("Aluno atualizado com sucesso!", "success")
+        return redirect(url_for("listar_alunos"))
+
+    return render_template("alunos/editar.html", aluno=aluno)
+
+# EXCLUIR
+@app.route("/alunos/<int:id>/excluir", methods=["POST"])
+@login_required
+@perm_required("ALUNO_EXCLUIR")
+def excluir_aluno(id):
+    aluno = Aluno.query.get_or_404(id)
+    db.session.delete(aluno)
+    db.session.commit()
+    flash("Aluno excluído com sucesso!", "success")
+    return redirect(url_for("listar_alunos"))
+
 # =============================================================================
-# HANDLERS DE ERRO (aviso no topo + redirect)
+# HANDLERS (avisos no topo)
 # =============================================================================
 @app.errorhandler(Forbidden)
 @app.errorhandler(403)
@@ -391,51 +472,23 @@ def handle_not_found(e):
     return redirect(url_for("index"))
 
 # =============================================================================
-# BLUEPRINTS
-# =============================================================================
-from alunos import bp as alunos_bp
-app.register_blueprint(alunos_bp)
-
-from escolas import bp as escolas_bp
-app.register_blueprint(escolas_bp)
-
-from series import bp as series_bp
-app.register_blueprint(series_bp)
-
-from atividades import bp as atividades_bp
-app.register_blueprint(atividades_bp)
-
-from horarios import bp as horarios_bp
-app.register_blueprint(horarios_bp)
-
-# =============================================================================
-# INIT DB AUTOMÁTICO (sem Pre-Deploy do Render)
+# INIT DB AUTO
 # =============================================================================
 def init_db_if_needed():
-    """Cria tabelas e executa seeds, tanto localmente quanto no Render."""
     with app.app_context():
         db.create_all()
-        try:
-            seed_permissoes()
-        except Exception as e:
-            print("seed_permissoes:", e)
-        try:
-            seed_admin()
-        except Exception as e:
-            print("seed_admin:", e)
-        try:
-            seed_mensalidades()
-        except Exception as e:
-            print("seed_mensalidades:", e)
+        seed_permissoes()
+        seed_admin()
 
-# Chamado quando o app é importado pelo Gunicorn (Render) e também no dev.
 if os.environ.get("RUN_INIT_ON_BOOT", "1") == "1":
     try:
         init_db_if_needed()
     except Exception as e:
         print("Init-on-boot falhou:", e)
 
-# Execução local (desenvolvimento)
+# =============================================================================
+# DEV
+# =============================================================================
 if __name__ == "__main__":
     with app.app_context():
         init_db_if_needed()
