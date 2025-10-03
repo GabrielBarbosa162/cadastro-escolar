@@ -3,7 +3,7 @@ import uuid
 import ssl
 import smtplib
 from email.message import EmailMessage
-from datetime import datetime, timedelta
+from datetime import datetime
 from functools import wraps
 
 from flask import (
@@ -27,7 +27,7 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-keep-it-safe")
 
 def _normalize_db_url(url: str) -> str:
-    """Normaliza DATABASE_URL para psycopg3."""
+    """Normaliza DATABASE_URL para psycopg3 (Render)."""
     if not url:
         return "sqlite:///alunos.db"
     url = url.replace("postgres://", "postgresql://", 1)
@@ -170,8 +170,6 @@ def perm_required(codigo: str):
 # =============================================================================
 # SESSÃO
 # =============================================================================
-SESS_ACTIVE_MINUTES = 15
-
 @app.before_request
 def _atualiza_ultimo_seen():
     if current_user.is_authenticated:
@@ -187,7 +185,6 @@ def registrar_login_sessao(usuario: Usuario):
     if not sid:
         sid = str(uuid.uuid4())
         flask_session["session_id"] = sid
-    # evita colisão com unique(session_id)
     existe = UserSession.query.filter_by(session_id=sid).first()
     if existe:
         sid = f"{sid}-{uuid.uuid4().hex[:6]}"
@@ -203,17 +200,6 @@ def registrar_logout_sessao():
             us.is_active = False
             db.session.commit()
     flask_session.pop("session_id", None)
-
-# =============================================================================
-# CONTEXT PROCESSOR (flags usadas no Jinja)
-# =============================================================================
-@app.context_processor
-def inject_blueprints_and_perms():
-    from flask import current_app
-    # Flags não vão mais esconder botões; ficam só para outras telas se quiser.
-    return {
-        "bp_names": set(current_app.blueprints.keys()),
-    }
 
 # =============================================================================
 # SEEDS
@@ -238,33 +224,6 @@ def seed_admin():
 # =============================================================================
 # AUTENTICAÇÃO + ESQUECI/RESET SENHA
 # =============================================================================
-@login_manager.user_loader
-def load_user(user_id):
-    return Usuario.query.get(int(user_id))
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
-        senha = request.form.get("senha", "")
-        user = Usuario.query.filter_by(email=email).first()
-        if user and user.check_password(senha) and user.ativo:
-            login_user(user)
-            registrar_login_sessao(user)
-            flash("Login realizado com sucesso!", "success")
-            return redirect(url_for("index"))
-        flash("Credenciais inválidas ou usuário inativo.", "danger")
-    return render_template("login.html")
-
-@app.route("/logout", methods=["POST"])
-@login_required
-def logout():
-    registrar_logout_sessao()
-    logout_user()
-    flash("Sessão encerrada.", "info")
-    return redirect(url_for("login"))
-
-# --- Recuperação de senha ---
 def _ts() -> URLSafeTimedSerializer:
     salt = os.environ.get("SECURITY_PASSWORD_SALT", "salt-reset")
     return URLSafeTimedSerializer(app.config["SECRET_KEY"] + salt)
@@ -307,6 +266,32 @@ def enviar_email(destinatario: str, assunto: str, html: str, texto: str | None =
         server.login(user, pwd)
         server.send_message(msg)
 
+@login_manager.user_loader
+def load_user(user_id):
+    return Usuario.query.get(int(user_id))
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        senha = request.form.get("senha", "")
+        user = Usuario.query.filter_by(email=email).first()
+        if user and user.check_password(senha) and user.ativo:
+            login_user(user)
+            registrar_login_sessao(user)
+            flash("Login realizado com sucesso!", "success")
+            return redirect(url_for("index"))
+        flash("Credenciais inválidas ou usuário inativo.", "danger")
+    return render_template("login.html")
+
+@app.route("/logout", methods=["POST"])
+@login_required
+def logout():
+    registrar_logout_sessao()
+    logout_user()
+    flash("Sessão encerrada.", "info")
+    return redirect(url_for("login"))
+
 @app.route("/auth/esqueci", methods=["GET", "POST"], endpoint="forgot_password")
 def forgot_password():
     if request.method == "POST":
@@ -324,7 +309,7 @@ def forgot_password():
 
 @app.route("/auth/reset/<token>", methods=["GET", "POST"], endpoint="reset_password")
 def reset_password(token):
-    email = validar_token(token, max_age_sec=3600)  # 1 hora
+    email = validar_token(token, max_age_sec=3600)
     if not email:
         flash("Link inválido ou expirado. Solicite novamente.", "danger")
         return redirect(url_for("forgot_password"))
@@ -354,27 +339,25 @@ def reset_password(token):
     return render_template("auth/reset.html", token=token)
 
 # =============================================================================
-# ROTAS PRINCIPAIS / ALUNOS
+# ROTAS PRINCIPAIS / ALUNOS (endpoints fixos para evitar conflito)
 # =============================================================================
-@app.route("/")
+@app.route("/", endpoint="index")
 @login_required
 def index():
     return render_template("index.html")
 
-@app.route("/uploads/<path:filename>")
+@app.route("/uploads/<path:filename>", endpoint="uploads")
 @login_required
 def uploads(filename):
     return send_from_directory(UPLOAD_DIR, filename, as_attachment=False)
 
-# LISTAR
-@app.route("/alunos")
+@app.route("/alunos", endpoint="alunos_listar")
 @login_required
 def listar_alunos():
     alunos = Aluno.query.order_by(Aluno.nome.asc()).all()
     return render_template("alunos/listar.html", alunos=alunos)
 
-# NOVO
-@app.route("/alunos/novo", methods=["GET", "POST"])
+@app.route("/alunos/novo", methods=["GET", "POST"], endpoint="alunos_novo")
 @login_required
 @perm_required("ALUNO_CRIAR")
 def novo_aluno():
@@ -400,12 +383,11 @@ def novo_aluno():
                              telefone_mae=telefone_mae, foto_path=foto_path))
         db.session.commit()
         flash("Aluno cadastrado com sucesso!", "success")
-        return redirect(url_for("listar_alunos"))
+        return redirect(url_for("alunos_listar"))
 
     return render_template("alunos/novo.html")
 
-# EDITAR
-@app.route("/alunos/<int:id>/editar", methods=["GET", "POST"])
+@app.route("/alunos/<int:id>/editar", methods=["GET", "POST"], endpoint="alunos_editar")
 @login_required
 @perm_required("ALUNO_EDITAR")
 def editar_aluno(id):
@@ -429,12 +411,11 @@ def editar_aluno(id):
 
         db.session.commit()
         flash("Aluno atualizado com sucesso!", "success")
-        return redirect(url_for("listar_alunos"))
+        return redirect(url_for("alunos_listar"))
 
     return render_template("alunos/editar.html", aluno=aluno)
 
-# EXCLUIR
-@app.route("/alunos/<int:id>/excluir", methods=["POST"])
+@app.route("/alunos/<int:id>/excluir", methods=["POST"], endpoint="alunos_excluir")
 @login_required
 @perm_required("ALUNO_EXCLUIR")
 def excluir_aluno(id):
@@ -442,10 +423,10 @@ def excluir_aluno(id):
     db.session.delete(aluno)
     db.session.commit()
     flash("Aluno excluído com sucesso!", "success")
-    return redirect(url_for("listar_alunos"))
+    return redirect(url_for("alunos_listar"))
 
 # =============================================================================
-# HANDLERS (avisos no topo)
+# HANDLERS
 # =============================================================================
 @app.errorhandler(Forbidden)
 @app.errorhandler(403)

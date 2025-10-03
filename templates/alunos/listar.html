@@ -4,9 +4,14 @@
 {% block content %}
 <div class="container py-4">
 
+  <!-- Selo de debug para confirmar que este template está sendo renderizado -->
+  <div class="alert alert-info py-1 mb-3">
+    <strong>DEBUG_RENDER_ALUNOS_LISTAR</strong>
+  </div>
+
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="m-0">Alunos</h3>
-    <a href="{{ url_for('novo_aluno') }}" class="btn btn-primary">Cadastrar aluno</a>
+    <a href="{{ url_for('alunos_novo') }}" class="btn btn-primary">Cadastrar aluno</a>
   </div>
 
   {% if alunos|length == 0 %}
@@ -25,7 +30,7 @@
               {% else %}
                 <div class="bg-secondary rounded d-flex align-items-center justify-content-center"
                      style="width:56px;height:56px;">
-                  <span class="small text-dark">sem<br>foto</span>
+                  <span class="small text-dark text-center">sem<br>foto</span>
                 </div>
               {% endif %}
             </div>
@@ -42,14 +47,14 @@
               </div>
             </div>
 
-            <!-- AÇÕES (sempre aparecem; permissão é validada no backend) -->
+            <!-- AÇÕES (sem condições; backend valida permissão) -->
             <div class="col-auto d-flex gap-2">
-              <a href="{{ url_for('editar_aluno', id=aluno.id) }}" class="btn btn-outline-light btn-sm">
+              <a href="{{ url_for('alunos_editar', id=aluno.id) }}" class="btn btn-light btn-sm">
                 Editar
               </a>
-              <form method="post" action="{{ url_for('excluir_aluno', id=aluno.id) }}"
+              <form method="post" action="{{ url_for('alunos_excluir', id=aluno.id) }}"
                     onsubmit="return confirm('Confirma excluir {{ aluno.nome }}?');">
-                <button class="btn btn-outline-danger btn-sm">Excluir</button>
+                <button class="btn btn-danger btn-sm">Excluir</button>
               </form>
             </div>
 
