@@ -27,17 +27,26 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-keep-it-safe")
 
 def _normalize_db_url(url: str) -> str:
-    """Normaliza DATABASE_URL para psycopg3 (Render)."""
+    """Normaliza DATABASE_URL para psycopg3 (Render) ou usa SQLite local."""
     if not url:
         return "sqlite:///alunos.db"
+    # Heroku/Render antigos usam postgres://
     url = url.replace("postgres://", "postgresql://", 1)
     if url.startswith("postgresql://"):
+        # Força driver psycopg3
         url = url.replace("postgresql://", "postgresql+psycopg://", 1)
     return url
 
 db_url_env = os.environ.get("DATABASE_URL", "sqlite:///alunos.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = _normalize_db_url(db_url_env)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# Opções para evitar queda de conexão em free tier
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 280,
+    "pool_size": 5,
+    "max_overflow": 5,
+}
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -168,6 +177,13 @@ def perm_required(codigo: str):
     return deco
 
 # =============================================================================
+# ROTAS DE SAÚDE
+# =============================================================================
+@app.route("/healthz")
+def healthz():
+    return "ok", 200
+
+# =============================================================================
 # SESSÃO
 # =============================================================================
 @app.before_request
@@ -185,6 +201,7 @@ def registrar_login_sessao(usuario: Usuario):
     if not sid:
         sid = str(uuid.uuid4())
         flask_session["session_id"] = sid
+    # evita conflito de UNIQUE
     existe = UserSession.query.filter_by(session_id=sid).first()
     if existe:
         sid = f"{sid}-{uuid.uuid4().hex[:6]}"
@@ -246,8 +263,9 @@ def enviar_email(destinatario: str, assunto: str, html: str, texto: str | None =
     sender = os.environ.get("SMTP_SENDER", user)
 
     if not (host and user and pwd and sender):
+        # Em dev ou sem SMTP configurado, só loga no console.
         print("[DEBUG] SMTP não configurado. E-mail NÃO enviado.")
-        print("To:", destinatario)
+        print("Para:", destinatario)
         print("Assunto:", assunto)
         print("HTML:", html)
         return
@@ -265,10 +283,6 @@ def enviar_email(destinatario: str, assunto: str, html: str, texto: str | None =
         server.starttls(context=context)
         server.login(user, pwd)
         server.send_message(msg)
-
-@login_manager.user_loader
-def load_user(user_id):
-    return Usuario.query.get(int(user_id))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
