@@ -3,43 +3,48 @@
 
 {% block content %}
 <div class="container py-5 text-white">
-  <h2 class="mb-3">Bem-vindo ao Sistema Escolar</h2>
-  <p class="text-secondary">Use o menu acima para navegar pelas funcionalidades.</p>
 
-  <div class="mt-4 d-flex flex-wrap gap-3">
-    <a href="{{ url_for('alunos.listar') }}" class="btn btn-primary">
-      <i class="bi bi-people-fill me-1"></i> Gerenciar Alunos
+  <div class="alert alert-info small">
+    Página inicial ativa. Se ver erro 500, confira nomes de <code>endpoint</code> nas chamadas <code>url_for</code>.
+  </div>
+
+  <h2 class="mb-4">Bem-vindo!</h2>
+  <p class="text-secondary">Use a navegação ou os botões abaixo para acessar as áreas do sistema.</p>
+
+  <div class="d-flex flex-wrap gap-2 mt-3">
+
+    <!-- Alunos -->
+    <a href="{{ url_for('alunos_listar') }}" class="btn btn-primary">
+      Alunos
     </a>
 
-    {% if 'escolas' in bp_names %}
-    <a href="{{ url_for('escolas.listar') }}" class="btn btn-outline-light">
-      <i class="bi bi-building me-1"></i> Escolas
-    </a>
-    {% endif %}
+    <!-- Se você tiver endpoints para estas áreas, ajuste os nomes abaixo.
+         Caso não existam no seu app, remova os botões ou crie as rotas correspondentes. -->
 
-    {% if 'series' in bp_names %}
-    <a href="{{ url_for('series.listar') }}" class="btn btn-outline-light">
-      <i class="bi bi-collection me-1"></i> Séries
-    </a>
-    {% endif %}
-
-    {% if 'atividades' in bp_names %}
-    <a href="{{ url_for('atividades.listar') }}" class="btn btn-outline-light">
-      <i class="bi bi-journal-text me-1"></i> Atividades
+    {% if 'escolas_listar' in current_app.view_functions %}
+    <a href="{{ url_for('escolas_listar') }}" class="btn btn-outline-light">
+      Escolas
     </a>
     {% endif %}
 
-    {% if 'horarios' in bp_names %}
-    <a href="{{ url_for('horarios.listar') }}" class="btn btn-outline-light">
-      <i class="bi bi-calendar-week me-1"></i> Horários
+    {% if 'series_listar' in current_app.view_functions %}
+    <a href="{{ url_for('series_listar') }}" class="btn btn-outline-light">
+      Séries
     </a>
     {% endif %}
 
-    {% if current_user.is_authenticated and current_user.papel == 'DIRETORIA' %}
-    <a href="{{ url_for('usuarios_list') }}" class="btn btn-warning text-dark">
-      <i class="bi bi-person-gear me-1"></i> Usuários
+    {% if 'atividades_listar' in current_app.view_functions %}
+    <a href="{{ url_for('atividades_listar') }}" class="btn btn-outline-light">
+      Atividades
     </a>
     {% endif %}
+
+    {% if 'horarios_listar' in current_app.view_functions %}
+    <a href="{{ url_for('horarios_listar') }}" class="btn btn-outline-light">
+      Horários
+    </a>
+    {% endif %}
+
   </div>
 </div>
 {% endblock %}
