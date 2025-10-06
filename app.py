@@ -21,26 +21,22 @@ from werkzeug.exceptions import Forbidden, Unauthorized, NotFound
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
 # =============================================================================
-# APP & DB CONFIG
+# APP & DB
 # =============================================================================
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-keep-it-safe")
 
 def _normalize_db_url(url: str) -> str:
-    """Normaliza DATABASE_URL para psycopg3 (Render) ou usa SQLite local."""
     if not url:
         return "sqlite:///alunos.db"
-    # Heroku/Render antigos usam postgres://
     url = url.replace("postgres://", "postgresql://", 1)
     if url.startswith("postgresql://"):
-        # Força driver psycopg3
         url = url.replace("postgresql://", "postgresql+psycopg://", 1)
     return url
 
 db_url_env = os.environ.get("DATABASE_URL", "sqlite:///alunos.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = _normalize_db_url(db_url_env)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-# Opções para evitar queda de conexão em free tier
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True,
     "pool_recycle": 280,
@@ -54,6 +50,11 @@ login_manager.login_view = "login"
 
 UPLOAD_DIR = os.path.join(app.root_path, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# disponibiliza view_functions se precisar em algum template
+@app.context_processor
+def inject_view_functions():
+    return {"view_functions": app.view_functions}
 
 # =============================================================================
 # MODELOS
@@ -96,7 +97,7 @@ class UserSession(db.Model):
     __tablename__ = "user_session"
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey("usuario.id", ondelete="CASCADE"), nullable=False)
-    session_id = db.Column(db.String(60), unique=True, nullable=False)
+    session_id = db.Column(db.String(80), unique=True, nullable=False)
     login_em = db.Column(db.DateTime, default=datetime.utcnow)
     ultimo_seen = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
@@ -118,7 +119,7 @@ class Aluno(db.Model):
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 # =============================================================================
-# LOGIN MANAGER
+# LOGIN
 # =============================================================================
 @login_manager.user_loader
 def load_user(user_id):
@@ -177,15 +178,12 @@ def perm_required(codigo: str):
     return deco
 
 # =============================================================================
-# ROTAS DE SAÚDE
+# UTIL / SAÚDE / SESSÃO
 # =============================================================================
 @app.route("/healthz")
 def healthz():
     return "ok", 200
 
-# =============================================================================
-# SESSÃO
-# =============================================================================
 @app.before_request
 def _atualiza_ultimo_seen():
     if current_user.is_authenticated:
@@ -201,9 +199,8 @@ def registrar_login_sessao(usuario: Usuario):
     if not sid:
         sid = str(uuid.uuid4())
         flask_session["session_id"] = sid
-    # evita conflito de UNIQUE
-    existe = UserSession.query.filter_by(session_id=sid).first()
-    if existe:
+    # garante unicidade
+    if UserSession.query.filter_by(session_id=sid).first():
         sid = f"{sid}-{uuid.uuid4().hex[:6]}"
         flask_session["session_id"] = sid
     db.session.add(UserSession(usuario_id=usuario.id, session_id=sid, is_active=True))
@@ -236,64 +233,21 @@ def seed_admin():
         admin.set_password(os.environ.get("ADMIN_PASS", "Trocar123"))
         db.session.add(admin)
         db.session.commit()
-        print("Usuário DIRETORIA criado: admin@escola.com / ADMIN_PASS")
+        print("Usuário DIRETORIA: admin@escola.com / ADMIN_PASS")
 
 # =============================================================================
-# AUTENTICAÇÃO + ESQUECI/RESET SENHA
+# AUTH MÍNIMO (login/logout)
 # =============================================================================
-def _ts() -> URLSafeTimedSerializer:
-    salt = os.environ.get("SECURITY_PASSWORD_SALT", "salt-reset")
-    return URLSafeTimedSerializer(app.config["SECRET_KEY"] + salt)
-
-def gerar_token(email: str) -> str:
-    return _ts().dumps({"email": email})
-
-def validar_token(token: str, max_age_sec: int = 3600) -> str | None:
-    try:
-        data = _ts().loads(token, max_age=max_age_sec)
-        return data.get("email")
-    except (BadSignature, SignatureExpired):
-        return None
-
-def enviar_email(destinatario: str, assunto: str, html: str, texto: str | None = None):
-    host = os.environ.get("SMTP_HOST")
-    port = int(os.environ.get("SMTP_PORT", "587"))
-    user = os.environ.get("SMTP_USER")
-    pwd  = os.environ.get("SMTP_PASS")
-    sender = os.environ.get("SMTP_SENDER", user)
-
-    if not (host and user and pwd and sender):
-        # Em dev ou sem SMTP configurado, só loga no console.
-        print("[DEBUG] SMTP não configurado. E-mail NÃO enviado.")
-        print("Para:", destinatario)
-        print("Assunto:", assunto)
-        print("HTML:", html)
-        return
-
-    msg = EmailMessage()
-    msg["From"] = sender
-    msg["To"] = destinatario
-    msg["Subject"] = assunto
-    if texto:
-        msg.set_content(texto)
-    msg.add_alternative(html, subtype="html")
-
-    context = ssl.create_default_context()
-    with smtplib.SMTP(host, port) as server:
-        server.starttls(context=context)
-        server.login(user, pwd)
-        server.send_message(msg)
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
-        senha = request.form.get("senha", "")
+        email = request.form.get("email","").strip().lower()
+        senha = request.form.get("senha","")
         user = Usuario.query.filter_by(email=email).first()
         if user and user.check_password(senha) and user.ativo:
             login_user(user)
             registrar_login_sessao(user)
-            flash("Login realizado com sucesso!", "success")
+            flash("Bem-vindo!", "success")
             return redirect(url_for("index"))
         flash("Credenciais inválidas ou usuário inativo.", "danger")
     return render_template("login.html")
@@ -306,60 +260,17 @@ def logout():
     flash("Sessão encerrada.", "info")
     return redirect(url_for("login"))
 
-@app.route("/auth/esqueci", methods=["GET", "POST"], endpoint="forgot_password")
-def forgot_password():
-    if request.method == "POST":
-        email = request.form.get("email","").strip().lower()
-        if not email:
-            flash("Informe seu e-mail.", "warning")
-            return render_template("auth/esqueci.html")
-        token = gerar_token(email)
-        reset_url = url_for("reset_password", token=token, _external=True)
-        html = render_template("auth/email_reset.html", reset_url=reset_url)
-        enviar_email(email, "Redefinição de senha", html, texto=f"Redefina sua senha: {reset_url}")
-        flash("Se o e-mail estiver cadastrado, enviaremos um link de redefinição.", "info")
-        return redirect(url_for("login"))
-    return render_template("auth/esqueci.html")
-
-@app.route("/auth/reset/<token>", methods=["GET", "POST"], endpoint="reset_password")
-def reset_password(token):
-    email = validar_token(token, max_age_sec=3600)
-    if not email:
-        flash("Link inválido ou expirado. Solicite novamente.", "danger")
-        return redirect(url_for("forgot_password"))
-
-    if request.method == "POST":
-        senha = request.form.get("senha","")
-        confirmar = request.form.get("confirmar","")
-        if not senha or not confirmar:
-            flash("Preencha a nova senha e a confirmação.", "warning")
-            return render_template("auth/reset.html", token=token)
-        if senha != confirmar:
-            flash("Confirmação não confere.", "warning")
-            return render_template("auth/reset.html", token=token)
-        if len(senha) < 8 or not any(ch.isdigit() for ch in senha):
-            flash("Senha deve ter ao menos 8 caracteres e 1 número.", "warning")
-            return render_template("auth/reset.html", token=token)
-
-        user = Usuario.query.filter_by(email=email).first()
-        if not user:
-            flash("Conta não encontrada.", "danger")
-            return redirect(url_for("login"))
-        user.set_password(senha)
-        db.session.commit()
-        flash("Senha alterada com sucesso! Faça login.", "success")
-        return redirect(url_for("login"))
-
-    return render_template("auth/reset.html", token=token)
-
 # =============================================================================
-# ROTAS PRINCIPAIS / ALUNOS (endpoints fixos para evitar conflito)
+# HOME
 # =============================================================================
 @app.route("/", endpoint="index")
 @login_required
 def index():
     return render_template("index.html")
 
+# =============================================================================
+# ALUNOS
+# =============================================================================
 @app.route("/uploads/<path:filename>", endpoint="uploads")
 @login_required
 def uploads(filename):
@@ -367,89 +278,158 @@ def uploads(filename):
 
 @app.route("/alunos", endpoint="alunos_listar")
 @login_required
-def listar_alunos():
+def alunos_listar():
     alunos = Aluno.query.order_by(Aluno.nome.asc()).all()
     return render_template("alunos/listar.html", alunos=alunos)
 
 @app.route("/alunos/novo", methods=["GET", "POST"], endpoint="alunos_novo")
 @login_required
 @perm_required("ALUNO_CRIAR")
-def novo_aluno():
+def alunos_novo():
     if request.method == "POST":
         nome = request.form.get("nome","").strip()
         escola = request.form.get("escola","").strip()
         horario = request.form.get("horario","").strip()
         telefone_mae = request.form.get("telefone_mae","").strip()
-
         foto_file = request.files.get("foto")
         foto_path = None
         if foto_file and foto_file.filename:
             fname = f"{uuid.uuid4().hex}_{foto_file.filename}"
-            save_path = os.path.join(UPLOAD_DIR, fname)
-            foto_file.save(save_path)
+            foto_file.save(os.path.join(UPLOAD_DIR, fname))
             foto_path = fname
-
         if not nome:
             flash("Informe o nome do aluno.", "warning")
             return render_template("alunos/novo.html")
-
-        db.session.add(Aluno(nome=nome, escola=escola, horario=horario,
-                             telefone_mae=telefone_mae, foto_path=foto_path))
+        db.session.add(Aluno(
+            nome=nome, escola=escola, horario=horario,
+            telefone_mae=telefone_mae, foto_path=foto_path
+        ))
         db.session.commit()
-        flash("Aluno cadastrado com sucesso!", "success")
+        flash("Aluno cadastrado!", "success")
         return redirect(url_for("alunos_listar"))
-
     return render_template("alunos/novo.html")
 
 @app.route("/alunos/<int:id>/editar", methods=["GET", "POST"], endpoint="alunos_editar")
 @login_required
 @perm_required("ALUNO_EDITAR")
-def editar_aluno(id):
+def alunos_editar(id):
     aluno = Aluno.query.get_or_404(id)
     if request.method == "POST":
         aluno.nome = request.form.get("nome","").strip()
         aluno.escola = request.form.get("escola","").strip()
         aluno.horario = request.form.get("horario","").strip()
         aluno.telefone_mae = request.form.get("telefone_mae","").strip()
-
         foto_file = request.files.get("foto")
         if foto_file and foto_file.filename:
             fname = f"{uuid.uuid4().hex}_{foto_file.filename}"
-            save_path = os.path.join(UPLOAD_DIR, fname)
-            foto_file.save(save_path)
+            foto_file.save(os.path.join(UPLOAD_DIR, fname))
             aluno.foto_path = fname
-
         if not aluno.nome:
             flash("Informe o nome do aluno.", "warning")
             return render_template("alunos/editar.html", aluno=aluno)
-
         db.session.commit()
-        flash("Aluno atualizado com sucesso!", "success")
+        flash("Alterações salvas!", "success")
         return redirect(url_for("alunos_listar"))
-
     return render_template("alunos/editar.html", aluno=aluno)
 
 @app.route("/alunos/<int:id>/excluir", methods=["POST"], endpoint="alunos_excluir")
 @login_required
 @perm_required("ALUNO_EXCLUIR")
-def excluir_aluno(id):
+def alunos_excluir(id):
     aluno = Aluno.query.get_or_404(id)
     db.session.delete(aluno)
     db.session.commit()
-    flash("Aluno excluído com sucesso!", "success")
+    flash("Aluno excluído!", "success")
     return redirect(url_for("alunos_listar"))
 
 # =============================================================================
-# HANDLERS
+# STUBS – para os botões existirem agora (podem ser substituídos depois)
+# =============================================================================
+@app.route("/escolas", endpoint="escolas_listar")
+@login_required
+def escolas_listar():
+    itens = []  # substitua por sua query real depois
+    return render_template("stubs/lista_com_botao.html",
+                           titulo="Escolas",
+                           endpoint_novo="escolas_novo",
+                           label_botao="Nova Escola",
+                           itens=itens)
+
+@app.route("/escolas/novo", methods=["GET", "POST"], endpoint="escolas_novo")
+@login_required
+@perm_required("ESCOLA_ADICIONAR")
+def escolas_novo():
+    if request.method == "POST":
+        flash("Stub: Escola criada (implemente depois).", "info")
+        return redirect(url_for("escolas_listar"))
+    return render_template("stubs/novo_stub.html", titulo="Nova Escola")
+
+@app.route("/series", endpoint="series_listar")
+@login_required
+def series_listar():
+    itens = []
+    return render_template("stubs/lista_com_botao.html",
+                           titulo="Séries",
+                           endpoint_novo="series_novo",
+                           label_botao="Nova Série",
+                           itens=itens)
+
+@app.route("/series/novo", methods=["GET", "POST"], endpoint="series_novo")
+@login_required
+@perm_required("SERIE_ADICIONAR")
+def series_novo():
+    if request.method == "POST":
+        flash("Stub: Série criada (implemente depois).", "info")
+        return redirect(url_for("series_listar"))
+    return render_template("stubs/novo_stub.html", titulo="Nova Série")
+
+@app.route("/atividades", endpoint="atividades_listar")
+@login_required
+def atividades_listar():
+    itens = []
+    return render_template("stubs/lista_com_botao.html",
+                           titulo="Atividades",
+                           endpoint_novo="atividades_novo",
+                           label_botao="Nova Atividade",
+                           itens=itens)
+
+@app.route("/atividades/novo", methods=["GET", "POST"], endpoint="atividades_novo")
+@login_required
+@perm_required("ATIVIDADE_ADICIONAR")
+def atividades_novo():
+    if request.method == "POST":
+        flash("Stub: Atividade criada (implemente depois).", "info")
+        return redirect(url_for("atividades_listar"))
+    return render_template("stubs/novo_stub.html", titulo="Nova Atividade")
+
+@app.route("/horarios", endpoint="horarios_listar")
+@login_required
+def horarios_listar():
+    itens = []
+    return render_template("stubs/lista_com_botao.html",
+                           titulo="Horários",
+                           endpoint_novo="horarios_novo",
+                           label_botao="Novo Horário",
+                           itens=itens)
+
+@app.route("/horarios/novo", methods=["GET", "POST"], endpoint="horarios_novo")
+@login_required
+@perm_required("HORARIO_ADICIONAR")
+def horarios_novo():
+    if request.method == "POST":
+        flash("Stub: Horário criado (implemente depois).", "info")
+        return redirect(url_for("horarios_listar"))
+    return render_template("stubs/novo_stub.html", titulo="Novo Horário")
+
+# =============================================================================
+# ERROS
 # =============================================================================
 @app.errorhandler(Forbidden)
 @app.errorhandler(403)
 def handle_forbidden(e):
     flash("Você não possui permissão para esta tarefa.", "danger")
     ref = request.referrer
-    if ref and ref != request.url:
-        return redirect(ref)
-    return redirect(url_for("index"))
+    return redirect(ref or url_for("index"))
 
 @app.errorhandler(Unauthorized)
 @app.errorhandler(401)
@@ -462,12 +442,10 @@ def handle_unauthorized(e):
 def handle_not_found(e):
     flash("Página não encontrada.", "warning")
     ref = request.referrer
-    if ref and ref != request.url:
-        return redirect(ref)
-    return redirect(url_for("index"))
+    return redirect(ref or url_for("index"))
 
 # =============================================================================
-# INIT DB AUTO
+# INIT
 # =============================================================================
 def init_db_if_needed():
     with app.app_context():
@@ -481,9 +459,6 @@ if os.environ.get("RUN_INIT_ON_BOOT", "1") == "1":
     except Exception as e:
         print("Init-on-boot falhou:", e)
 
-# =============================================================================
-# DEV
-# =============================================================================
 if __name__ == "__main__":
     with app.app_context():
         init_db_if_needed()

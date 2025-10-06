@@ -1,38 +1,36 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block title %}Editar Aluno{% endblock %}
-
 {% block content %}
 <div class="container py-4">
   <h3 class="mb-3">Editar aluno</h3>
-  <form method="post" enctype="multipart/form-data" class="row g-3" autocomplete="off">
+  <form method="post" enctype="multipart/form-data" class="row g-3">
     <div class="col-12 col-md-6">
-      <label class="form-label">Nome</label>
-      <input type="text" name="nome" class="form-control" value="{{ aluno.nome }}" required>
+      <label class="form-label">Nome completo</label>
+      <input name="nome" class="form-control" value="{{ aluno.nome }}" required>
     </div>
     <div class="col-12 col-md-6">
       <label class="form-label">Escola</label>
-      <input type="text" name="escola" class="form-control" value="{{ aluno.escola }}">
+      <input name="escola" class="form-control" value="{{ aluno.escola }}">
     </div>
     <div class="col-12 col-md-4">
       <label class="form-label">Horário</label>
-      <input type="text" name="horario" class="form-control" value="{{ aluno.horario }}">
+      <input name="horario" class="form-control" value="{{ aluno.horario }}">
     </div>
     <div class="col-12 col-md-4">
       <label class="form-label">Telefone da mãe</label>
-      <input type="text" name="telefone_mae" class="form-control" value="{{ aluno.telefone_mae }}">
+      <input name="telefone_mae" class="form-control" value="{{ aluno.telefone_mae }}">
     </div>
     <div class="col-12 col-md-4">
       <label class="form-label">Foto do aluno</label>
-      <input type="file" name="foto" class="form-control">
+      <input type="file" name="foto" class="form-control" accept="image/*">
       {% if aluno.foto_path %}
         <div class="mt-2">
-          <img src="{{ url_for('uploads', filename=aluno.foto_path) }}" alt="Foto atual"
-               class="rounded" style="width:80px;height:80px;object-fit:cover;">
+          <img src="{{ url_for('uploads', filename=aluno.foto_path) }}" class="avatar" alt="foto">
         </div>
       {% endif %}
     </div>
     <div class="col-12 text-end">
-      <a href="{{ url_for('alunos_listar') }}" class="btn btn-outline-light">Voltar</a>
+      <a class="btn btn-outline-light" href="{{ url_for('alunos_listar') }}">Cancelar</a>
       <button class="btn btn-light">Salvar alterações</button>
     </div>
   </form>

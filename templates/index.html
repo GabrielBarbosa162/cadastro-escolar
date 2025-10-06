@@ -3,37 +3,14 @@
 
 {% block content %}
 <div class="container py-5 text-white">
-
-  <div class="alert alert-info small">
-    Página inicial ativa. Use os botões abaixo para navegar.
-  </div>
-
   <h2 class="mb-4">Bem-vindo!</h2>
-  <p class="text-secondary">Acesse as áreas do sistema:</p>
-
-  <div class="d-flex flex-wrap gap-2 mt-3">
-
-    <!-- Alunos (sempre existe) -->
-    <a href="{{ url_for('alunos_listar') }}" class="btn btn-primary">
-      Alunos
-    </a>
-
-    {% if 'escolas_listar' in view_functions %}
-    <a href="{{ url_for('escolas_listar') }}" class="btn btn-outline-light">Escolas</a>
-    {% endif %}
-
-    {% if 'series_listar' in view_functions %}
-    <a href="{{ url_for('series_listar') }}" class="btn btn-outline-light">Séries</a>
-    {% endif %}
-
-    {% if 'atividades_listar' in view_functions %}
-    <a href="{{ url_for('atividades_listar') }}" class="btn btn-outline-light">Atividades</a>
-    {% endif %}
-
-    {% if 'horarios_listar' in view_functions %}
-    <a href="{{ url_for('horarios_listar') }}" class="btn btn-outline-light">Horários</a>
-    {% endif %}
-
+  <p class="text-secondary">Use a barra superior para navegar.</p>
+  <div class="mt-3 d-flex flex-wrap gap-2">
+    <a class="btn btn-primary" href="{{ url_for('alunos_listar') }}">Alunos</a>
+    <a class="btn btn-outline-light" href="{{ url_for('escolas_listar') }}">Escolas</a>
+    <a class="btn btn-outline-light" href="{{ url_for('series_listar') }}">Séries</a>
+    <a class="btn btn-outline-light" href="{{ url_for('atividades_listar') }}">Atividades</a>
+    <a class="btn btn-outline-light" href="{{ url_for('horarios_listar') }}">Horários</a>
   </div>
 </div>
 {% endblock %}

@@ -1,68 +1,53 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block title %}Alunos{% endblock %}
-
 {% block content %}
 <div class="container py-4">
 
-  <!-- Selo de debug para confirmar que este template está sendo renderizado -->
-  <div class="alert alert-info py-1 mb-3">
-    <strong>DEBUG_RENDER_ALUNOS_LISTAR</strong>
-  </div>
-
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="m-0">Alunos</h3>
-    <a href="{{ url_for('alunos_novo') }}" class="btn btn-primary">Cadastrar aluno</a>
+    {% if current_user.is_authenticated and (current_user.papel=='DIRETORIA' or
+      (view_functions and 'alunos_novo' in view_functions and
+       (current_user.papel=='DIRETORIA' or True))) %}
+      <!-- o perm_required vai validar no servidor -->
+      <a href="{{ url_for('alunos_novo') }}" class="btn btn-light">Cadastrar aluno</a>
+    {% endif %}
   </div>
 
-  {% if alunos|length == 0 %}
-    <div class="alert alert-secondary">Nenhum aluno cadastrado.</div>
-  {% else %}
-    <div class="list-group">
-      {% for aluno in alunos %}
-        <div class="list-group-item list-group-item-action bg-dark text-white border-secondary">
-          <div class="row align-items-center g-2">
-
-            <!-- FOTO -->
-            <div class="col-auto">
-              {% if aluno.foto_path %}
-                <img src="{{ url_for('uploads', filename=aluno.foto_path) }}"
-                     alt="Foto de {{ aluno.nome }}" class="rounded" style="width:56px;height:56px;object-fit:cover;">
-              {% else %}
-                <div class="bg-secondary rounded d-flex align-items-center justify-content-center"
-                     style="width:56px;height:56px;">
-                  <span class="small text-dark text-center">sem<br>foto</span>
-                </div>
-              {% endif %}
-            </div>
-
-            <!-- DADOS -->
-            <div class="col">
-              <div class="d-flex flex-column">
-                <strong class="lh-1">{{ aluno.nome }}</strong>
-                <div class="text-secondary small mt-1">
-                  {% if aluno.escola %}<span class="me-3">Escola: {{ aluno.escola }}</span>{% endif %}
-                  {% if aluno.horario %}<span class="me-3">Horário: {{ aluno.horario }}</span>{% endif %}
-                  {% if aluno.telefone_mae %}<span>Telefone da mãe: {{ aluno.telefone_mae }}</span>{% endif %}
-                </div>
-              </div>
-            </div>
-
-            <!-- AÇÕES (sem condições; backend valida permissão) -->
-            <div class="col-auto d-flex gap-2">
-              <a href="{{ url_for('alunos_editar', id=aluno.id) }}" class="btn btn-light btn-sm">
-                Editar
-              </a>
-              <form method="post" action="{{ url_for('alunos_excluir', id=aluno.id) }}"
-                    onsubmit="return confirm('Confirma excluir {{ aluno.nome }}?');">
-                <button class="btn btn-danger btn-sm">Excluir</button>
-              </form>
-            </div>
-
-          </div>
+  {% if alunos %}
+  <div class="list-group">
+    {% for a in alunos %}
+    <div class="list-group-item list-group-item-action bg-dark text-white d-flex align-items-center">
+      <img class="avatar me-3" src="{{ url_for('uploads', filename=a.foto_path) if a.foto_path else url_for('static', filename='img/user.png') }}"
+           alt="foto">
+      <div class="flex-grow-1">
+        <div class="fw-semibold">{{ a.nome }}</div>
+        <div class="small text-secondary">
+          Escola: {{ a.escola or '—' }} &nbsp;|&nbsp;
+          Horário: {{ a.horario or '—' }} &nbsp;|&nbsp;
+          Tel. mãe: {{ a.telefone_mae or '—' }}
         </div>
-      {% endfor %}
+      </div>
+      <div class="ms-3">
+        {% if current_user.papel=='DIRETORIA' %}
+          <a class="btn btn-sm btn-outline-light" href="{{ url_for('alunos_editar', id=a.id) }}">Editar</a>
+          <form method="post" action="{{ url_for('alunos_excluir', id=a.id) }}" class="d-inline"
+                onsubmit="return confirm('Excluir este aluno?');">
+            <button class="btn btn-sm btn-outline-danger">Excluir</button>
+          </form>
+        {% else %}
+          {# o decorador perm_required garante a autorização, aqui mostramos os botões sempre para facilitar UX #}
+          <a class="btn btn-sm btn-outline-light" href="{{ url_for('alunos_editar', id=a.id) }}">Editar</a>
+          <form method="post" action="{{ url_for('alunos_excluir', id=a.id) }}" class="d-inline"
+                onsubmit="return confirm('Excluir este aluno?');">
+            <button class="btn btn-sm btn-outline-danger">Excluir</button>
+          </form>
+        {% endif %}
+      </div>
     </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <div class="alert alert-secondary mt-3">Nenhum aluno cadastrado.</div>
   {% endif %}
-
 </div>
 {% endblock %}

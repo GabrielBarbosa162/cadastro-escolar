@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">{{ titulo }}</h3>
+  <form method="post">
+    <div class="alert alert-info">Formulário de exemplo (substitua pelo real).</div>
+    <div class="text-end">
+      <a class="btn btn-outline-light" href="javascript:history.back()">Cancelar</a>
+      <button class="btn btn-light">Salvar</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
