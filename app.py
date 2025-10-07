@@ -1,14 +1,11 @@
 import os
 import uuid
-import ssl
-import smtplib
-from email.message import EmailMessage
-from datetime import datetime
+from datetime import datetime, time as dtime
 from functools import wraps
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    flash, abort, session as flask_session, send_from_directory
+    flash, abort, session as flask_session, send_from_directory, jsonify
 )
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
@@ -16,9 +13,9 @@ from flask_login import (
     login_required, current_user
 )
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import UniqueConstraint, ForeignKey
+from sqlalchemy.orm import relationship
 from werkzeug.exceptions import Forbidden, Unauthorized, NotFound
-from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
 # =============================================================================
 # APP & DB
@@ -51,7 +48,7 @@ login_manager.login_view = "login"
 UPLOAD_DIR = os.path.join(app.root_path, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# disponibiliza view_functions se precisar em algum template
+# Jinja helper
 @app.context_processor
 def inject_view_functions():
     return {"view_functions": app.view_functions}
@@ -118,12 +115,35 @@ class Aluno(db.Model):
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-# =============================================================================
-# LOGIN
-# =============================================================================
-@login_manager.user_loader
-def load_user(user_id):
-    return Usuario.query.get(int(user_id))
+class Escola(db.Model):
+    __tablename__ = "escola"
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(200), unique=True, nullable=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Serie(db.Model):
+    __tablename__ = "serie"
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(120), unique=True, nullable=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Horario(db.Model):
+    __tablename__ = "horario"
+    id = db.Column(db.Integer, primary_key=True)
+    hora_inicio = db.Column(db.String(5), nullable=False)  # HH:MM
+    hora_fim = db.Column(db.String(5), nullable=False)     # HH:MM
+    label = db.Column(db.String(20), nullable=False)       # "HH:MM - HH:MM"
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Atividade(db.Model):
+    __tablename__ = "atividade"
+    id = db.Column(db.Integer, primary_key=True)
+    aluno_id = db.Column(db.Integer, ForeignKey("aluno.id", ondelete="SET NULL"))
+    aluno = relationship("Aluno")
+    data_atividade = db.Column(db.String(10))  # dd/mm/aaaa
+    conteudo = db.Column(db.Text)
+    observacao = db.Column(db.Text)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
 
 # =============================================================================
 # PERMISSÕES
@@ -178,7 +198,7 @@ def perm_required(codigo: str):
     return deco
 
 # =============================================================================
-# UTIL / SAÚDE / SESSÃO
+# SAÚDE / SESSÃO
 # =============================================================================
 @app.route("/healthz")
 def healthz():
@@ -199,7 +219,6 @@ def registrar_login_sessao(usuario: Usuario):
     if not sid:
         sid = str(uuid.uuid4())
         flask_session["session_id"] = sid
-    # garante unicidade
     if UserSession.query.filter_by(session_id=sid).first():
         sid = f"{sid}-{uuid.uuid4().hex[:6]}"
         flask_session["session_id"] = sid
@@ -236,8 +255,12 @@ def seed_admin():
         print("Usuário DIRETORIA: admin@escola.com / ADMIN_PASS")
 
 # =============================================================================
-# AUTH MÍNIMO (login/logout)
+# AUTH
 # =============================================================================
+@login_manager.user_loader
+def load_user(user_id):
+    return Usuario.query.get(int(user_id))
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -269,7 +292,111 @@ def index():
     return render_template("index.html")
 
 # =============================================================================
-# ALUNOS
+# USUÁRIOS + PERMISSÕES
+# =============================================================================
+@app.route("/usuarios", methods=["GET"], endpoint="usuarios_list")
+@login_required
+def usuarios_list():
+    if current_user.papel != "DIRETORIA":
+        abort(403)
+    usuarios = Usuario.query.order_by(Usuario.email.asc()).all()
+    permissoes_por_usuario = {}
+    for u in usuarios:
+        if u.papel == "DIRETORIA":
+            permissoes_por_usuario[u.id] = {cod: True for cod in PERMISSOES_CODIGOS}
+        else:
+            marcadas = set(
+                p.codigo for p in (
+                    Permissao.query
+                    .join(UsuarioPermissao, UsuarioPermissao.permissao_id == Permissao.id)
+                    .filter(UsuarioPermissao.usuario_id == u.id)
+                    .all()
+                )
+            )
+            permissoes_por_usuario[u.id] = {cod: (cod in marcadas) for cod in PERMISSOES_CODIGOS}
+
+    return render_template(
+        "usuarios_list.html",
+        usuarios=usuarios,
+        permissoes_codigos=PERMISSOES_CODIGOS,
+        permissoes_nomes=PERMISSOES_NOMES,
+        permissoes_por_usuario=permissoes_por_usuario
+    )
+
+@app.route("/usuarios/<int:usuario_id>/permissoes", methods=["POST"], endpoint="usuarios_salvar_permissoes")
+@login_required
+def usuarios_salvar_permissoes(usuario_id):
+    if current_user.papel != "DIRETORIA":
+        abort(403)
+    u = Usuario.query.get_or_404(usuario_id)
+
+    if u.papel == "DIRETORIA":
+        flash("Diretoria já possui todas as permissões por padrão.", "info")
+        return redirect(url_for("usuarios_list"))
+
+    enviados = set(request.form.getlist("permissoes[]"))
+    for cod in enviados:
+        if cod not in PERMISSOES_CODIGOS:
+            abort(400, f"Código de permissão inválido: {cod}")
+
+    atuais = {
+        p.codigo: up for (p, up) in db.session.query(Permissao, UsuarioPermissao)
+        .join(UsuarioPermissao, UsuarioPermissao.permissao_id == Permissao.id, isouter=True)
+        .all()
+        if up is not None and up.usuario_id == u.id
+    }
+
+    cache_perm = {p.codigo: p for p in Permissao.query.all()}
+
+    # remove não marcadas
+    for cod, up in list(atuais.items()):
+        if cod not in enviados:
+            db.session.delete(up)
+
+    # adiciona novas
+    for cod in enviados:
+        if cod not in atuais:
+            perm = cache_perm.get(cod)
+            if perm:
+                db.session.add(UsuarioPermissao(usuario_id=u.id, permissao_id=perm.id))
+
+    db.session.commit()
+    flash("Permissões atualizadas.", "success")
+    return redirect(url_for("usuarios_list"))
+
+@app.route("/usuarios/novo", methods=["GET", "POST"], endpoint="usuarios_novo")
+@login_required
+def usuarios_novo():
+    if current_user.papel != "DIRETORIA":
+        abort(403)
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        senha = request.form.get("senha", "")
+        confirmar = request.form.get("confirmar", "")
+        papel = request.form.get("papel", "RESPONSAVEL")
+        if not email or not senha or not confirmar:
+            flash("Preencha todos os campos.", "warning")
+            return render_template("usuario_form.html")
+        if senha != confirmar:
+            flash("A confirmação de senha não confere.", "warning")
+            return render_template("usuario_form.html")
+        if len(senha) < 8 or not any(ch.isdigit() for ch in senha):
+            flash("Senha deve ter ao menos 8 caracteres e 1 dígito.", "warning")
+            return render_template("usuario_form.html")
+        if Usuario.query.filter_by(email=email).first():
+            flash("E-mail já cadastrado.", "warning")
+            return render_template("usuario_form.html")
+
+        u = Usuario(email=email, papel=papel, ativo=True)
+        u.set_password(senha)
+        db.session.add(u)
+        db.session.commit()
+        flash("Usuário criado com sucesso.", "success")
+        return redirect(url_for("usuarios_list"))
+    return render_template("usuario_form.html")
+
+# =============================================================================
+# ALUNOS (lista simples + novo/editar/excluir)
 # =============================================================================
 @app.route("/uploads/<path:filename>", endpoint="uploads")
 @login_required
@@ -291,15 +418,18 @@ def alunos_novo():
         escola = request.form.get("escola","").strip()
         horario = request.form.get("horario","").strip()
         telefone_mae = request.form.get("telefone_mae","").strip()
+
         foto_file = request.files.get("foto")
         foto_path = None
         if foto_file and foto_file.filename:
             fname = f"{uuid.uuid4().hex}_{foto_file.filename}"
             foto_file.save(os.path.join(UPLOAD_DIR, fname))
             foto_path = fname
+
         if not nome:
             flash("Informe o nome do aluno.", "warning")
             return render_template("alunos/novo.html")
+
         db.session.add(Aluno(
             nome=nome, escola=escola, horario=horario,
             telefone_mae=telefone_mae, foto_path=foto_path
@@ -342,84 +472,281 @@ def alunos_excluir(id):
     flash("Aluno excluído!", "success")
     return redirect(url_for("alunos_listar"))
 
+# Endpoint de busca dinâmica de alunos (para o formulário de atividade)
+@app.route("/alunos/search")
+@login_required
+def alunos_search():
+    q = request.args.get("q","").strip().lower()
+    qry = Aluno.query
+    if q:
+        qry = qry.filter(Aluno.nome.ilike(f"%{q}%"))
+    results = qry.order_by(Aluno.nome.asc()).limit(20).all()
+    return jsonify([{"id": a.id, "nome": a.nome} for a in results])
+
 # =============================================================================
-# STUBS – para os botões existirem agora (podem ser substituídos depois)
+# ESCOLAS
 # =============================================================================
 @app.route("/escolas", endpoint="escolas_listar")
 @login_required
 def escolas_listar():
-    itens = []  # substitua por sua query real depois
-    return render_template("stubs/lista_com_botao.html",
-                           titulo="Escolas",
-                           endpoint_novo="escolas_novo",
-                           label_botao="Nova Escola",
-                           itens=itens)
+    escolas = Escola.query.order_by(Escola.nome.asc()).all()
+    return render_template("escolas/listar.html", escolas=escolas)
 
 @app.route("/escolas/novo", methods=["GET", "POST"], endpoint="escolas_novo")
 @login_required
 @perm_required("ESCOLA_ADICIONAR")
 def escolas_novo():
     if request.method == "POST":
-        flash("Stub: Escola criada (implemente depois).", "info")
+        nome = request.form.get("nome","").strip()
+        if not nome:
+            flash("Informe o nome da escola.", "warning")
+            return render_template("escolas/novo.html")
+        if Escola.query.filter(Escola.nome.ilike(nome)).first():
+            flash("Já existe uma escola com esse nome.", "warning")
+            return render_template("escolas/novo.html")
+        db.session.add(Escola(nome=nome))
+        db.session.commit()
+        flash("Escola cadastrada!", "success")
         return redirect(url_for("escolas_listar"))
-    return render_template("stubs/novo_stub.html", titulo="Nova Escola")
+    return render_template("escolas/novo.html")
 
+@app.route("/escolas/<int:id>/editar", methods=["GET", "POST"], endpoint="escolas_editar")
+@login_required
+@perm_required("ESCOLA_ADICIONAR")
+def escolas_editar(id):
+    e = Escola.query.get_or_404(id)
+    if request.method == "POST":
+        nome = request.form.get("nome","").strip()
+        if not nome:
+            flash("Informe o nome da escola.", "warning")
+            return render_template("escolas/editar.html", escola=e)
+        existe = Escola.query.filter(Escola.nome.ilike(nome), Escola.id != e.id).first()
+        if existe:
+            flash("Já existe outra escola com esse nome.", "warning")
+            return render_template("escolas/editar.html", escola=e)
+        e.nome = nome
+        db.session.commit()
+        flash("Escola atualizada!", "success")
+        return redirect(url_for("escolas_listar"))
+    return render_template("escolas/editar.html", escola=e)
+
+@app.route("/escolas/<int:id>/excluir", methods=["POST"], endpoint="escolas_excluir")
+@login_required
+@perm_required("ESCOLA_EXCLUIR")
+def escolas_excluir(id):
+    e = Escola.query.get_or_404(id)
+    db.session.delete(e)
+    db.session.commit()
+    flash("Escola excluída!", "success")
+    return redirect(url_for("escolas_listar"))
+
+# =============================================================================
+# SÉRIES
+# =============================================================================
 @app.route("/series", endpoint="series_listar")
 @login_required
 def series_listar():
-    itens = []
-    return render_template("stubs/lista_com_botao.html",
-                           titulo="Séries",
-                           endpoint_novo="series_novo",
-                           label_botao="Nova Série",
-                           itens=itens)
+    series = Serie.query.order_by(Serie.nome.asc()).all()
+    return render_template("series/listar.html", series=series)
 
 @app.route("/series/novo", methods=["GET", "POST"], endpoint="series_novo")
 @login_required
 @perm_required("SERIE_ADICIONAR")
 def series_novo():
     if request.method == "POST":
-        flash("Stub: Série criada (implemente depois).", "info")
+        nome = request.form.get("nome","").strip()
+        if not nome:
+            flash("Informe o nome da série.", "warning")
+            return render_template("series/novo.html")
+        if Serie.query.filter(Serie.nome.ilike(nome)).first():
+            flash("Já existe uma série com esse nome.", "warning")
+            return render_template("series/novo.html")
+        db.session.add(Serie(nome=nome))
+        db.session.commit()
+        flash("Série cadastrada!", "success")
         return redirect(url_for("series_listar"))
-    return render_template("stubs/novo_stub.html", titulo="Nova Série")
+    return render_template("series/novo.html")
 
-@app.route("/atividades", endpoint="atividades_listar")
+@app.route("/series/<int:id>/editar", methods=["GET", "POST"], endpoint="series_editar")
 @login_required
-def atividades_listar():
-    itens = []
-    return render_template("stubs/lista_com_botao.html",
-                           titulo="Atividades",
-                           endpoint_novo="atividades_novo",
-                           label_botao="Nova Atividade",
-                           itens=itens)
-
-@app.route("/atividades/novo", methods=["GET", "POST"], endpoint="atividades_novo")
-@login_required
-@perm_required("ATIVIDADE_ADICIONAR")
-def atividades_novo():
+@perm_required("SERIE_ADICIONAR")
+def series_editar(id):
+    s = Serie.query.get_or_404(id)
     if request.method == "POST":
-        flash("Stub: Atividade criada (implemente depois).", "info")
-        return redirect(url_for("atividades_listar"))
-    return render_template("stubs/novo_stub.html", titulo="Nova Atividade")
+        nome = request.form.get("nome","").strip()
+        if not nome:
+            flash("Informe o nome da série.", "warning")
+            return render_template("series/editar.html", serie=s)
+        existe = Serie.query.filter(Serie.nome.ilike(nome), Serie.id != s.id).first()
+        if existe:
+            flash("Já existe outra série com esse nome.", "warning")
+            return render_template("series/editar.html", serie=s)
+        s.nome = nome
+        db.session.commit()
+        flash("Série atualizada!", "success")
+        return redirect(url_for("series_listar"))
+    return render_template("series/editar.html", serie=s)
+
+@app.route("/series/<int:id>/excluir", methods=["POST"], endpoint="series_excluir")
+@login_required
+@perm_required("SERIE_EXCLUIR")
+def series_excluir(id):
+    s = Serie.query.get_or_404(id)
+    db.session.delete(s)
+    db.session.commit()
+    flash("Série excluída!", "success")
+    return redirect(url_for("series_listar"))
+
+# =============================================================================
+# HORÁRIOS
+# =============================================================================
+def _parse_hhmm(val: str) -> dtime | None:
+    try:
+        hh, mm = val.split(":")
+        return dtime(hour=int(hh), minute=int(mm))
+    except Exception:
+        return None
 
 @app.route("/horarios", endpoint="horarios_listar")
 @login_required
 def horarios_listar():
-    itens = []
-    return render_template("stubs/lista_com_botao.html",
-                           titulo="Horários",
-                           endpoint_novo="horarios_novo",
-                           label_botao="Novo Horário",
-                           itens=itens)
+    horarios = Horario.query.order_by(Horario.hora_inicio.asc()).all()
+    return render_template("horarios/listar.html", horarios=horarios)
 
 @app.route("/horarios/novo", methods=["GET", "POST"], endpoint="horarios_novo")
 @login_required
 @perm_required("HORARIO_ADICIONAR")
 def horarios_novo():
     if request.method == "POST":
-        flash("Stub: Horário criado (implemente depois).", "info")
+        h_ini = request.form.get("hora_inicio","").strip()
+        h_fim = request.form.get("hora_fim","").strip()
+
+        t_ini = _parse_hhmm(h_ini)
+        t_fim = _parse_hhmm(h_fim)
+
+        if not t_ini or not t_fim:
+            flash("Informe horas válidas no formato HH:MM.", "warning")
+            return render_template("horarios/novo.html")
+
+        if t_fim <= t_ini:
+            flash("A hora fim deve ser MAIOR que a hora início.", "danger")
+            return render_template("horarios/novo.html")
+
+        label = f"{h_ini} - {h_fim}"
+        db.session.add(Horario(hora_inicio=h_ini, hora_fim=h_fim, label=label))
+        db.session.commit()
+        flash("Horário cadastrado!", "success")
         return redirect(url_for("horarios_listar"))
-    return render_template("stubs/novo_stub.html", titulo="Novo Horário")
+
+    return render_template("horarios/novo.html")
+
+@app.route("/horarios/<int:id>/editar", methods=["GET", "POST"], endpoint="horarios_editar")
+@login_required
+@perm_required("HORARIO_ADICIONAR")
+def horarios_editar(id):
+    h = Horario.query.get_or_404(id)
+    if request.method == "POST":
+        h_ini = request.form.get("hora_inicio","").strip()
+        h_fim = request.form.get("hora_fim","").strip()
+        t_ini = _parse_hhmm(h_ini)
+        t_fim = _parse_hhmm(h_fim)
+        if not t_ini or not t_fim:
+            flash("Informe horas válidas no formato HH:MM.", "warning")
+            return render_template("horarios/editar.html", horario=h)
+        if t_fim <= t_ini:
+            flash("A hora fim deve ser MAIOR que a hora início.", "danger")
+            return render_template("horarios/editar.html", horario=h)
+        h.hora_inicio = h_ini
+        h.hora_fim = h_fim
+        h.label = f"{h_ini} - {h_fim}"
+        db.session.commit()
+        flash("Horário atualizado!", "success")
+        return redirect(url_for("horarios_listar"))
+    return render_template("horarios/editar.html", horario=h)
+
+@app.route("/horarios/<int:id>/excluir", methods=["POST"], endpoint="horarios_excluir")
+@login_required
+@perm_required("HORARIO_EXCLUIR")
+def horarios_excluir(id):
+    h = Horario.query.get_or_404(id)
+    db.session.delete(h)
+    db.session.commit()
+    flash("Horário excluído!", "success")
+    return redirect(url_for("horarios_listar"))
+
+# =============================================================================
+# ATIVIDADES
+# =============================================================================
+@app.route("/atividades", endpoint="atividades_listar")
+@login_required
+def atividades_listar():
+    atividades = (Atividade.query
+                  .order_by(Atividade.criado_em.desc())
+                  .all())
+    return render_template("atividades/listar.html", atividades=atividades)
+
+@app.route("/atividades/novo", methods=["GET", "POST"], endpoint="atividades_novo")
+@login_required
+@perm_required("ATIVIDADE_ADICIONAR")
+def atividades_novo():
+    if request.method == "POST":
+        aluno_id = request.form.get("aluno_id")
+        data_atividade = request.form.get("data_atividade","").strip()
+        conteudo = request.form.get("conteudo","").strip()
+        observacao = request.form.get("observacao","").strip()
+
+        if not aluno_id or not aluno_id.isdigit():
+            flash("Selecione um aluno.", "warning")
+            alunos = Aluno.query.order_by(Aluno.nome.asc()).all()
+            return render_template("atividades/novo.html", alunos=alunos)
+
+        atv = Atividade(
+            aluno_id=int(aluno_id),
+            data_atividade=data_atividade,
+            conteudo=conteudo,
+            observacao=observacao
+        )
+        db.session.add(atv)
+        db.session.commit()
+        flash("Atividade lançada!", "success")
+        return redirect(url_for("atividades_listar"))
+
+    alunos = Aluno.query.order_by(Aluno.nome.asc()).all()
+    return render_template("atividades/novo.html", alunos=alunos)
+
+@app.route("/atividades/<int:id>/editar", methods=["GET", "POST"], endpoint="atividades_editar")
+@login_required
+@perm_required("ATIVIDADE_ADICIONAR")
+def atividades_editar(id):
+    atv = Atividade.query.get_or_404(id)
+    if request.method == "POST":
+        aluno_id = request.form.get("aluno_id")
+        data_atividade = request.form.get("data_atividade","").strip()
+        conteudo = request.form.get("conteudo","").strip()
+        observacao = request.form.get("observacao","").strip()
+        if not aluno_id or not aluno_id.isdigit():
+            flash("Selecione um aluno.", "warning")
+            alunos = Aluno.query.order_by(Aluno.nome.asc()).all()
+            return render_template("atividades/editar.html", atividade=atv, alunos=alunos)
+        atv.aluno_id = int(aluno_id)
+        atv.data_atividade = data_atividade
+        atv.conteudo = conteudo
+        atv.observacao = observacao
+        db.session.commit()
+        flash("Atividade atualizada!", "success")
+        return redirect(url_for("atividades_listar"))
+    alunos = Aluno.query.order_by(Aluno.nome.asc()).all()
+    return render_template("atividades/editar.html", atividade=atv, alunos=alunos)
+
+@app.route("/atividades/<int:id>/excluir", methods=["POST"], endpoint="atividades_excluir")
+@login_required
+@perm_required("ATIVIDADE_EXCLUIR")
+def atividades_excluir(id):
+    atv = Atividade.query.get_or_404(id)
+    db.session.delete(atv)
+    db.session.commit()
+    flash("Atividade excluída!", "success")
+    return redirect(url_for("atividades_listar"))
 
 # =============================================================================
 # ERROS

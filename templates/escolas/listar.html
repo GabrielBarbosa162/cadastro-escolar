@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Escolas{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="m-0">Escolas</h3>
+    <a href="{{ url_for('escolas_novo') }}" class="btn btn-light">Nova Escola</a>
+  </div>
+
+  {% if escolas %}
+    <ul class="list-group">
+      {% for e in escolas %}
+        <li class="list-group-item bg-dark text-white d-flex justify-content-between">
+          <span>{{ e.nome }}</span>
+          <span class="small text-secondary">{{ e.criado_em.strftime('%d/%m/%Y %H:%M') }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="alert alert-secondary">Nenhuma escola cadastrada.</div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -2,23 +2,16 @@
 {% block title %}Alunos{% endblock %}
 {% block content %}
 <div class="container py-4">
-
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="m-0">Alunos</h3>
-    {% if current_user.is_authenticated and (current_user.papel=='DIRETORIA' or
-      (view_functions and 'alunos_novo' in view_functions and
-       (current_user.papel=='DIRETORIA' or True))) %}
-      <!-- o perm_required vai validar no servidor -->
-      <a href="{{ url_for('alunos_novo') }}" class="btn btn-light">Cadastrar aluno</a>
-    {% endif %}
+    <a href="{{ url_for('alunos_novo') }}" class="btn btn-light">Cadastrar aluno</a>
   </div>
 
   {% if alunos %}
   <div class="list-group">
     {% for a in alunos %}
     <div class="list-group-item list-group-item-action bg-dark text-white d-flex align-items-center">
-      <img class="avatar me-3" src="{{ url_for('uploads', filename=a.foto_path) if a.foto_path else url_for('static', filename='img/user.png') }}"
-           alt="foto">
+      <img class="avatar me-3" src="{{ url_for('uploads', filename=a.foto_path) if a.foto_path else url_for('static', filename='img/user.png') }}" alt="foto">
       <div class="flex-grow-1">
         <div class="fw-semibold">{{ a.nome }}</div>
         <div class="small text-secondary">
@@ -28,20 +21,10 @@
         </div>
       </div>
       <div class="ms-3">
-        {% if current_user.papel=='DIRETORIA' %}
-          <a class="btn btn-sm btn-outline-light" href="{{ url_for('alunos_editar', id=a.id) }}">Editar</a>
-          <form method="post" action="{{ url_for('alunos_excluir', id=a.id) }}" class="d-inline"
-                onsubmit="return confirm('Excluir este aluno?');">
-            <button class="btn btn-sm btn-outline-danger">Excluir</button>
-          </form>
-        {% else %}
-          {# o decorador perm_required garante a autorização, aqui mostramos os botões sempre para facilitar UX #}
-          <a class="btn btn-sm btn-outline-light" href="{{ url_for('alunos_editar', id=a.id) }}">Editar</a>
-          <form method="post" action="{{ url_for('alunos_excluir', id=a.id) }}" class="d-inline"
-                onsubmit="return confirm('Excluir este aluno?');">
-            <button class="btn btn-sm btn-outline-danger">Excluir</button>
-          </form>
-        {% endif %}
+        <a class="btn btn-sm btn-outline-light" href="{{ url_for('alunos_editar', id=a.id) }}">Editar</a>
+        <form method="post" action="{{ url_for('alunos_excluir', id=a.id) }}" class="d-inline" onsubmit="return confirm('Excluir este aluno?');">
+          <button class="btn btn-sm btn-outline-danger">Excluir</button>
+        </form>
       </div>
     </div>
     {% endfor %}

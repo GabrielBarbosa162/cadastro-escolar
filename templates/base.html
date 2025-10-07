@@ -8,7 +8,6 @@
   <style>
     body{ background:#0b0f14; color:#fff; }
     .avatar{ width:42px; height:42px; border-radius:50%; object-fit:cover; background:#1b2533; }
-    .card-dark{ background:#121923; color:#fff; }
   </style>
 </head>
 <body>
@@ -25,6 +24,11 @@
         <li class="nav-item">
           <a class="nav-link {% if request.endpoint=='alunos_listar' %}active{% endif %}"
              href="{{ url_for('alunos_listar') }}">Alunos</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint=='usuarios_list' %}active{% endif %}"
+             href="{{ url_for('usuarios_list') }}">Usuários</a>
         </li>
 
         <li class="nav-item">
@@ -63,7 +67,7 @@
   </div>
 </nav>
 
-<div class="container mt-3">
+<div class="container mt-3" id="flash-container">
   {% with msgs = get_flashed_messages(with_categories=true) %}
     {% if msgs %}
       {% for cat,msg in msgs %}
@@ -79,5 +83,14 @@
 {% block content %}{% endblock %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Esconde automaticamente os alerts depois de 5 segundos
+  setTimeout(() => {
+    document.querySelectorAll('#flash-container .alert').forEach(el => {
+      const bsAlert = bootstrap.Alert.getOrCreateInstance(el);
+      bsAlert.close();
+    });
+  }, 5000);
+</script>
 </body>
 </html>
