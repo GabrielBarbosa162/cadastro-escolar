@@ -4,23 +4,215 @@
 <div class="container py-4">
   <h3 class="mb-3">Editar aluno</h3>
   <form method="post" enctype="multipart/form-data" class="row g-3">
+
     <div class="col-12 col-md-6">
-      <label class="form-label">Nome completo</label>
+      <label class="form-label">Nome Completo</label>
       <input name="nome" class="form-control" value="{{ aluno.nome }}" required>
     </div>
+
+    <div class="col-12 col-md-3">
+      <label class="form-label">Naturalidade</label>
+      <input name="naturalidade" class="form-control" value="{{ dados.naturalidade or '' }}">
+    </div>
+
+    <div class="col-12 col-md-3">
+      <label class="form-label">Nacionalidade</label>
+      <input name="nacionalidade" class="form-control" value="{{ dados.nacionalidade or '' }}">
+    </div>
+
+    <div class="col-12 col-md-3">
+      <label class="form-label">Data de nascimento</label>
+      <input name="data_nascimento" class="form-control" placeholder="dd/mm/aaaa" value="{{ dados.data_nascimento or '' }}">
+    </div>
+
+    <div class="col-6 col-md-2">
+      <label class="form-label">Idade</label>
+      <input name="idade" class="form-control" value="{{ dados.idade or '' }}">
+    </div>
+
+    <div class="col-6 col-md-2">
+      <label class="form-label">Anos</label>
+      <input name="anos" class="form-control" value="{{ dados.anos or '' }}">
+    </div>
+
+    <div class="col-12 col-md-5">
+      <label class="form-label d-block">Sexo</label>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="sexo" id="sxM" value="Masculino" {% if dados.sexo=='Masculino' %}checked{% endif %}>
+        <label class="form-check-label" for="sxM">Masculino</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="sexo" id="sxF" value="Feminino" {% if dados.sexo=='Feminino' %}checked{% endif %}>
+        <label class="form-check-label" for="sxF">Feminino</label>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6">
+      <label class="form-label">Nome do Pai</label>
+      <input name="nome_pai" class="form-control" value="{{ dados.nome_pai or '' }}">
+    </div>
+
+    <div class="col-12 col-md-6">
+      <label class="form-label">Nome da Mãe</label>
+      <input name="nome_mae" class="form-control" value="{{ dados.nome_mae or '' }}">
+    </div>
+
+    <div class="col-12 col-md-6">
+      <label class="form-label">Endereço</label>
+      <input name="endereco" class="form-control" value="{{ dados.endereco or '' }}">
+    </div>
+
+    <div class="col-6 col-md-2">
+      <label class="form-label">Número</label>
+      <input name="numero" class="form-control" value="{{ dados.numero or '' }}">
+    </div>
+
+    <div class="col-6 col-md-4">
+      <label class="form-label">Bairro</label>
+      <input name="bairro" class="form-control" value="{{ dados.bairro or '' }}">
+    </div>
+
+    <div class="col-6 col-md-3">
+      <label class="form-label">Telefone Celular</label>
+      <input name="telefone_celular" class="form-control" value="{{ dados.telefone_celular or '' }}">
+    </div>
+
+    <div class="col-6 col-md-3">
+      <label class="form-label">Telefone Fixo</label>
+      <input name="telefone_fixo" class="form-control" value="{{ dados.telefone_fixo or '' }}">
+    </div>
+
+    <hr class="mt-3">
+
     <div class="col-12 col-md-4">
       <label class="form-label">Escola</label>
-      <input name="escola" class="form-control" value="{{ aluno.escola }}">
+      {% if escolas %}
+      <select class="form-select" name="escola">
+        <option value="">Selecione…</option>
+        {% for e in escolas %}
+          <option value="{{ e.nome }}" {% if aluno.escola==e.nome %}selected{% endif %}>{{ e.nome }}</option>
+        {% endfor %}
+      </select>
+      {% else %}
+      <input name="escola_text" class="form-control" value="{{ aluno.escola or '' }}" placeholder="Informe a escola">
+      {% endif %}
     </div>
+
     <div class="col-12 col-md-4">
-      <label class="form-label">Horário</label>
-      <input name="horario" class="form-control" value="{{ aluno.horario }}" placeholder="ex: 13:00 - 17:00">
+      <label class="form-label">Série</label>
+      {% if series %}
+      <select class="form-select" name="serie">
+        <option value="">Selecione…</option>
+        {% for s in series %}
+          <option value="{{ s.nome }}" {% if dados.serie==s.nome %}selected{% endif %}>{{ s.nome }}</option>
+        {% endfor %}
+      </select>
+      {% else %}
+      <input name="serie" class="form-control" value="{{ dados.serie or '' }}" placeholder="Informe a série">
+      {% endif %}
     </div>
+
     <div class="col-12 col-md-4">
-      <label class="form-label">Telefone da mãe</label>
-      <input name="telefone_mae" class="form-control" value="{{ aluno.telefone_mae }}">
+      <label class="form-label">Horário da aula</label>
+      {% if horarios %}
+      <select class="form-select" name="horario_sel">
+        <option value="">Selecione…</option>
+        {% for h in horarios %}
+          <option value="{{ h.label }}" {% if aluno.horario==h.label %}selected{% endif %}>{{ h.label }}</option>
+        {% endfor %}
+      </select>
+      <small class="text-secondary">Ou informe manualmente:</small>
+      <input name="horario_txt" class="form-control" placeholder="ex: 13:00 - 17:00" value="{{ aluno.horario or '' }}">
+      {% else %}
+      <input name="horario_txt" class="form-control" placeholder="ex: 13:00 - 17:00" value="{{ aluno.horario or '' }}">
+      {% endif %}
     </div>
-    <div class="col-12 col-md-4">
+
+    <div class="col-12 col-md-6">
+      <label class="form-label">Telefone da Mãe (para WhatsApp)</label>
+      <input name="telefone_mae" class="form-control" value="{{ aluno.telefone_mae or '' }}">
+    </div>
+
+    <hr class="mt-3">
+
+    <div class="col-12 col-md-3">
+      <label class="form-label d-block">Algum tipo de dificuldade?</label>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="dificuldade" id="difS" value="sim" {% if dados.dificuldade=='sim' %}checked{% endif %}>
+        <label class="form-check-label" for="difS">Sim</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="dificuldade" id="difN" value="nao" {% if dados.dificuldade!='sim' %}checked{% endif %}>
+        <label class="form-check-label" for="difN">Não</label>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-9">
+      <label class="form-label">Qual?</label>
+      <input name="dificuldade_qual" class="form-control" value="{{ dados.dificuldade_qual or '' }}">
+    </div>
+
+    <div class="col-12 col-md-3">
+      <label class="form-label d-block">Toma medicamento controlado?</label>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="medicamento_controlado" id="medS" value="sim" {% if dados.medicamento_controlado=='sim' %}checked{% endif %}>
+        <label class="form-check-label" for="medS">Sim</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="medicamento_controlado" id="medN" value="nao" {% if dados.medicamento_controlado!='sim' %}checked{% endif %}>
+        <label class="form-check-label" for="medN">Não</label>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-9">
+      <label class="form-label">Qual?</label>
+      <input name="medicamento_qual" class="form-control" value="{{ dados.medicamento_qual or '' }}">
+    </div>
+
+    <div class="col-12 col-md-3">
+      <label class="form-label d-block">Matutino (Manhã)</label>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="matutino_sim" id="matutino"
+               {% if dados.matutino_sim %}checked{% endif %}>
+        <label class="form-check-label" for="matutino">Sim</label>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-3">
+      <label class="form-label">Horário (manhã)</label>
+      <input name="horario_matutino" class="form-control" value="{{ dados.horario_matutino or '' }}">
+    </div>
+
+    <div class="col-12 col-md-3">
+      <label class="form-label d-block">Vespertino (Tarde)</label>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="vespertino_sim" id="vespertino"
+               {% if dados.vespertino_sim %}checked{% endif %}>
+        <label class="form-check-label" for="vespertino">Sim</label>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-3">
+      <label class="form-label">Horário (tarde)</label>
+      <input name="horario_vespertino" class="form-control" value="{{ dados.horario_vespertino or '' }}">
+    </div>
+
+    <div class="col-12 col-md-3">
+      <label class="form-label">Início das aulas</label>
+      <input name="inicio_aulas" class="form-control" placeholder="dd/mm/aaaa" value="{{ dados.inicio_aulas or '' }}">
+    </div>
+
+    <div class="col-12 col-md-6">
+      <label class="form-label">Mensalidade</label>
+      <select name="mensalidade" class="form-select">
+        <option value="">Selecione…</option>
+        <option value="170,00" {% if dados.mensalidade=='170,00' %}selected{% endif %}>Pré 1 a 5º ano — 170,00 R$</option>
+        <option value="180,00" {% if dados.mensalidade=='180,00' %}selected{% endif %}>6º a 7º ano — 180,00 R$</option>
+        <option value="190,00" {% if dados.mensalidade=='190,00' %}selected{% endif %}>8º a 9º ano — 190,00 R$</option>
+      </select>
+    </div>
+
+    <div class="col-12 col-md-3">
       <label class="form-label">Foto do aluno</label>
       <input type="file" name="foto" class="form-control" accept="image/*">
       {% if aluno.foto_path %}
@@ -29,7 +221,8 @@
         </div>
       {% endif %}
     </div>
-    <div class="col-12 text-end">
+
+    <div class="col-12 text-end mt-3">
       <a class="btn btn-outline-light" href="{{ url_for('alunos_listar') }}">Cancelar</a>
       <button class="btn btn-light">Salvar alterações</button>
     </div>

@@ -1,4 +1,5 @@
 import os
+import json
 import uuid
 from datetime import datetime, time as dtime
 from functools import wraps
@@ -48,7 +49,7 @@ login_manager.login_view = "login"
 UPLOAD_DIR = os.path.join(app.root_path, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Jinja helper
+# Expor view_functions para Jinja (evita current_app undefined)
 @app.context_processor
 def inject_view_functions():
     return {"view_functions": app.view_functions}
@@ -114,6 +115,18 @@ class Aluno(db.Model):
     foto_path = db.Column(db.String(255))
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class AlunoExtra(db.Model):
+    """
+    Campos adicionais do Aluno (sem quebrar a tabela existente).
+    Armazena como JSON: naturalidade, nacionalidade, datas, sexo,
+    nomes dos pais, endereço, números, bairro, telefones, série, dificuldade etc.
+    """
+    __tablename__ = "aluno_extra"
+    id = db.Column(db.Integer, primary_key=True)
+    aluno_id = db.Column(db.Integer, db.ForeignKey("aluno.id", ondelete="CASCADE"), unique=True)
+    dados = db.Column(db.Text, nullable=False, default="{}")  # JSON str
+    aluno = relationship("Aluno", backref=db.backref("extra", uselist=False, cascade="all, delete-orphan"))
 
 class Escola(db.Model):
     __tablename__ = "escola"
@@ -348,12 +361,10 @@ def usuarios_salvar_permissoes(usuario_id):
 
     cache_perm = {p.codigo: p for p in Permissao.query.all()}
 
-    # remove não marcadas
     for cod, up in list(atuais.items()):
         if cod not in enviados:
             db.session.delete(up)
 
-    # adiciona novas
     for cod in enviados:
         if cod not in atuais:
             perm = cache_perm.get(cod)
@@ -396,7 +407,20 @@ def usuarios_novo():
     return render_template("usuario_form.html")
 
 # =============================================================================
-# ALUNOS (lista simples + novo/editar/excluir)
+# HELPERS
+# =============================================================================
+def _parse_hhmm(val: str) -> dtime | None:
+    try:
+        hh, mm = val.split(":")
+        return dtime(hour=int(hh), minute=int(mm))
+    except Exception:
+        return None
+
+def _get_bool(val):
+    return True if str(val).lower() in ("1", "true", "on", "sim") else False
+
+# =============================================================================
+# ALUNOS (lista + novo/editar/excluir) — com campos extras no JSON
 # =============================================================================
 @app.route("/uploads/<path:filename>", endpoint="uploads")
 @login_required
@@ -413,12 +437,20 @@ def alunos_listar():
 @login_required
 @perm_required("ALUNO_CRIAR")
 def alunos_novo():
+    escolas = Escola.query.order_by(Escola.nome.asc()).all()
+    series = Serie.query.order_by(Serie.nome.asc()).all()
+    horarios = Horario.query.order_by(Horario.hora_inicio.asc()).all()
+
     if request.method == "POST":
         nome = request.form.get("nome","").strip()
-        escola = request.form.get("escola","").strip()
-        horario = request.form.get("horario","").strip()
+        escola = request.form.get("escola") or request.form.get("escola_text","")
+        serie = request.form.get("serie","")
+        horario_sel = request.form.get("horario_sel","")
+        horario_txt = request.form.get("horario_txt","").strip()
+        horario = horario_sel or horario_txt  # usa o horário selecionado ou texto livre
         telefone_mae = request.form.get("telefone_mae","").strip()
 
+        # Foto
         foto_file = request.files.get("foto")
         foto_path = None
         if foto_file and foto_file.filename:
@@ -428,39 +460,116 @@ def alunos_novo():
 
         if not nome:
             flash("Informe o nome do aluno.", "warning")
-            return render_template("alunos/novo.html")
+            return render_template("alunos/novo.html", escolas=escolas, series=series, horarios=horarios)
 
-        db.session.add(Aluno(
-            nome=nome, escola=escola, horario=horario,
-            telefone_mae=telefone_mae, foto_path=foto_path
-        ))
+        # cria aluno básico
+        aluno = Aluno(nome=nome, escola=escola, horario=horario, telefone_mae=telefone_mae, foto_path=foto_path)
+        db.session.add(aluno)
+        db.session.flush()  # obter ID
+
+        # monta JSON dos campos extras
+        dados = {
+            "naturalidade": request.form.get("naturalidade","").strip(),
+            "nacionalidade": request.form.get("nacionalidade","").strip(),
+            "data_nascimento": request.form.get("data_nascimento","").strip(),
+            "idade": request.form.get("idade","").strip(),
+            "anos": request.form.get("anos","").strip(),
+            "sexo": request.form.get("sexo","").strip(),
+            "nome_pai": request.form.get("nome_pai","").strip(),
+            "nome_mae": request.form.get("nome_mae","").strip(),
+            "endereco": request.form.get("endereco","").strip(),
+            "numero": request.form.get("numero","").strip(),
+            "bairro": request.form.get("bairro","").strip(),
+            "telefone_celular": request.form.get("telefone_celular","").strip(),
+            "telefone_fixo": request.form.get("telefone_fixo","").strip(),
+            "serie": serie,
+            "dificuldade": request.form.get("dificuldade","nao"),
+            "dificuldade_qual": request.form.get("dificuldade_qual","").strip(),
+            "medicamento_controlado": request.form.get("medicamento_controlado","nao"),
+            "medicamento_qual": request.form.get("medicamento_qual","").strip(),
+            "matutino_sim": _get_bool(request.form.get("matutino_sim")),
+            "horario_matutino": request.form.get("horario_matutino","").strip(),
+            "vespertino_sim": _get_bool(request.form.get("vespertino_sim")),
+            "horario_vespertino": request.form.get("horario_vespertino","").strip(),
+            "inicio_aulas": request.form.get("inicio_aulas","").strip(),
+            "mensalidade": request.form.get("mensalidade","").strip(),  # 170/180/190
+        }
+        db.session.add(AlunoExtra(aluno_id=aluno.id, dados=json.dumps(dados, ensure_ascii=False)))
         db.session.commit()
         flash("Aluno cadastrado!", "success")
         return redirect(url_for("alunos_listar"))
-    return render_template("alunos/novo.html")
+
+    return render_template("alunos/novo.html", escolas=escolas, series=series, horarios=horarios)
 
 @app.route("/alunos/<int:id>/editar", methods=["GET", "POST"], endpoint="alunos_editar")
 @login_required
 @perm_required("ALUNO_EDITAR")
 def alunos_editar(id):
     aluno = Aluno.query.get_or_404(id)
+    escolas = Escola.query.order_by(Escola.nome.asc()).all()
+    series = Serie.query.order_by(Serie.nome.asc()).all()
+    horarios = Horario.query.order_by(Horario.hora_inicio.asc()).all()
+
+    extra = aluno.extra.dados if aluno.extra else "{}"
+    dados = {}
+    try:
+        dados = json.loads(extra)
+    except Exception:
+        dados = {}
+
     if request.method == "POST":
         aluno.nome = request.form.get("nome","").strip()
-        aluno.escola = request.form.get("escola","").strip()
-        aluno.horario = request.form.get("horario","").strip()
+        aluno.escola = request.form.get("escola") or request.form.get("escola_text","")
+        aluno.horario = request.form.get("horario_sel","") or request.form.get("horario_txt","").strip()
         aluno.telefone_mae = request.form.get("telefone_mae","").strip()
+
         foto_file = request.files.get("foto")
         if foto_file and foto_file.filename:
             fname = f"{uuid.uuid4().hex}_{foto_file.filename}"
             foto_file.save(os.path.join(UPLOAD_DIR, fname))
             aluno.foto_path = fname
+
         if not aluno.nome:
             flash("Informe o nome do aluno.", "warning")
-            return render_template("alunos/editar.html", aluno=aluno)
+            return render_template("alunos/editar.html", aluno=aluno, dados=dados, escolas=escolas, series=series, horarios=horarios)
+
+        dados_atual = {
+            "naturalidade": request.form.get("naturalidade","").strip(),
+            "nacionalidade": request.form.get("nacionalidade","").strip(),
+            "data_nascimento": request.form.get("data_nascimento","").strip(),
+            "idade": request.form.get("idade","").strip(),
+            "anos": request.form.get("anos","").strip(),
+            "sexo": request.form.get("sexo","").strip(),
+            "nome_pai": request.form.get("nome_pai","").strip(),
+            "nome_mae": request.form.get("nome_mae","").strip(),
+            "endereco": request.form.get("endereco","").strip(),
+            "numero": request.form.get("numero","").strip(),
+            "bairro": request.form.get("bairro","").strip(),
+            "telefone_celular": request.form.get("telefone_celular","").strip(),
+            "telefone_fixo": request.form.get("telefone_fixo","").strip(),
+            "serie": request.form.get("serie",""),
+            "dificuldade": request.form.get("dificuldade","nao"),
+            "dificuldade_qual": request.form.get("dificuldade_qual","").strip(),
+            "medicamento_controlado": request.form.get("medicamento_controlado","nao"),
+            "medicamento_qual": request.form.get("medicamento_qual","").strip(),
+            "matutino_sim": _get_bool(request.form.get("matutino_sim")),
+            "horario_matutino": request.form.get("horario_matutino","").strip(),
+            "vespertino_sim": _get_bool(request.form.get("vespertino_sim")),
+            "horario_vespertino": request.form.get("horario_vespertino","").strip(),
+            "inicio_aulas": request.form.get("inicio_aulas","").strip(),
+            "mensalidade": request.form.get("mensalidade","").strip(),
+        }
+
+        if aluno.extra:
+            aluno.extra.dados = json.dumps(dados_atual, ensure_ascii=False)
+        else:
+            db.session.add(AlunoExtra(aluno_id=aluno.id, dados=json.dumps(dados_atual, ensure_ascii=False)))
+
         db.session.commit()
         flash("Alterações salvas!", "success")
         return redirect(url_for("alunos_listar"))
-    return render_template("alunos/editar.html", aluno=aluno)
+
+    return render_template("alunos/editar.html", aluno=aluno, dados=dados, escolas=escolas, series=series, horarios=horarios)
 
 @app.route("/alunos/<int:id>/excluir", methods=["POST"], endpoint="alunos_excluir")
 @login_required
@@ -472,7 +581,7 @@ def alunos_excluir(id):
     flash("Aluno excluído!", "success")
     return redirect(url_for("alunos_listar"))
 
-# Endpoint de busca dinâmica de alunos (para o formulário de atividade)
+# Busca dinâmica (para atividades etc.)
 @app.route("/alunos/search")
 @login_required
 def alunos_search():
@@ -600,13 +709,6 @@ def series_excluir(id):
 # =============================================================================
 # HORÁRIOS
 # =============================================================================
-def _parse_hhmm(val: str) -> dtime | None:
-    try:
-        hh, mm = val.split(":")
-        return dtime(hour=int(hh), minute=int(mm))
-    except Exception:
-        return None
-
 @app.route("/horarios", endpoint="horarios_listar")
 @login_required
 def horarios_listar():
