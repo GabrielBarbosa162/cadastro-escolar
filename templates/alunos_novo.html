@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% block title %}Cadastrar Aluno{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="m-0">Cadastrar aluno</h3>
+    <a href="{{ url_for('alunos_listar') }}" class="btn btn-outline-light"><i class="bi bi-arrow-left"></i> Voltar</a>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="card card-soft p-4">
+    <div class="row g-3">
+
+      <div class="col-12 col-lg-8">
+        <label class="form-label">Nome Completo</label>
+        <input name="nome" class="form-control" required>
+      </div>
+
+      <div class="col-6 col-lg-2">
+        <label class="form-label">Data de nascimento</label>
+        <input type="date" name="data_nascimento" class="form-control" required>
+      </div>
+
+      <div class="col-6 col-lg-2">
+        <label class="form-label">Sexo</label>
+        <select class="form-select" name="sexo">
+          <option value="M">Masculino</option>
+          <option value="F">Feminino</option>
+        </select>
+      </div>
+
+      <div class="col-6 col-lg-3">
+        <label class="form-label">Naturalidade</label>
+        <input name="naturalidade" class="form-control">
+      </div>
+      <div class="col-6 col-lg-3">
+        <label class="form-label">Nacionalidade</label>
+        <input name="nacionalidade" class="form-control">
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <label class="form-label">Endereço</label>
+        <input name="endereco" class="form-control">
+      </div>
+
+      <div class="col-4 col-lg-2">
+        <label class="form-label">Número</label>
+        <input name="numero" class="form-control">
+      </div>
+      <div class="col-8 col-lg-4">
+        <label class="form-label">Bairro</label>
+        <input name="bairro" class="form-control">
+      </div>
+
+      <div class="col-6 col-lg-3">
+        <label class="form-label">Telefone mãe</label>
+        <input name="telefone_mae" class="form-control" placeholder="(00) 00000-0000">
+      </div>
+      <div class="col-6 col-lg-3">
+        <label class="form-label">Telefone (celular)</label>
+        <input name="telefone_celular" class="form-control">
+      </div>
+      <div class="col-6 col-lg-3">
+        <label class="form-label">Telefone (fixo)</label>
+        <input name="telefone_fixo" class="form-control">
+      </div>
+
+      <div class="col-12"><hr class="border-secondary"></div>
+
+      <!-- ESCOLA / SÉRIE / HORÁRIO / MENSALIDADE (listas vindas do backend) -->
+      <div class="col-12 col-lg-3">
+        <label class="form-label">Escola</label>
+        <select name="escola_id" class="form-select" required>
+          {% for e in escolas %}<option value="{{ e.id }}">{{ e.nome }}</option>{% endfor %}
+        </select>
+      </div>
+
+      <div class="col-12 col-lg-3">
+        <label class="form-label">Série</label>
+        <select name="serie_id" class="form-select" required>
+          {% for s in series %}<option value="{{ s.id }}">{{ s.nome }}</option>{% endfor %}
+        </select>
+      </div>
+
+      <div class="col-12 col-lg-3">
+        <label class="form-label">Horário</label>
+        <select name="horario_id" class="form-select" required>
+          {% for h in horarios %}<option value="{{ h.id }}">{{ h.label or (h.hora_inicio ~ ' - ' ~ h.hora_fim) }}</option>{% endfor %}
+        </select>
+      </div>
+
+      <div class="col-12 col-lg-3">
+        <label class="form-label">Mensalidade</label>
+        <select name="mensalidade_id" class="form-select">
+          {% for m in mensalidades %}<option value="{{ m.id }}">{{ m.nome }}</option>{% endfor %}
+        </select>
+      </div>
+
+      <div class="col-12"><hr class="border-secondary"></div>
+
+      <div class="col-12 col-lg-6">
+        <label class="form-label">Nome do Pai</label>
+        <input name="nome_pai" class="form-control">
+      </div>
+      <div class="col-12 col-lg-6">
+        <label class="form-label">Nome da Mãe</label>
+        <input name="nome_mae" class="form-control">
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <label class="form-label">Algum tipo de dificuldade?</label>
+        <div class="input-group">
+          <select name="dificuldade" class="form-select">
+            <option value="NAO">Não</option>
+            <option value="SIM">Sim</option>
+          </select>
+          <input name="dificuldade_qual" class="form-control" placeholder="Qual? (opcional)">
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <label class="form-label">Medicamento controlado?</label>
+        <div class="input-group">
+          <select name="medicamento_controlado" class="form-select">
+            <option value="NAO">Não</option>
+            <option value="SIM">Sim</option>
+          </select>
+          <input name="medicamento_qual" class="form-control" placeholder="Qual? (opcional)">
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-4">
+        <label class="form-label">Início das aulas</label>
+        <input type="date" class="form-control" name="inicio_aulas">
+      </div>
+
+      <div class="col-12 col-lg-4">
+        <label class="form-label">Foto do aluno</label>
+        <input type="file" name="foto" class="form-control" accept="image/*">
+      </div>
+
+      <div class="col-12 d-flex justify-content-end mt-2">
+        <button class="btn btn-brand"><i class="bi bi-check2-circle"></i> Salvar</button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

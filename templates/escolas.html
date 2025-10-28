@@ -1,48 +1,31 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block title %}Escolas{% endblock %}
-
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h4 class="mb-0">Escolas</h4>
-  <a href="{{ url_for('escolas_nova') }}" class="btn btn-primary">+ Nova escola</a>
-</div>
-
-<div class="card">
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-dark table-hover align-middle mb-0">
-        <thead>
-          <tr>
-            <th style="width:60%">Nome</th>
-            <th style="width:40%" class="text-end">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% if escolas %}
-            {% for escola in escolas %}
-              <tr>
-                <td>{{ escola.nome }}</td>
-                <td class="text-end">
-                  <form method="post"
-                        action="{{ url_for('escola_excluir', escola_id=escola.id) }}"
-                        class="d-inline"
-                        onsubmit="return confirm('Excluir a escola \"{{ escola.nome }}\"?');">
-                    <button class="btn btn-sm btn-outline-danger">Excluir</button>
-                  </form>
-                </td>
-              </tr>
-            {% endfor %}
-          {% else %}
-            <tr>
-              <td colspan="2" class="text-center text-secondary py-4">
-                Nenhuma escola cadastrada.
-              </td>
-            </tr>
-          {% endif %}
-        </tbody>
-      </table>
-    </div>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="m-0">Escolas</h3>
+    <a href="{{ url_for('escolas_novo') }}" class="btn btn-light">Nova Escola</a>
   </div>
+
+  {% if escolas %}
+    <ul class="list-group">
+      {% for e in escolas %}
+        <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center">
+          <div>
+            <div class="fw-semibold">{{ e.nome }}</div>
+            <div class="small text-secondary">Cadastrada em {{ e.criado_em.strftime('%d/%m/%Y %H:%M') }}</div>
+          </div>
+          <div class="ms-3">
+            <a class="btn btn-sm btn-outline-light" href="{{ url_for('escolas_editar', id=e.id) }}">Editar</a>
+            <form method="post" action="{{ url_for('escolas_excluir', id=e.id) }}" class="d-inline" onsubmit="return confirm('Excluir esta escola?');">
+              <button class="btn btn-sm btn-outline-danger">Excluir</button>
+            </form>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="alert alert-secondary">Nenhuma escola cadastrada.</div>
+  {% endif %}
 </div>
 {% endblock %}
-                        

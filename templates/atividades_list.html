@@ -1,67 +1,33 @@
 {% extends 'base.html' %}
 {% block title %}Atividades{% endblock %}
 {% block content %}
-<div class="container py-4">
+<div class="container py-3">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="mb-0">Atividades</h3>
-    <a href="{{ url_for('atividades.novo') }}" class="btn btn-primary">
-      <i class="bi bi-plus-circle me-1"></i> Nova Atividade
-    </a>
+    <a href="{{ url_for('atividades.nova') }}" class="btn btn-light">Lançar atividade</a>
   </div>
 
-  <form class="mb-3" method="get">
-    <div class="input-group">
-      <input name="q" class="form-control" placeholder="Buscar por título..." value="{{ request.args.get('q','') }}">
-      <button class="btn btn-outline-light">Buscar</button>
-    </div>
-  </form>
-
-  <div class="card border-0 shadow-sm">
+  <div class="card">
     <div class="card-body p-0">
-      <table class="table table-dark align-middle mb-0">
-        <thead>
-          <tr>
-            <th>Título</th>
-            <th>Aluno</th>
-            <th style="width:140px">Data</th>
-            <th>Conteúdo</th>
-            <th class="text-center" style="width:120px">WhatsApp</th>
-            <th class="text-end" style="width:140px">Ações</th>
-          </tr>
-        </thead>
+      <table class="table table-hover mb-0">
+        <thead><tr><th>Aluno</th><th>Data</th><th>Conteúdo</th><th style="width:160px;">Ações</th></tr></thead>
         <tbody>
-          {% for it in itens %}
+          {% for it in atividades %}
             <tr>
-              <td class="fw-semibold">{{ it.nome }}</td>
-              <td>{{ it.aluno_nome or '—' }}</td>
-              <td class="text-secondary">{{ it.data_atividade.strftime('%d/%m/%Y') if it.data_atividade else '—' }}</td>
-              <td class="text-truncate" style="max-width:260px;">{{ it.conteudo or '—' }}</td>
-              <td class="text-center">
-                {% set w = wa_link(it) %}
-                {% if w %}
-                  <a class="btn btn-success btn-sm" href="{{ w }}" target="_blank" rel="noopener" title="Abrir no WhatsApp Web">
-                    <i class="bi bi-whatsapp"></i>
-                  </a>
-                {% else %}
-                  <span class="text-secondary small">—</span>
-                {% endif %}
-              </td>
-              <td class="text-end">
+              <td>{{ it.aluno.nome if it.aluno else '-' }}</td>
+              <td>{{ it.data.strftime('%d/%m/%Y') if it.data else '-' }}</td>
+              <td class="text-truncate" style="max-width:420px;">{{ it.conteudo or '-' }}</td>
+              <td>
                 <div class="btn-group btn-group-sm">
-                  <a href="{{ url_for('atividades.editar', id=it.id) }}" class="btn btn-outline-light" title="Editar">
-                    <i class="bi bi-pencil-square"></i>
-                  </a>
-                  <form method="post" action="{{ url_for('atividades.excluir', id=it.id) }}"
-                        onsubmit="return confirm('Excluir esta atividade?');">
-                    <button class="btn btn-outline-danger" title="Excluir">
-                      <i class="bi bi-trash"></i>
-                    </button>
+                  <a class="btn btn-outline-light" href="{{ url_for('atividades.editar', id=it.id) }}">Editar</a>
+                  <form method="post" action="{{ url_for('atividades.excluir', id=it.id) }}" onsubmit="return confirm('Excluir esta atividade?');">
+                    <button class="btn btn-outline-danger">Excluir</button>
                   </form>
                 </div>
               </td>
             </tr>
           {% else %}
-            <tr><td colspan="6" class="text-center text-secondary py-4">Nenhuma atividade cadastrada.</td></tr>
+            <tr><td colspan="4" class="text-center text-secondary py-4">Nenhuma atividade lançada.</td></tr>
           {% endfor %}
         </tbody>
       </table>

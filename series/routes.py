@@ -1,68 +1,57 @@
-from flask import render_template, request, redirect, url_for, flash, abort
-from flask_login import login_required, current_user
+from flask import render_template, request, redirect, url_for, flash
+from flask_login import login_required
 from . import bp
-from models import db, Serie
-
-def _pode_gerenciar():
-    return current_user.is_authenticated and current_user.papel in ("DIRETORIA",)
+from app import db, Usuario, Aluno, Escola, Serie, Horario, Mensalidade, Atividade, perm_required, usuario_tem_permissao
 
 @bp.route("/")
 @login_required
 def listar():
-    q = (request.args.get("q") or "").strip()
-    query = Serie.query
-    if q:
-        query = query.filter(Serie.nome.ilike(f"%{q}%"))
-    itens = query.order_by(Serie.nome.asc()).all()
-    return render_template("series_list.html", itens=itens)
+    series = Serie.query.order_by(Serie.nome.asc()).all()
+    return render_template("series/listar.html", series=series)
 
-@bp.route("/novo", methods=["GET", "POST"])
+@bp.route("/nova", methods=["GET", "POST"])
 @login_required
-def novo():
-    if not _pode_gerenciar():
-        abort(403)
+@perm_required("SERIE_ADICIONAR")
+def nova():
     if request.method == "POST":
-        nome = (request.form.get("nome") or "").strip()
+        nome = request.form.get("nome", "").strip()
         if not nome:
             flash("Informe o nome da série.", "warning")
-            return render_template("serie_form.html")
-        if Serie.query.filter(Serie.nome.ilike(nome)).first():
-            flash("Já existe uma série com esse nome.", "warning")
-            return render_template("serie_form.html")
-        db.session.add(Serie(nome=nome))
-        db.session.commit()
-        flash("Série cadastrada.", "success")
-        return redirect(url_for("series.listar"))
-    return render_template("serie_form.html")
+        else:
+            db.session.add(Serie(nome=nome))
+            db.session.commit()
+            flash("Série cadastrada.", "success")
+            return redirect(url_for("series.listar"))
+    return render_template("series/nova.html")
 
 @bp.route("/<int:id>/editar", methods=["GET", "POST"])
 @login_required
-def editar(id: int):
-    if not _pode_gerenciar():
-        abort(403)
-    s = Serie.query.get_or_404(id)
+@perm_required("SERIE_ADICIONAR")
+def editar(id):
+    serie = db.session.get(Serie, id)
+    if not serie:
+        flash("Série não encontrada.", "warning")
+        return redirect(url_for("series.listar"))
     if request.method == "POST":
-        nome = (request.form.get("nome") or "").strip()
+        nome = request.form.get("nome", "").strip()
         if not nome:
             flash("Informe o nome da série.", "warning")
-            return render_template("serie_form.html", s=s)
-        existente = Serie.query.filter(Serie.nome.ilike(nome), Serie.id != s.id).first()
-        if existente:
-            flash("Já existe outra série com esse nome.", "warning")
-            return render_template("serie_form.html", s=s)
-        s.nome = nome
-        db.session.commit()
-        flash("Série atualizada.", "success")
-        return redirect(url_for("series.listar"))
-    return render_template("serie_form.html", s=s)
+        else:
+            serie.nome = nome
+            db.session.commit()
+            flash("Série atualizada.", "success")
+            return redirect(url_for("series.listar"))
+    return render_template("series/editar.html", serie=serie)
 
 @bp.route("/<int:id>/excluir", methods=["POST"])
 @login_required
-def excluir(id: int):
-    if not _pode_gerenciar():
-        abort(403)
-    s = Serie.query.get_or_404(id)
-    db.session.delete(s)
-    db.session.commit()
-    flash("Série excluída.", "success")
+@perm_required("SERIE_EXCLUIR")
+def excluir(id):
+    serie = db.session.get(Serie, id)
+    if serie:
+        db.session.delete(serie)
+        db.session.commit()
+        flash("Série excluída.", "success")
+    else:
+        flash("Série não encontrada.", "warning")
     return redirect(url_for("series.listar"))

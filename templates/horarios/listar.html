@@ -1,6 +1,4 @@
-{% extends "base.html" %}
-{% block title %}Horários{% endblock %}
-{% block content %}
+{% extends 'base.html' %}{% block title %}Horários{% endblock %}{% block content %}
 <div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="mb-0">Lista de Horários</h3>
@@ -8,21 +6,12 @@
       <a href="{{ url_for('horarios.novo') }}" class="btn btn-success">Novo Horário</a>
     {% endif %}
   </div>
-
   {% if horarios %}
     <div class="table-responsive">
       <table class="table table-dark table-striped align-middle">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Início</th>
-            <th>Fim</th>
-            <th>Faixa</th>
-            <th class="text-end">Ações</th>
-          </tr>
-        </thead>
+        <thead><tr><th>#</th><th>Início</th><th>Fim</th><th>Faixa</th><th class="text-end">Ações</th></tr></thead>
         <tbody>
-          {% for h in horarios %}
+        {% for h in horarios %}
           <tr>
             <td>{{ h.id }}</td>
             <td>{{ h.hora_inicio }}</td>
@@ -39,7 +28,7 @@
               {% endif %}
             </td>
           </tr>
-          {% endfor %}
+        {% endfor %}
         </tbody>
       </table>
     </div>

@@ -10,9 +10,17 @@
   {% if escolas %}
     <ul class="list-group">
       {% for e in escolas %}
-        <li class="list-group-item bg-dark text-white d-flex justify-content-between">
-          <span>{{ e.nome }}</span>
-          <span class="small text-secondary">{{ e.criado_em.strftime('%d/%m/%Y %H:%M') }}</span>
+        <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center">
+          <div>
+            <div class="fw-semibold">{{ e.nome }}</div>
+            <div class="small text-secondary">Cadastrada em {{ e.criado_em.strftime('%d/%m/%Y %H:%M') }}</div>
+          </div>
+          <div class="ms-3">
+            <a class="btn btn-sm btn-outline-light" href="{{ url_for('escolas_editar', id=e.id) }}">Editar</a>
+            <form method="post" action="{{ url_for('escolas_excluir', id=e.id) }}" class="d-inline" onsubmit="return confirm('Excluir esta escola?');">
+              <button class="btn btn-sm btn-outline-danger">Excluir</button>
+            </form>
+          </div>
         </li>
       {% endfor %}
     </ul>

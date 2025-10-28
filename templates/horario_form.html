@@ -1,38 +1,28 @@
 {% extends 'base.html' %}
-{% block title %}{{ 'Editar Horário' if h else 'Novo Horário' }}{% endblock %}
+{% block title %}{{ 'Editar horário' if horario else 'Novo horário' }}{% endblock %}
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="mb-0">{{ 'Editar Horário' if h else 'Novo Horário' }}</h3>
-    <a href="{{ url_for('horarios.listar') }}" class="btn btn-outline-light">Voltar</a>
-  </div>
-
-  <form method="post" class="card border-0 shadow-sm">
+<div class="container py-3">
+  <div class="card">
     <div class="card-body">
-      <div class="row g-3">
-        <div class="col-6 col-md-3">
-          <label class="form-label">Hora início</label>
-          <input type="time" name="hora_inicio" class="form-control" required
-                 value="{{ hi if hi is defined else (h.hora_inicio if h else '') }}">
+      <h4 class="mb-3">{{ 'Editar horário' if horario else 'Novo horário' }}</h4>
+      <form method="post">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Hora início</label>
+            <input type="time" name="hora_inicio" class="form-control" required value="{{ horario.hora_inicio if horario else '' }}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Hora fim</label>
+            <input type="time" name="hora_fim" class="form-control" required value="{{ horario.hora_fim if horario else '' }}">
+          </div>
+          <div class="col-12 d-flex justify-content-end gap-2">
+            <a href="{{ url_for('horarios.listar') }}" class="btn btn-outline-light">Voltar</a>
+            <button class="btn btn-light">{{ 'Salvar alterações' if horario else 'Cadastrar' }}</button>
+          </div>
         </div>
-        <div class="col-6 col-md-3">
-          <label class="form-label">Hora fim</label>
-          <input type="time" name="hora_fim" class="form-control" required
-                 value="{{ hf if hf is defined else (h.hora_fim if h else '') }}">
-        </div>
-      </div>
-      <small class="text-secondary">A hora fim deve ser maior que a hora início.</small>
+      </form>
+      <p class="text-secondary small mt-2 mb-0">A hora fim deve ser maior que a hora início.</p>
     </div>
-    <div class="card-footer d-flex justify-content-between">
-      {% if h %}
-        <span class="text-secondary small">ID {{ h.id }}</span>
-      {% else %}
-        <span></span>
-      {% endif %}
-      <button class="btn btn-success">
-        <i class="bi bi-check2 me-1"></i> Salvar
-      </button>
-    </div>
-  </form>
+  </div>
 </div>
 {% endblock %}

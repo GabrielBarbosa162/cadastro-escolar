@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import render_template, request, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
 from . import bp
-from models import db, Horario, Aluno
+from app import db, Horario, Aluno
 
 def _pode_gerenciar():
     return current_user.is_authenticated and current_user.papel in ("DIRETORIA", "PROFESSOR")

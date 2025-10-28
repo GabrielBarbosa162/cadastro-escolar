@@ -1,16 +1,30 @@
 {% extends 'base.html' %}
-{% block title %}Início{% endblock %}
+{% block title %}Início · Cadastro Escolar{% endblock %}
 {% block content %}
-<div class="container py-5 text-white">
-  <h2 class="mb-4">Bem-vindo!</h2>
-  <p class="text-secondary">Use a barra superior para navegar.</p>
-  <div class="mt-3 d-flex flex-wrap gap-2">
-    <a class="btn btn-primary" href="{{ url_for('alunos_listar') }}">Alunos</a>
-    <a class="btn btn-outline-light" href="{{ url_for('usuarios_list') }}">Usuários</a>
-    <a class="btn btn-outline-light" href="{{ url_for('escolas_listar') }}">Escolas</a>
-    <a class="btn btn-outline-light" href="{{ url_for('series_listar') }}">Séries</a>
-    <a class="btn btn-outline-light" href="{{ url_for('atividades_listar') }}">Atividades</a>
-    <a class="btn btn-outline-light" href="{{ url_for('horarios_listar') }}">Horários</a>
+<div class="container py-4">
+  <div class="row g-3">
+    <div class="col-12 col-lg-8">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="mb-2">Bem-vindo!</h3>
+          <p class="text-secondary mb-0">Use o menu para navegar entre alunos, escolas, séries, horários e atividades.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="mb-3">Acesso Rápido</h5>
+          <div class="d-grid gap-2">
+            <a href="{{ url_for('alunos.novo') }}" class="btn btn-light">Cadastrar novo aluno</a>
+            <a href="{{ url_for('escolas.nova') }}" class="btn btn-outline-light">Nova Escola</a>
+            <a href="{{ url_for('series.nova') }}" class="btn btn-outline-light">Nova Série</a>
+            <a href="{{ url_for('horarios.novo') }}" class="btn btn-outline-light">Novo Horário</a>
+            <a href="{{ url_for('atividades.nova') }}" class="btn btn-outline-light">Lançar Atividade</a>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

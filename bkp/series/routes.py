@@ -1,7 +1,7 @@
 from flask import render_template, request, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
 from . import bp
-from models import db, Serie
+from app import db, Serie
 
 def _pode_gerenciar():
     return current_user.is_authenticated and current_user.papel in ("DIRETORIA",)
