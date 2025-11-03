@@ -1,16 +1,14 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block title %}Usuários{% endblock %}
-
 {% block content %}
 <div class="container py-4">
   <div class="d-flex justify-content-between align-items-center">
     <h3 class="mb-0">Usuários</h3>
     <div class="d-flex gap-2">
-      <a href="{{ url_for('usuarios_list', mostrar='todos' if not mostrar_todos else None) }}"
-         class="btn btn-outline-light">
+      <a href="{{ url_for('usuarios_list', mostrar='todos' if not mostrar_todos else None) }}" class="btn btn-outline-light">
         {{ 'Mostrar apenas ativos' if mostrar_todos else 'Mostrar todos' }}
       </a>
-      {% if current_user.papel == 'DIRETORIA' and can('USUARIO_CRIAR') %}
+      {% if current_user.papel == 'DIRETORIA' %}
         <a href="{{ url_for('usuarios_novo') }}" class="btn btn-light">Novo usuário</a>
       {% endif %}
     </div>
@@ -20,18 +18,11 @@
     <table class="table table-dark table-striped align-middle">
       <thead>
         <tr>
-          <th>#</th>
-          <th>E-mail</th>
-          <th>Papel</th>
-          <th>Ativo</th>
-          <th>Último acesso</th>
-          <th>Online</th>
-          <th>Permissões</th>
-          <th class="text-end">Ações</th>
+          <th>#</th><th>E-mail</th><th>Papel</th><th>Ativo</th><th>Último acesso</th><th>Online</th><th>Permissões</th>
         </tr>
       </thead>
       <tbody>
-      {% for u in usuarios %}
+        {% for u in usuarios %}
         <tr>
           <td>{{ u.id }}</td>
           <td>{{ u.email }}</td>
@@ -39,10 +30,8 @@
           <td>{{ 'Sim' if u.ativo else 'Não' }}</td>
           <td>
             {% if last_seen_map.get(u.id) %}
-              {{ last_seen_map[u.id].strftime('%d/%m/%Y %H:%M') }}
-            {% else %}
-              —
-            {% endif %}
+              {{ last_seen_map[u.id].astimezone().strftime('%d/%m/%Y %H:%M') }}
+            {% else %}—{% endif %}
           </td>
           <td>
             {% if active_map.get(u.id) %}
@@ -51,24 +40,20 @@
               <span class="badge text-bg-secondary">offline</span>
             {% endif %}
           </td>
-          <td style="min-width: 380px;">
+          <td style="min-width:380px;">
             {% if u.papel == 'DIRETORIA' %}
               <span class="text-success">Diretoria já tem todas as permissões.</span>
             {% else %}
               <form method="post" action="{{ url_for('usuarios_salvar_permissoes', usuario_id=u.id, mostrar=('todos' if mostrar_todos else None)) }}">
                 <div class="row g-2">
                   {% for cod in permissoes_codigos %}
-                    <div class="col-12 col-md-6">
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="permissoes[]"
-                               id="perm_{{ u.id }}_{{ cod }}"
-                               value="{{ cod }}"
-                               {% if permissoes_por_usuario[u.id][cod] %}checked{% endif %}>
-                        <label class="form-check-label small" for="perm_{{ u.id }}_{{ cod }}">
-                          {{ permissoes_nomes[cod] }}
-                        </label>
-                      </div>
+                  <div class="col-12 col-md-6">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="permissoes[]" id="perm_{{ u.id }}_{{ cod }}" value="{{ cod }}"
+                             {% if permissoes_por_usuario[u.id][cod] %}checked{% endif %}>
+                      <label class="form-check-label small" for="perm_{{ u.id }}_{{ cod }}">{{ permissoes_nomes[cod] }}</label>
                     </div>
+                  </div>
                   {% endfor %}
                 </div>
                 <div class="mt-2">
@@ -79,12 +64,9 @@
             {% endif %}
           </td>
         </tr>
-      {% endfor %}
+        {% endfor %}
       </tbody>
     </table>
   </div>
-  {% else %}
-  <div class="alert alert-secondary">Nenhum usuário.</div>
-  {% endif %}
 </div>
 {% endblock %}

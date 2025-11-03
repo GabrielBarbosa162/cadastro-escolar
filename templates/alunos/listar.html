@@ -1,77 +1,56 @@
 {% extends 'base.html' %}
 {% block title %}Alunos{% endblock %}
 {% block content %}
-<div class="container py-4">
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Alunos</h4>
+  <a class="btn btn-primary" href="{{ url_for('alunos_novo') }}">Novo aluno</a>
+</div>
 
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <h3 class="m-0">Alunos</h3>
-
-    <div class="d-flex gap-2">
-      {% if 'alunos_novo' in view_functions and can('ALUNO_CRIAR') %}
-        <a href="{{ url_for('alunos_novo') }}" class="btn btn-brand">
-          <i class="bi bi-person-plus"></i> Cadastrar aluno
-        </a>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="card card-soft">
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-dark table-hover align-middle mb-0">
-          <thead>
-            <tr class="text-uppercase small">
-              <th style="width:72px;">Foto</th>
-              <th>Nome</th>
-              <th>Escola</th>
-              <th>Horário</th>
-              <th>Telefone da mãe</th>
-              <th style="width:160px;">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for a in alunos %}
-            <tr>
-              <td>
-                {% if a.foto_path %}
-                  <img src="{{ url_for('uploads', filename=a.foto_path) }}" class="avatar-sm" alt="foto">
-                {% else %}
-                  <span class="avatar-sm d-inline-block"></span>
-                {% endif %}
-              </td>
-              <td>{{ a.nome }}</td>
-              <td>{{ a.escola or '-' }}</td>
-              <td>
-                {% if a.horario %}{{ a.horario }}
-                {% elif a.horario_resumo %}{{ a.horario_resumo }}
-                {% else %}-{% endif %}
-              </td>
-              <td>{{ a.telefone_mae or '-' }}</td>
-              <td>
-                <div class="d-flex gap-2">
-                  {% if 'alunos_editar' in view_functions and can('ALUNO_EDITAR') %}
-                    {# ATENÇÃO: troque 'id' por 'aluno_id' se sua rota espera 'aluno_id' #}
-                    <a class="btn btn-sm btn-outline-light" href="{{ url_for('alunos_editar', id=a.id) }}">
-                      <i class="bi bi-pencil"></i>
-                    </a>
-                  {% endif %}
-                  {% if 'alunos_excluir' in view_functions and can('ALUNO_EXCLUIR') %}
-                    {# ATENÇÃO: troque 'id' por 'aluno_id' se sua rota espera 'aluno_id' #}
-                    <form method="post" action="{{ url_for('alunos_excluir', id=a.id) }}" onsubmit="return confirm('Excluir este aluno?');">
-                      <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                    </form>
-                  {% endif %}
-                </div>
-              </td>
-            </tr>
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Foto</th>
+          <th>Nome</th>
+          <th>Escola</th>
+          <th>Série</th>
+          <th>Horário</th>
+          <th>Telefone mãe</th>
+          <th class="text-end">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in items %}
+        <tr>
+          <td>
+            {% if a.foto_path %}
+              <img class="avatar-aluno" src="{{ url_for('uploads', filename=a.foto_path) }}" alt="foto" />
             {% else %}
-            <tr><td colspan="6" class="text-center text-muted py-4">Nenhum aluno cadastrado.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>{{ a.nome }}</td>
+          <td>{{ a.escola.nome if a.escola else '—' }}</td>
+          <td>{{ a.serie.nome if a.serie else '—' }}</td>
+          <td>
+            {% if a.horario %}
+              {{ a.horario.hora_inicio }}–{{ a.horario.hora_fim }}
+            {% else %}—{% endif %}
+          </td>
+          <td>{{ a.telefone_mae or '—' }}</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('alunos_editar', id=a.id) }}">Editar</a>
+            <form class="d-inline" method="post" action="{{ url_for('alunos_excluir', id=a.id) }}" onsubmit="return confirm('Excluir aluno?');">
+              <button class="btn btn-sm btn-outline-danger">Excluir</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center text-muted py-4">Nenhum aluno encontrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
-
 </div>
 {% endblock %}

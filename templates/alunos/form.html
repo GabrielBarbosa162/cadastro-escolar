@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar aluno' if aluno else 'Novo aluno' }}{% endblock %}
+{% block content %}
+<h4 class="mb-3">{{ 'Editar aluno' if aluno else 'Novo aluno' }}</h4>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Nome do aluno</label>
+          <input class="form-control" name="nome" value="{{ aluno.nome if aluno else '' }}" required />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Telefone da mãe</label>
+          <input class="form-control" name="telefone_mae" value="{{ aluno.telefone_mae if aluno else '' }}" />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Escola</label>
+          <select class="form-select" name="escola_id">
+            <option value="">—</option>
+            {% for e in escolas %}
+              <option value="{{ e.id }}" {% if aluno and aluno.escola_id==e.id %}selected{% endif %}>{{ e.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Série</label>
+          <select class="form-select" name="serie_id">
+            <option value="">—</option>
+            {% for s in series %}
+              <option value="{{ s.id }}" {% if aluno and aluno.serie_id==s.id %}selected{% endif %}>{{ s.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Horário</label>
+          <select class="form-select" name="horario_id">
+            <option value="">—</option>
+            {% for h in horarios %}
+              <option value="{{ h.id }}" {% if aluno and aluno.horario_id==h.id %}selected{% endif %}>
+                {{ h.hora_inicio }}–{{ h.hora_fim }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Foto</label>
+          <input class="form-control" type="file" name="foto" accept="image/*" />
+          {% if aluno and aluno.foto_path %}
+          <div class="mt-2">
+            <img class="avatar-aluno" src="{{ url_for('uploads', filename=aluno.foto_path) }}" alt="foto" />
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-12">
+          <label class="form-label">Observações</label>
+          <textarea class="form-control" name="observacoes" rows="3">{{ aluno.observacoes if aluno else '' }}</textarea>
+        </div>
+      </div>
+
+      <div class="mt-3 d-flex gap-2">
+        <button class="btn btn-primary">Salvar</button>
+        <a class="btn btn-secondary" href="{{ url_for('alunos_list') }}">Voltar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

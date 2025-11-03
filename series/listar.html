@@ -1,31 +1,36 @@
 {% extends 'base.html' %}
 {% block title %}Séries{% endblock %}
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="m-0">Séries</h3>
-    <a href="{{ url_for('series_novo') }}" class="btn btn-light">Nova Série</a>
-  </div>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Séries</h4>
+  <a class="btn btn-primary" href="{{ url_for('series_nova') }}">Nova série</a>
+</div>
 
-  {% if series %}
-    <ul class="list-group">
-      {% for s in series %}
-        <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center">
-          <div>
-            <div class="fw-semibold">{{ s.nome }}</div>
-            <div class="small text-secondary">Cadastrada em {{ s.criado_em.strftime('%d/%m/%Y %H:%M') }}</div>
-          </div>
-          <div class="ms-3">
-            <a class="btn btn-sm btn-outline-light" href="{{ url_for('series_editar', id=s.id) }}">Editar</a>
-            <form method="post" action="{{ url_for('series_excluir', id=s.id) }}" class="d-inline" onsubmit="return confirm('Excluir esta série?');">
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Nome</th>
+          <th class="text-end">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in items %}
+        <tr>
+          <td>{{ s.nome }}</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('series_editar', id=s.id) }}">Editar</a>
+            <form class="d-inline" method="post" action="{{ url_for('series_excluir', id=s.id) }}" onsubmit="return confirm('Excluir série?');">
               <button class="btn btn-sm btn-outline-danger">Excluir</button>
             </form>
-          </div>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <div class="alert alert-secondary">Nenhuma série cadastrada.</div>
-  {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="2" class="text-center text-muted py-4">Nenhuma série.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}
