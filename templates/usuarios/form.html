@@ -1,44 +1,31 @@
 {% extends 'base.html' %}
-{% block title %}{{ 'Editar usuário' if user else 'Novo usuário' }}{% endblock %}
+{% block title %}Novo Usuário{% endblock %}
 {% block content %}
-<h4 class="mb-3">{{ 'Editar usuário' if user else 'Novo usuário' }}</h4>
-<div class="card shadow-sm">
-  <div class="card-body">
-    <form method="post">
-      {% if not user %}
-      <div class="mb-3">
+<h4 class="mb-3">Novo usuário</h4>
+<div class="card card-glass p-3">
+  <form method="post">
+    <div class="row g-3">
+      <div class="col-md-5">
         <label class="form-label">E-mail</label>
-        <input class="form-control" type="email" name="email" required />
+        <input class="form-control" type="email" name="email" required>
       </div>
-      {% endif %}
-
-      <div class="mb-3">
-        <label class="form-label">Senha {% if user %}(opcional para alterar){% endif %}</label>
-        <input class="form-control" type="password" name="senha" />
-      </div>
-
-      <div class="mb-3">
+      <div class="col-md-3">
         <label class="form-label">Papel</label>
         <select class="form-select" name="papel">
-          <option value="DIRETORIA" {% if user and user.papel=='DIRETORIA' %}selected{% endif %}>Diretoria</option>
-          <option value="PROFESSOR" {% if user and user.papel=='PROFESSOR' %}selected{% endif %}>Professor</option>
-          <option value="RESPONSAVEL" {% if user and user.papel=='RESPONSAVEL' %}selected{% endif %}>Responsável</option>
-          <option value="ALUNO" {% if user and user.papel=='ALUNO' %}selected{% endif %}>Aluno</option>
+          <option value="DIRETORIA">Diretoria</option>
+          <option value="PROFESSOR">Professor</option>
+          <option value="RESPONSAVEL" selected>Responsável</option>
+          <option value="ALUNO">Aluno</option>
         </select>
       </div>
-
-      {% if user %}
-      <div class="form-check mb-3">
-        <input class="form-check-input" type="checkbox" name="ativo" id="ativo" {% if user.ativo %}checked{% endif %}>
-        <label class="form-check-label" for="ativo">Ativo</label>
+      <div class="col-md-2">
+        <label class="form-label">Senha</label>
+        <input class="form-control" type="password" name="senha" required>
       </div>
-      {% endif %}
-
-      <div class="d-flex gap-2">
-        <button class="btn btn-primary">Salvar</button>
-        <a class="btn btn-secondary" href="{{ url_for('usuarios_list') }}">Voltar</a>
+      <div class="col-md-2 d-flex align-items-end">
+        <button class="btn btn-light w-100">Salvar</button>
       </div>
-    </form>
-  </div>
+    </div>
+  </form>
 </div>
 {% endblock %}

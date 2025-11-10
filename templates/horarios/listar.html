@@ -2,34 +2,48 @@
 {% block title %}Horários{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h4>Horários</h4>
-  <a class="btn btn-primary" href="{{ url_for('horarios_novo') }}">Novo horário</a>
+  <div>
+    <h4 class="mb-0">Horários</h4>
+    <small class="text-secondary">Defina faixas de horário (início e fim).</small>
+  </div>
+  <div class="d-flex gap-2">
+    {% if 'horarios_novo' in has_endpoint %}
+      <a class="btn btn-light btn-sm" href="{{ url_for('horarios_novo') }}">Novo Horário</a>
+    {% endif %}
+  </div>
 </div>
 
-<div class="card shadow-sm">
+<div class="card card-glass p-3">
   <div class="table-responsive">
-    <table class="table align-middle mb-0">
-      <thead class="table-light">
+    <table class="table table-dark table-hover align-middle mb-0">
+      <thead>
         <tr>
+          <th style="width:80px">#</th>
           <th>Início</th>
           <th>Fim</th>
-          <th class="text-end">Ações</th>
+          <th style="width:200px" class="text-end">Ações</th>
         </tr>
       </thead>
       <tbody>
         {% for h in items %}
         <tr>
-          <td>{{ h.hora_inicio }}</td>
-          <td>{{ h.hora_fim }}</td>
+          <td>{{ h.id }}</td>
+          <td class="fw-semibold">{{ h.hora_inicio }}</td>
+          <td class="fw-semibold">{{ h.hora_fim }}</td>
           <td class="text-end">
-            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('horarios_editar', id=h.id) }}">Editar</a>
-            <form class="d-inline" method="post" action="{{ url_for('horarios_excluir', id=h.id) }}" onsubmit="return confirm('Excluir horário?');">
+            {% if 'horarios_editar' in has_endpoint %}
+              <a class="btn btn-sm btn-outline-light" href="{{ url_for('horarios_editar', id=h.id) }}">Editar</a>
+            {% endif %}
+            {% if 'horarios_excluir' in has_endpoint %}
+            <form class="d-inline" method="post" action="{{ url_for('horarios_excluir', id=h.id) }}"
+                  onsubmit="return confirm('Excluir este horário?')">
               <button class="btn btn-sm btn-outline-danger">Excluir</button>
             </form>
+            {% endif %}
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="3" class="text-center text-muted py-4">Nenhum horário.</td></tr>
+        <tr><td colspan="4" class="text-center text-secondary py-4">Nenhum horário cadastrado.</td></tr>
         {% endfor %}
       </tbody>
     </table>

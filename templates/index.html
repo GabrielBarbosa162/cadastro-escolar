@@ -3,22 +3,26 @@
 {% block content %}
 <div class="row g-3">
   <div class="col-12">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h5 class="card-title mb-3">Menu rápido</h5>
-        <div class="d-flex gap-2 flex-wrap">
-          <a class="btn btn-outline-primary" href="{{ url_for('alunos_list') }}">Alunos</a>
-          <a class="btn btn-outline-primary" href="{{ url_for('escolas_list') }}">Escolas</a>
-          <a class="btn btn-outline-primary" href="{{ url_for('series_list') }}">Séries</a>
-          <a class="btn btn-outline-primary" href="{{ url_for('horarios_list') }}">Horários</a>
-          <a class="btn btn-outline-primary" href="{{ url_for('atividades_list') }}">Atividades</a>
-          {% if is_diretoria %}
-          <a class="btn btn-outline-dark" href="{{ url_for('usuarios_list') }}">Usuários</a>
-          <span class="ms-3 text-muted">Total de alunos: <strong>{{ alunos_total }}</strong></span>
-          {% endif %}
+    <div class="card card-glass p-4">
+      <h4 class="mb-0">Bem-vindo!</h4>
+      <p class="text-secondary mb-0">Use o menu acima para navegar.</p>
+    </div>
+  </div>
+
+  {% if is_diretoria %}
+  <div class="col-12 col-md-4">
+    <div class="card card-glass p-4">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-secondary">Total de Alunos</div>
+          <div class="fs-3 fw-bold">{{ alunos_total }}</div>
         </div>
+        {% if 'alunos_list' in has_endpoint %}
+          <a class="btn btn-outline-light btn-sm" href="{{ url_for('alunos_list') }}">Ver</a>
+        {% endif %}
       </div>
     </div>
   </div>
+  {% endif %}
 </div>
 {% endblock %}

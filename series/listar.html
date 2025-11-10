@@ -2,32 +2,34 @@
 {% block title %}Séries{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h4>Séries</h4>
-  <a class="btn btn-primary" href="{{ url_for('series_nova') }}">Nova série</a>
+  <h4 class="mb-0">Séries</h4>
+  <a class="btn btn-light btn-sm" href="{{ url_for('series_nova') }}">Nova Série</a>
 </div>
 
-<div class="card shadow-sm">
+<div class="card card-glass p-3">
   <div class="table-responsive">
-    <table class="table align-middle mb-0">
-      <thead class="table-light">
+    <table class="table table-dark table-hover align-middle mb-0">
+      <thead>
         <tr>
+          <th style="width:80px">#</th>
           <th>Nome</th>
-          <th class="text-end">Ações</th>
+          <th style="width:160px">Ações</th>
         </tr>
       </thead>
       <tbody>
-        {% for s in items %}
+        {% for s in series %}
         <tr>
+          <td>{{ s.id }}</td>
           <td>{{ s.nome }}</td>
-          <td class="text-end">
-            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('series_editar', id=s.id) }}">Editar</a>
-            <form class="d-inline" method="post" action="{{ url_for('series_excluir', id=s.id) }}" onsubmit="return confirm('Excluir série?');">
+          <td>
+            <a class="btn btn-sm btn-outline-light" href="{{ url_for('series_editar', sid=s.id) }}">Editar</a>
+            <form class="d-inline" method="post" action="{{ url_for('series_excluir', sid=s.id) }}" onsubmit="return confirm('Excluir esta série?')">
               <button class="btn btn-sm btn-outline-danger">Excluir</button>
             </form>
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="2" class="text-center text-muted py-4">Nenhuma série.</td></tr>
+        <tr><td colspan="3" class="text-center text-secondary">Nenhuma série cadastrada.</td></tr>
         {% endfor %}
       </tbody>
     </table>

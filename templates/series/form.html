@@ -1,19 +1,22 @@
 {% extends 'base.html' %}
-{% block title %}{{ 'Editar série' if item else 'Nova série' }}{% endblock %}
+{% block title %}{{ 'Nova Série' if mode=='novo' else 'Editar Série' }}{% endblock %}
 {% block content %}
-<h4 class="mb-3">{{ 'Editar série' if item else 'Nova série' }}</h4>
-<div class="card shadow-sm">
-  <div class="card-body">
-    <form method="post">
+<h4 class="mb-3">{{ 'Nova Série' if mode=='novo' else 'Editar Série' }}</h4>
+<div class="card card-glass p-3">
+  <form method="post">
+    <div class="row g-3">
       <div class="col-md-6">
         <label class="form-label">Nome</label>
-        <input class="form-control" name="nome" value="{{ item.nome if item else '' }}" required />
+        <input class="form-control" type="text" name="nome" required
+               value="{{ nome if nome is defined else (serie.nome if serie is defined else '') }}">
       </div>
-      <div class="mt-3 d-flex gap-2">
-        <button class="btn btn-primary">Salvar</button>
-        <a class="btn btn-secondary" href="{{ url_for('series_list') }}">Voltar</a>
+      <div class="col-md-3 d-flex align-items-end">
+        <a class="btn btn-outline-light w-100" href="{{ url_for('series_list') }}">Voltar</a>
       </div>
-    </form>
-  </div>
+      <div class="col-md-3 d-flex align-items-end">
+        <button class="btn btn-light w-100">Salvar</button>
+      </div>
+    </div>
+  </form>
 </div>
 {% endblock %}
