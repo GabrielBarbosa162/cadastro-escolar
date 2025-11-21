@@ -1,38 +1,35 @@
 {% extends 'base.html' %}
-{% block title %}Novo Usuário{% endblock %}
 {% block content %}
-<div class="container py-4">
-  <div class="card">
-    <div class="card-body">
-      <h3 class="mb-3">Cadastrar novo usuário</h3>
-      <form method="post" class="row g-3" autocomplete="off">
-        <div class="col-12 col-md-6">
-          <label class="form-label">E-mail</label>
-          <input type="email" name="email" class="form-control" required>
-        </div>
-        <div class="col-6 col-md-3">
-          <label class="form-label">Senha</label>
-          <input type="password" name="senha" class="form-control" required>
-        </div>
-        <div class="col-6 col-md-3">
-          <label class="form-label">Confirmar</label>
-          <input type="password" name="confirmar" class="form-control" required>
-        </div>
-        <div class="col-12 col-md-4">
-          <label class="form-label">Papel</label>
-          <select name="papel" class="form-select">
-            <option value="DIRETORIA">Diretoria</option>
-            <option value="PROFESSOR">Professor</option>
-            <option value="RESPONSAVEL" selected>Responsável</option>
-            <option value="ALUNO">Aluno</option>
-          </select>
-        </div>
-        <div class="col-12 text-end">
-          <a href="{{ url_for('usuarios_list') }}" class="btn btn-outline-light">Voltar</a>
-          <button class="btn btn-light">Cadastrar usuário</button>
-        </div>
-      </form>
+<h4 class="mb-3">Novo Usuário</h4>
+<div class="card p-3">
+  <form method="post">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">E-mail</label>
+        <input type="email" class="form-control" name="email" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Senha</label>
+        <input type="password" class="form-control" name="senha" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Confirmar</label>
+        <input type="password" class="form-control" name="confirmar" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Papel</label>
+        <select class="form-select" name="papel">
+          <option value="RESPONSAVEL">Responsável</option>
+          <option value="PROFESSOR">Professor</option>
+          <option value="ALUNO">Aluno</option>
+          <option value="DIRETORIA">Diretoria</option>
+        </select>
+      </div>
     </div>
-  </div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary">Salvar</button>
+      <a href="{{ url_for('usuarios_list') }}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
 </div>
 {% endblock %}

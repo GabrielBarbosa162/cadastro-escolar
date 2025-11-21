@@ -1,27 +1,75 @@
 {% extends 'base.html' %}
 {% block title %}Início{% endblock %}
+
 {% block content %}
+<h1 class="h4 mb-4">Painel</h1>
+
 <div class="row g-3">
-  <div class="col-12">
-    <div class="card card-glass p-4">
-      <h4 class="mb-0">Bem-vindo!</h4>
-      <p class="text-secondary mb-0">Use o menu acima para navegar.</p>
-    </div>
+  <div class="col-12 col-md-6 col-lg-4">
+    <a href="{{ url_for('alunos_list') }}" class="text-decoration-none text-light">
+      <div class="card bg-secondary border-0 card-hover">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Alunos</h5>
+          <p class="card-text text-light-50 mb-0">Gerencie cadastros de alunos</p>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-4">
+    <a href="{{ url_for('series_list') }}" class="text-decoration-none text-light">
+      <div class="card bg-secondary border-0 card-hover">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Séries</h5>
+          <p class="card-text text-light-50 mb-0">Cadastre e edite séries</p>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-4">
+    <a href="{{ url_for('escolas_list') }}" class="text-decoration-none text-light">
+      <div class="card bg-secondary border-0 card-hover">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Escolas</h5>
+          <p class="card-text text-light-50 mb-0">Unidades e instituições</p>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-4">
+    <a href="{{ url_for('horarios_list') }}" class="text-decoration-none text-light">
+      <div class="card bg-secondary border-0 card-hover">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Horários</h5>
+          <p class="card-text text-light-50 mb-0">Faixas de aula (início/fim)</p>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-4">
+    <a href="{{ url_for('atividades_list') }}" class="text-decoration-none text-light">
+      <div class="card bg-secondary border-0 card-hover">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Atividades</h5>
+          <p class="card-text text-light-50 mb-0">Conteúdo e observações</p>
+        </div>
+      </div>
+    </a>
   </div>
 
   {% if is_diretoria %}
-  <div class="col-12 col-md-4">
-    <div class="card card-glass p-4">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <div class="text-secondary">Total de Alunos</div>
-          <div class="fs-3 fw-bold">{{ alunos_total }}</div>
+  <div class="col-12 col-md-6 col-lg-4">
+    <a href="{{ url_for('usuarios_list') }}" class="text-decoration-none text-light">
+      <div class="card bg-secondary border-0 card-hover">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Usuários</h5>
+          <p class="card-text text-light-50 mb-0">Perfis e permissões</p>
         </div>
-        {% if 'alunos_list' in has_endpoint %}
-          <a class="btn btn-outline-light btn-sm" href="{{ url_for('alunos_list') }}">Ver</a>
-        {% endif %}
       </div>
-    </div>
+    </a>
   </div>
   {% endif %}
 </div>

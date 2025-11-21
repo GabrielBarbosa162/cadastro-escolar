@@ -1,68 +1,24 @@
 {% extends 'base.html' %}
-{% block title %}Alunos{% endblock %}
-
 {% block content %}
-
-{# --------- Resolve endpoints com fallback (evita BuildError) --------- #}
-{% set list_endpoint =
-      'alunos_listar' if (has_endpoint and 'alunos_listar' in has_endpoint)
-      else ('alunos.listar' if (has_endpoint and 'alunos.listar' in has_endpoint) else None) %}
-
-{% set novo_endpoint =
-      'alunos_novo' if (has_endpoint and 'alunos_novo' in has_endpoint)
-      else ('alunos.novo' if (has_endpoint and 'alunos.novo' in has_endpoint) else None) %}
-
-{% set editar_endpoint =
-      'alunos_editar' if (has_endpoint and 'alunos_editar' in has_endpoint)
-      else ('alunos.editar' if (has_endpoint and 'alunos.editar' in has_endpoint) else None) %}
-
-{% set excluir_endpoint =
-      'alunos_excluir' if (has_endpoint and 'alunos_excluir' in has_endpoint)
-      else ('alunos.excluir' if (has_endpoint and 'alunos.excluir' in has_endpoint) else None) %}
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <div>
-    <h4 class="mb-0">Alunos</h4>
-    <small class="text-secondary">Gerencie alunos: cadastro, edição, exclusão e busca.</small>
-  </div>
-
-  <div class="d-flex gap-2 align-items-center">
-    {# Formulário de busca: só exibe se houver endpoint de listagem #}
-    {% if list_endpoint %}
-      <form class="d-flex" method="get" action="{{ url_for(list_endpoint) }}">
-        <input
-          class="form-control form-control-sm"
-          type="text"
-          name="q"
-          value="{{ request.args.get('q','') }}"
-          placeholder="Buscar por nome, escola..."
-          autocomplete="off"
-        >
-        <button class="btn btn-sm btn-outline-light ms-2">Buscar</button>
-      </form>
-    {% endif %}
-
-    {# Botão visível APENAS para Diretoria e se existir endpoint de novo aluno #}
-    {% if is_diretoria and novo_endpoint %}
-      <a class="btn btn-light btn-sm" href="{{ url_for(novo_endpoint) }}">
-        Novo aluno
-      </a>
-    {% endif %}
-  </div>
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h3 class="mb-0">Alunos</h3>
+  {% if can('ALUNO_CRIAR') %}
+  <a class="btn btn-light" href="{{ url_for('alunos_novo') }}">Novo Aluno</a>
+  {% endif %}
 </div>
 
-<div class="card card-glass p-3">
-  <div class="table-responsive">
-    <table class="table table-dark table-hover align-middle mb-0">
+<div class="card bg-dark border-secondary">
+  <div class="card-body p-0">
+    <table class="table table-dark table-striped table-hover align-middle mb-0">
       <thead>
         <tr>
-          <th style="width:64px">Foto</th>
+          <th style="width:64px;">Foto</th>
           <th>Nome</th>
-          <th class="text-nowrap">Escola</th>
-          <th class="text-nowrap">Série</th>
-          <th class="text-nowrap">Horário</th>
-          <th class="text-nowrap">Telefone</th>
-          <th style="width:200px" class="text-end">Ações</th>
+          <th>Escola</th>
+          <th>Série</th>
+          <th>Horário</th>
+          <th>Telefone</th>
+          <th class="text-end">Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -70,65 +26,43 @@
         <tr>
           <td>
             {% if a.foto_path %}
-              <img src="{{ url_for('uploads', filename=a.foto_path) }}" class="avatar-sm" alt="foto">
+              <img src="{{ a.foto_path }}" alt="foto {{ a.nome }}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.15);" />
             {% else %}
-              <div class="avatar-sm d-flex align-items-center justify-content-center bg-secondary">—</div>
+              <div style="width:48px;height:48px;border-radius:8px;background:#2b2f33;border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-weight:700;">
+                {{ a.nome[:1]|upper }}
+              </div>
             {% endif %}
           </td>
-
-          <td class="fw-semibold">{{ a.nome }}</td>
-          <td>{{ a.escola.nome if a.escola else '-' }}</td>
-          <td>{{ a.serie.nome if a.serie else '-' }}</td>
-
+          <td>{{ a.nome }}</td>
+          <td>{{ a.escola.nome if a.escola }}</td>
+          <td>{{ a.serie.nome if a.serie }}</td>
           <td>
             {% if a.horario %}
               {{ a.horario.hora_inicio }}–{{ a.horario.hora_fim }}
-            {% else %}-{% endif %}
-          </td>
-
-          <td>
-            {% set tel = (a.telefone_cel or '') ~ (' / ' ~ a.telefone_fixo if a.telefone_fixo else '') %}
-            {{ tel if tel|trim else '-' }}
-          </td>
-
-          <td class="text-end">
-            {% if editar_endpoint %}
-              <a class="btn btn-sm btn-outline-light" href="{{ url_for(editar_endpoint, id=a.id) }}">Editar</a>
             {% endif %}
-
-            {% if excluir_endpoint and is_diretoria %}
-              <form class="d-inline" method="post" action="{{ url_for(excluir_endpoint, id=a.id) }}"
-                    onsubmit="return confirm('Excluir este aluno?')">
-                <button class="btn btn-sm btn-outline-danger">Excluir</button>
-              </form>
+          </td>
+          <td>
+            {% if a.telefone_cel %}<span class="me-2">{{ a.telefone_cel }}</span>{% endif %}
+            {% if a.telefone_fixo %}<span class="text-secondary">{{ a.telefone_fixo }}</span>{% endif %}
+          </td>
+          <td class="text-end">
+            {% if can('ALUNO_EDITAR') %}
+            <a class="btn btn-sm btn-outline-light" href="{{ url_for('alunos_editar', id=a.id) }}">Editar</a>
+            {% endif %}
+            {% if can('ALUNO_EXCLUIR') %}
+            <form class="d-inline" method="post" action="{{ url_for('alunos_excluir', id=a.id) }}" onsubmit="return confirm('Excluir este aluno?');">
+              <button class="btn btn-sm btn-outline-danger">Excluir</button>
+            </form>
             {% endif %}
           </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="7" class="text-center text-secondary py-4">
-            Nenhum aluno encontrado.
-          </td>
+          <td colspan="7" class="text-center text-secondary py-4">Nenhum aluno cadastrado.</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
-
-{% if pagination %}
-<nav class="mt-3">
-  <ul class="pagination pagination-sm mb-0">
-    <li class="page-item {% if not pagination.prev_url %}disabled{% endif %}">
-      <a class="page-link" href="{{ pagination.prev_url or '#' }}">Anterior</a>
-    </li>
-    <li class="page-item disabled">
-      <span class="page-link">Página {{ pagination.page }} de {{ pagination.pages }}</span>
-    </li>
-    <li class="page-item {% if not pagination.next_url %}disabled{% endif %}">
-      <a class="page-link" href="{{ pagination.next_url or '#' }}">Próxima</a>
-    </li>
-  </ul>
-</nav>
-{% endif %}
 {% endblock %}
