@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar atividade' if item else 'Nova atividade' }}{% endblock %}
+{% block content %}
+<h4 class="mb-3">{{ 'Editar atividade' if item else 'Nova atividade' }}</h4>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <form method="post">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Aluno</label>
+          <select class="form-select" name="aluno_id" required>
+            {% for a in alunos %}
+            <option value="{{ a.id }}" {% if item and item.aluno_id==a.id %}selected{% endif %}>{{ a.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Data</label>
+          <input class="form-control" type="date" name="data" value="{{ item.data.isoformat() if item else '' }}" />
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">Conteúdo</label>
+          <textarea class="form-control" name="conteudo" rows="2">{{ item.conteudo if item else '' }}</textarea>
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">Observação</label>
+          <textarea class="form-control" name="observacao" rows="2">{{ item.observacao if item else '' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-3 d-flex gap-2">
+        <button class="btn btn-primary">Salvar</button>
+        <a class="btn btn-secondary" href="{{ url_for('atividades_list') }}">Voltar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

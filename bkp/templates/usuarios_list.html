@@ -1,96 +1,124 @@
 {% extends 'base.html' %}
-{% block title %}Usuários & Permissões{% endblock %}
+{% block title %}Usuários{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="mb-0">Usuários & Permissões</h3>
-    <div class="d-flex gap-2">
-      <a href="{{ url_for('usuarios_novo') }}" class="btn btn-primary">
-        <i class="bi bi-person-plus me-1"></i> Novo usuário
-      </a>
-      <a href="{{ url_for('alunos.listar') }}" class="btn btn-outline-light">
-        <i class="bi bi-people-fill me-1"></i> Alunos
-      </a>
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h1 class="h4 mb-0">Usuários</h1>
+  <button class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#formNovoUsuario">
+    Novo Usuário
+  </button>
+</div>
+
+<div id="formNovoUsuario" class="collapse mb-4">
+  <div class="card bg-secondary border-0">
+    <div class="card-body">
+      <form method="post" action="{{ url_for('usuarios_novo') }}" class="row g-3">
+        <div class="col-12 col-md-4">
+          <label class="form-label">E-mail</label>
+          <input type="email" class="form-control" name="email" required>
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label">Senha</label>
+          <input type="password" class="form-control" name="senha" minlength="8" required>
+          <div class="form-text">Mín. 8 caracteres e 1 dígito</div>
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label">Confirmar Senha</label>
+          <input type="password" class="form-control" name="confirmar" minlength="8" required>
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label">Perfil</label>
+          <select name="papel" class="form-select">
+            <option value="DIRETORIA">Diretoria</option>
+            <option value="PROFESSOR">Professor</option>
+            <option value="RESPONSAVEL">Responsável</option>
+            <option value="ALUNO">Aluno</option>
+          </select>
+        </div>
+        <div class="col-12 d-flex justify-content-end">
+          <button class="btn btn-success">Salvar</button>
+        </div>
+      </form>
     </div>
   </div>
+</div>
 
-  <form class="mb-3">
-    {% if mostrar_todos %}
-      <a class="btn btn-sm btn-outline-light" href="{{ url_for('usuarios_list') }}">Mostrar apenas ativos</a>
-    {% else %}
-      <a class="btn btn-sm btn-outline-light" href="{{ url_for('usuarios_list', mostrar='todos') }}">Mostrar todos</a>
-    {% endif %}
-  </form>
+<div class="card bg-secondary border-0">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-dark table-striped align-middle mb-0">
+        <thead>
+          <tr>
+            <th>E-mail</th>
+            <th>Perfil</th>
+            <th>Status</th>
+            <th class="table-actions text-end">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in usuarios %}
+          <tr>
+            <td>{{ u.email }}</td>
+            <td>{{ u.papel }}</td>
+            <td>
+              {% if u.ativo %}
+                <span class="badge text-bg-success">Ativo</span>
+              {% else %}
+                <span class="badge text-bg-secondary">Inativo</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <!-- Editar (inline em modal simples) -->
+              <button
+                  class="btn btn-sm btn-outline-light"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#editRow{{u.id}}">
+                Editar
+              </button>
 
-  <div class="table-responsive card border-0 shadow-sm">
-    <table class="table table-dark align-middle mb-0">
-      <thead>
-        <tr>
-          <th style="min-width:220px">Usuário (e-mail)</th>
-          <th style="width:120px">Papel</th>
-          <th style="width:120px">Status</th>
-          <th style="width:200px">Último visto</th>
-          <th>Permissões</th>
-          <th style="width:110px" class="text-end">Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for u in usuarios %}
-        <tr>
-          <td class="fw-semibold">
-            <i class="bi bi-person me-1"></i> {{ u.email }}
-          </td>
-          <td>{{ u.papel }}</td>
-          <td>
-            {% if active_map.get(u.id) %}
-              <span class="badge bg-success">Ativo</span>
-            {% else %}
-              <span class="badge bg-secondary">Inativo</span>
-            {% endif %}
-          </td>
-          <td class="text-secondary">
-            {% if last_seen_map.get(u.id) %}
-              {{ last_seen_map[u.id].strftime("%d/%m/%Y %H:%M") }}
-            {% else %}
-              —
-            {% endif %}
-          </td>
-          <td>
-            {% if u.papel == 'DIRETORIA' %}
-              <span class="text-success">Diretoria possui todas as permissões.</span>
-            {% else %}
-              <form method="post" action="{{ url_for('usuarios_salvar_permissoes', usuario_id=u.id, mostrar=request.args.get('mostrar')) }}">
-                <div class="row g-2">
-                  {% for cod in permissoes_codigos %}
-                    <div class="col-12 col-md-6 col-lg-4">
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="p_{{ u.id }}_{{ cod }}" name="permissoes[]" value="{{ cod }}"
-                               {% if permissoes_por_usuario[u.id][cod] %}checked{% endif %}>
-                        <label class="form-check-label small" for="p_{{ u.id }}_{{ cod }}">{{ permissoes_nomes[cod] }}</label>
-                      </div>
-                    </div>
-                  {% endfor %}
+              <!-- Excluir -->
+              <form method="post" action="{{ url_for('usuarios_excluir', id=u.id) }}"
+                    class="d-inline"
+                    onsubmit="return confirm('Confirmar exclusão?');">
+                <button class="btn btn-sm btn-outline-danger">Excluir</button>
+              </form>
+            </td>
+          </tr>
+          <tr class="collapse bg-dark" id="editRow{{u.id}}">
+            <td colspan="4">
+              <form method="post" action="{{ url_for('usuarios_editar', id=u.id) }}" class="row g-3 mt-2">
+                <div class="col-12 col-md-4">
+                  <label class="form-label">Perfil</label>
+                  <select name="papel" class="form-select">
+                    <option value="DIRETORIA" {{ 'selected' if u.papel=='DIRETORIA' }}>Diretoria</option>
+                    <option value="PROFESSOR" {{ 'selected' if u.papel=='PROFESSOR' }}>Professor</option>
+                    <option value="RESPONSAVEL" {{ 'selected' if u.papel=='RESPONSAVEL' }}>Responsável</option>
+                    <option value="ALUNO" {{ 'selected' if u.papel=='ALUNO' }}>Aluno</option>
+                  </select>
                 </div>
-                <div class="mt-2">
-                  <button class="btn btn-sm btn-success">
-                    <i class="bi bi-check2 me-1"></i> Salvar permissões
-                  </button>
+                <div class="col-12 col-md-3">
+                  <label class="form-label">Status</label>
+                  <select name="ativo" class="form-select">
+                    <option value="1" {{ 'selected' if u.ativo }}>Ativo</option>
+                    <option value="0" {{ 'selected' if not u.ativo }}>Inativo</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label">Nova Senha (opcional)</label>
+                  <input type="password" class="form-control" name="nova_senha" minlength="8" placeholder="Deixe em branco p/ manter">
+                </div>
+                <div class="col-12 col-md-2 d-flex align-items-end justify-content-end">
+                  <button class="btn btn-success w-100">Salvar</button>
                 </div>
               </form>
-            {% endif %}
-          </td>
-          <td class="text-end">
-            <a class="btn btn-sm btn-outline-light" href="{{ url_for('usuario_painel', usuario_id=u.id) }}">
-              <i class="bi bi-speedometer2"></i>
-            </a>
-          </td>
-        </tr>
-      {% else %}
-        <tr><td colspan="6" class="text-center text-secondary py-4">Nenhum usuário encontrado.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-center text-light-50 py-4">Nenhum usuário encontrado.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 {% endblock %}

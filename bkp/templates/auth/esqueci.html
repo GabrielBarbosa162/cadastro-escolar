@@ -1,24 +1,23 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block title %}Esqueci minha senha{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-center">
-  <div class="card" style="max-width:480px; width:100%;">
-    <div class="card-body">
-      <h5 class="mb-3">Esqueci minha senha</h5>
-      <form method="post">
-        <div class="mb-3">
-          <label class="form-label">E-mail</label>
-          <input name="email" type="email" class="form-control" required>
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="card bg-dark text-light border-secondary">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Esqueci minha senha</h5>
+          <p class="text-secondary">Informe seu e-mail. Se existir um cadastro, enviaremos instruções para redefinição.</p>
+          <form method="post" action="{{ url_for('esqueci') }}">
+            <div class="mb-3">
+              <label class="form-label">E-mail</label>
+              <input type="email" name="email" class="form-control bg-dark text-light border-secondary" required>
+            </div>
+            <button class="btn btn-light">Enviar instruções</button>
+            <a class="btn btn-outline-secondary ms-2" href="{{ url_for('login') }}">Voltar</a>
+          </form>
         </div>
-        <button class="btn btn-primary w-100">Enviar instruções</button>
-      </form>
-      {% if dev_link %}
-        <div class="alert alert-info mt-3">
-          <div class="fw-semibold">DEV:</div>
-          Link de redefinição (sem SMTP configurado):<br>
-          <a class="text-break" href="{{ dev_link }}">{{ dev_link }}</a>
-        </div>
-      {% endif %}
+      </div>
     </div>
   </div>
 </div>

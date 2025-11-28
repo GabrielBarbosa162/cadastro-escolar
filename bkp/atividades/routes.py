@@ -1,145 +1,85 @@
-import re
 from datetime import datetime
-from urllib.parse import quote
-from flask import render_template, request, redirect, url_for, flash, abort
-from flask_login import login_required, current_user
+from flask import render_template, request, redirect, url_for, flash
+from flask_login import login_required
 from . import bp
-from models import db, Atividade, Aluno
+from app import db, Usuario, Aluno, Escola, Serie, Horario, Mensalidade, Atividade, perm_required, usuario_tem_permissao
 
-def _pode_gerenciar():
-    return current_user.is_authenticated and current_user.papel in ("DIRETORIA", "PROFESSOR")
-
-def _normalize_phone(phone_raw: str) -> str:
-    """Mantém apenas dígitos e adiciona DDI 55 se faltar (Brasil)."""
-    if not phone_raw:
-        return ""
-    digits = re.sub(r"\D+", "", phone_raw)
-    if digits.startswith("55"):
-        return digits
-    if len(digits) >= 10:
-        return "55" + digits
-    return digits  # deixa como está se muito curto
 
 @bp.route("/")
 @login_required
 def listar():
-    q = (request.args.get("q") or "").strip()
-    query = Atividade.query
-    if q:
-        query = query.filter(Atividade.nome.ilike(f"%{q}%"))
-    itens = query.order_by(Atividade.data_atividade.desc().nullslast(), Atividade.criado_em.desc()).all()
+    itens = (Atividade.query
+             .order_by(Atividade.data.desc().nullslast(), Atividade.criado_em.desc())
+             .all())
+    return render_template("atividades/listar.html", atividades=itens)
 
-    # Mapa de telefones da mãe por aluno_id (para montar o link na lista)
-    phones = {}
-    ids = [it.aluno_id for it in itens if it.aluno_id]
-    if ids:
-        for al in Aluno.query.filter(Aluno.id.in_(ids)).all():
-            phones[al.id] = al.telefone_mae or al.telefone_celular or ""
-
-    def wa_link(it: Atividade):
-        phone = _normalize_phone(phones.get(it.aluno_id, ""))
-        if not phone:
-            return None
-        data_txt = it.data_atividade.strftime("%d/%m/%Y") if it.data_atividade else ""
-        msg = (
-            f"*Atividade:* {it.nome}\n"
-            f"*Aluno:* {it.aluno_nome or ''}\n"
-            f"*Data:* {data_txt}\n"
-            f"*Conteúdo:* {it.conteudo or ''}\n"
-            f"*Obs.:* {it.observacao or ''}"
-        )
-        # >>>>>> Linka DIRETO no WhatsApp Web
-        return f"https://web.whatsapp.com/send?phone={phone}&text={quote(msg)}"
-
-    return render_template("atividades_list.html", itens=itens, wa_link=wa_link)
-
-@bp.route("/novo", methods=["GET", "POST"])
+@bp.route("/nova", methods=["GET", "POST"])
 @login_required
-def novo():
-    if not _pode_gerenciar():
-        abort(403)
+@perm_required("ATIVIDADE_ADICIONAR")
+def nova():
     alunos = Aluno.query.order_by(Aluno.nome.asc()).all()
-
     if request.method == "POST":
         aluno_id = request.form.get("aluno_id")
-        nome = (request.form.get("nome") or "").strip()
-        data = request.form.get("data_atividade")
-        conteudo = (request.form.get("conteudo") or "").strip()
-        observacao = (request.form.get("observacao") or "").strip()
+        data_txt = request.form.get("data")  # yyyy-mm-dd
+        conteudo = request.form.get("conteudo", "").strip() or None
+        observacao = request.form.get("observacao", "").strip() or None
 
-        if not aluno_id:
-            flash("Selecione o aluno.", "warning")
-            return render_template("atividade_form.html", alunos=alunos)
-        if not nome:
-            flash("Informe o nome/título da atividade.", "warning")
-            return render_template("atividade_form.html", alunos=alunos)
+        d = None
+        if data_txt:
+            try:
+                d = datetime.strptime(data_txt, "%Y-%m-%d").date()
+            except Exception:
+                pass
 
-        al = Aluno.query.get(int(aluno_id))
-        if not al:
-            flash("Aluno inválido.", "warning")
-            return render_template("atividade_form.html", alunos=alunos)
-
-        atv = Atividade(
-            nome=nome,
-            aluno_id=al.id,
-            aluno_nome=al.nome,
-            data_atividade=datetime.strptime(data, "%Y-%m-%d").date() if data else None,
-            conteudo=conteudo or None,
-            observacao=observacao or None
+        a = Atividade(
+            aluno_id=int(aluno_id) if aluno_id else None,
+            data=d,
+            conteudo=conteudo,
+            observacao=observacao
         )
-        db.session.add(atv)
+        db.session.add(a)
         db.session.commit()
-        flash("Atividade cadastrada.", "success")
+        flash("Atividade lançada.", "success")
         return redirect(url_for("atividades.listar"))
 
-    return render_template("atividade_form.html", alunos=alunos, a=None)
+    return render_template("atividades/nova.html", alunos=alunos)
 
 @bp.route("/<int:id>/editar", methods=["GET", "POST"])
 @login_required
-def editar(id: int):
-    if not _pode_gerenciar():
-        abort(403)
-    a = Atividade.query.get_or_404(id)
+@perm_required("ATIVIDADE_ADICIONAR")
+def editar(id):
+    item = db.session.get(Atividade, id)
+    if not item:
+        flash("Atividade não encontrada.", "warning")
+        return redirect(url_for("atividades.listar"))
     alunos = Aluno.query.order_by(Aluno.nome.asc()).all()
-
     if request.method == "POST":
         aluno_id = request.form.get("aluno_id")
-        nome = (request.form.get("nome") or "").strip()
-        data = request.form.get("data_atividade")
-        conteudo = (request.form.get("conteudo") or "").strip()
-        observacao = (request.form.get("observacao") or "").strip()
-
-        if not aluno_id:
-            flash("Selecione o aluno.", "warning")
-            return render_template("atividade_form.html", alunos=alunos, a=a)
-        if not nome:
-            flash("Informe o nome/título da atividade.", "warning")
-            return render_template("atividade_form.html", alunos=alunos, a=a)
-
-        al = Aluno.query.get(int(aluno_id))
-        if not al:
-            flash("Aluno inválido.", "warning")
-            return render_template("atividade_form.html", alunos=alunos, a=a)
-
-        a.nome = nome
-        a.aluno_id = al.id
-        a.aluno_nome = al.nome
-        a.data_atividade = datetime.strptime(data, "%Y-%m-%d").date() if data else None
-        a.conteudo = conteudo or None
-        a.observacao = observacao or None
+        data_txt = request.form.get("data")
+        item.aluno_id = int(aluno_id) if aluno_id else None
+        if data_txt:
+            try:
+                item.data = datetime.strptime(data_txt, "%Y-%m-%d").date()
+            except Exception:
+                item.data = None
+        else:
+            item.data = None
+        item.conteudo = request.form.get("conteudo", "").strip() or None
+        item.observacao = request.form.get("observacao", "").strip() or None
         db.session.commit()
         flash("Atividade atualizada.", "success")
         return redirect(url_for("atividades.listar"))
-
-    return render_template("atividade_form.html", alunos=alunos, a=a)
+    return render_template("atividades/editar.html", item=item, alunos=alunos)
 
 @bp.route("/<int:id>/excluir", methods=["POST"])
 @login_required
-def excluir(id: int):
-    if not _pode_gerenciar():
-        abort(403)
-    atv = Atividade.query.get_or_404(id)
-    db.session.delete(atv)
-    db.session.commit()
-    flash("Atividade excluída.", "success")
+@perm_required("ATIVIDADE_EXCLUIR")
+def excluir(id):
+    item = db.session.get(Atividade, id)
+    if item:
+        db.session.delete(item)
+        db.session.commit()
+        flash("Atividade excluída.", "success")
+    else:
+        flash("Atividade não encontrada.", "warning")
     return redirect(url_for("atividades.listar"))

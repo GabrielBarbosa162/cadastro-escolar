@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="m-0">{{ titulo }}</h3>
+    <a class="btn btn-light" href="{{ url_for(endpoint_novo) }}">{{ label_botao }}</a>
+  </div>
+
+  {% if itens and itens|length>0 %}
+    <ul class="list-group">
+      {% for it in itens %}
+        <li class="list-group-item bg-dark text-white">{{ it }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="alert alert-secondary">Nenhum item cadastrado ainda.</div>
+  {% endif %}
+</div>
+{% endblock %}

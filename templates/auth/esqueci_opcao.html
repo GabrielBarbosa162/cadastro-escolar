@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Recuperar Senha{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-center mt-5">
+  <div class="card bg-dark text-light border-secondary shadow-sm" style="width: 460px;">
+    <div class="card-body">
+
+      <h4 class="mb-3 text-center">Recuperar Senha</h4>
+      <p class="text-muted text-center mb-4">
+        Escolha como deseja receber o código de recuperação.
+      </p>
+
+      <div class="d-grid gap-3">
+        <a href="{{ url_for('esqueci_email') }}" class="btn btn-success btn-lg">
+          Receber código por E-mail
+        </a>
+        <a href="{{ url_for('esqueci_whatsapp') }}" class="btn btn-outline-success btn-lg">
+          Receber código por WhatsApp
+        </a>
+      </div>
+
+      <div class="text-center mt-4">
+        <a href="{{ url_for('login') }}" class="text-muted">
+          Voltar para o login
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

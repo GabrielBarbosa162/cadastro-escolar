@@ -1,24 +1,67 @@
-{% extends 'base.html' %}
-{% block title %}Esqueci minha senha{% endblock %}
+{% extends "base.html" %}
+{% block title %}Recuperar Senha{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-  <div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-      <div class="card bg-dark text-light border-secondary">
-        <div class="card-body">
-          <h5 class="card-title mb-3">Esqueci minha senha</h5>
-          <p class="text-secondary">Informe seu e-mail. Se existir um cadastro, enviaremos instruções para redefinição.</p>
-          <form method="post" action="{{ url_for('esqueci') }}">
-            <div class="mb-3">
-              <label class="form-label">E-mail</label>
-              <input type="email" name="email" class="form-control bg-dark text-light border-secondary" required>
-            </div>
-            <button class="btn btn-light">Enviar instruções</button>
-            <a class="btn btn-outline-secondary ms-2" href="{{ url_for('login') }}">Voltar</a>
-          </form>
+
+<div class="d-flex justify-content-center mt-5">
+  <div class="card bg-dark text-light border-secondary shadow-sm" style="width: 460px;">
+    <div class="card-body">
+
+      <h4 class="mb-3 text-center">Recuperar Senha</h4>
+      <p class="text-muted text-center mb-4">
+        Informe seu e-mail cadastrado e escolha como deseja receber o código.
+      </p>
+
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">E-mail cadastrado</label>
+          <input type="email"
+                 name="email"
+                 class="form-control"
+                 placeholder="seuemail@exemplo.com"
+                 required>
         </div>
+
+        <div class="mb-3">
+          <label class="form-label d-block">Como deseja receber o código?</label>
+
+          <div class="form-check">
+            <input class="form-check-input"
+                   type="radio"
+                   name="metodo"
+                   id="met_email"
+                   value="email"
+                   checked>
+            <label class="form-check-label" for="met_email">
+              Receber código por e-mail
+            </label>
+          </div>
+
+          <div class="form-check mt-1">
+            <input class="form-check-input"
+                   type="radio"
+                   name="metodo"
+                   id="met_whatsapp"
+                   value="whatsapp">
+            <label class="form-check-label" for="met_whatsapp">
+              Receber código por WhatsApp
+            </label>
+          </div>
+        </div>
+
+        <button class="btn btn-success w-100 py-2">
+          Continuar
+        </button>
+      </form>
+
+      <div class="text-center mt-3">
+        <a href="{{ url_for('login') }}" class="text-muted">
+          Voltar para o login
+        </a>
       </div>
+
     </div>
   </div>
 </div>
+
 {% endblock %}

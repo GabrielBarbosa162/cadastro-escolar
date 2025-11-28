@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Horários{% endblock %}
+{% block content %}
+<div class="container py-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Horários</h3>
+    <a href="{{ url_for('horarios.novo') }}" class="btn btn-light">Novo Horário</a>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>Início</th><th>Fim</th><th style="width:180px;">Ações</th></tr></thead>
+        <tbody>
+          {% for h in horarios %}
+            <tr>
+              <td class="fw-semibold">{{ h.hora_inicio or '-' }}</td>
+              <td class="fw-semibold">{{ h.hora_fim or '-' }}</td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <a class="btn btn-outline-light" href="{{ url_for('horarios.editar', id=h.id) }}">Editar</a>
+                  <form method="post" action="{{ url_for('horarios.excluir', id=h.id) }}" onsubmit="return confirm('Excluir este horário?');">
+                    <button class="btn btn-outline-danger">Excluir</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="3" class="text-center text-secondary py-4">Nenhum horário cadastrado.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

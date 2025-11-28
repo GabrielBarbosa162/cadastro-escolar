@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-title-row mb-3">
+  <div>
+    <h2>Alunos</h2>
+    <div class="subtitle">Lista de todos os alunos cadastrados no sistema.</div>
+  </div>
+
+  {% if current_user.is_diretoria() %}
+    <div>
+      <a href="{{ url_for('alunos_novo') }}" class="btn btn-success">Novo aluno</a>
+    </div>
+  {% endif %}
+</div>
+
+<section class="card bg-dark border-secondary">
+  <div class="card-body">
+    <h5 class="card-title mb-3">Alunos cadastrados</h5>
+
+    {% if items %}
+      <div class="table-responsive">
+        <table class="table table-dark table-striped align-middle">
+          <thead>
+            <tr>
+              <th>Aluno</th>
+              <th>Escola</th>
+              <th>Série</th>
+              <th>Horário</th>
+              <th>Telefones</th>
+              <th style="width: 180px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for a in items %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  {% if a.foto_path %}
+                    <img src="{{ a.foto_path }}"
+                         alt="Foto de {{ a.nome }}"
+                         style="width:38px; height:38px; border-radius:50%; object-fit:cover; margin-right:0.6rem; border:1px solid #1f2937;">
+                  {% else %}
+                    <div style="width:38px; height:38px; border-radius:50%; margin-right:0.6rem;
+                                display:flex; align-items:center; justify-content:center;
+                                background:#020617; border:1px solid #1f2937; font-size:0.85rem; color:#9ca3af;">
+                      {{ a.nome[0]|upper }}
+                    </div>
+                  {% endif %}
+                  <span>{{ a.nome }}</span>
+                </div>
+              </td>
+              <td>{{ a.escola.nome if a.escola else '-' }}</td>
+              <td>{{ a.serie.nome if a.serie else '-' }}</td>
+              <td>
+                {% if a.horario %}
+                  {{ a.horario.hora_inicio }} - {{ a.horario.hora_fim }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>
+                {% if a.telefone_cel %}<span class="badge bg-secondary me-1">{{ a.telefone_cel }}</span>{% endif %}
+                {% if a.telefone_fixo %}<span class="badge bg-secondary">{{ a.telefone_fixo }}</span>{% endif %}
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <a href="{{ url_for('alunos_ver', id=a.id) }}"
+                     class="btn btn-sm btn-primary">
+                    Ver
+                  </a>
+
+                  {% if current_user.is_diretoria() %}
+                    <a href="{{ url_for('alunos_editar', id=a.id) }}"
+                       class="btn btn-sm btn-outline-light">
+                      Editar
+                    </a>
+                    <form method="post"
+                          action="{{ url_for('alunos_excluir', id=a.id) }}"
+                          onsubmit="return confirm('Confirma excluir este aluno?');">
+                      <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted mb-0">Nenhum aluno cadastrado.</p>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

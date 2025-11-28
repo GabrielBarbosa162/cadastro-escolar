@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Recuperar Senha - E-mail{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-center mt-5">
+  <div class="card bg-dark text-light border-secondary shadow-sm" style="width: 460px;">
+    <div class="card-body">
+
+      <h4 class="mb-3 text-center">Recuperar por E-mail</h4>
+      <p class="text-muted text-center mb-4">
+        Informe o e-mail cadastrado para receber o código de recuperação.
+      </p>
+
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">E-mail cadastrado</label>
+          <input type="email"
+                 name="email"
+                 class="form-control"
+                 placeholder="seuemail@exemplo.com"
+                 required>
+        </div>
+
+        <button class="btn btn-success w-100 py-2">
+          Enviar código
+        </button>
+      </form>
+
+      <div class="text-center mt-3">
+        <a href="{{ url_for('esqueci') }}" class="text-muted">
+          &larr; Voltar e escolher outra opção
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar Aluno' if aluno else 'Novo Aluno' }}{% endblock %}
+
+{% block content %}
+<h4 class="mb-3">{{ 'Editar Aluno' if aluno else 'Novo Aluno' }}</h4>
+
+<form method="post" enctype="multipart/form-data">
+  <!-- Identificação -->
+  <div class="card bg-black border-secondary mb-3">
+    <div class="card-header border-secondary">Identificação</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Nome completo</label>
+          <input class="form-control" name="nome" value="{{ aluno.nome if aluno else '' }}" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Naturalidade</label>
+          <input class="form-control" name="naturalidade" value="{{ aluno.naturalidade if aluno else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Nacionalidade</label>
+          <input class="form-control" name="nacionalidade" value="{{ aluno.nacionalidade if aluno else '' }}">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Data de nascimento</label>
+          <input type="date" class="form-control" name="data_nascimento" value="{{ aluno.data_nascimento if aluno and aluno.data_nascimento }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Idade (anos)</label>
+          <input class="form-control" name="idade" value="{{ aluno.idade if aluno and aluno.idade }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Sexo</label>
+          <select class="form-select" name="sexo">
+            {% set sx = (aluno.sexo if aluno else '') %}
+            <option value="" {{ 'selected' if sx=='' else '' }}></option>
+            <option value="M" {{ 'selected' if sx=='M' else '' }}>Masculino</option>
+            <option value="F" {{ 'selected' if sx=='F' else '' }}>Feminino</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Família e Contato -->
+  <div class="card bg-black border-secondary mb-3">
+    <div class="card-header border-secondary">Filiação e Contatos</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Nome do Pai</label>
+          <input class="form-control" name="nome_pai" value="{{ aluno.nome_pai if aluno else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Nome da Mãe</label>
+          <input class="form-control" name="nome_mae" value="{{ aluno.nome_mae if aluno else '' }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Endereço</label>
+          <input class="form-control" name="endereco" value="{{ aluno.endereco if aluno else '' }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Número</label>
+          <input class="form-control" name="numero" value="{{ aluno.numero if aluno else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Bairro</label>
+          <input class="form-control" name="bairro" value="{{ aluno.bairro if aluno else '' }}">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Celular</label>
+          <input class="form-control" name="telefone_cel" value="{{ aluno.telefone_cel if aluno else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Fixo</label>
+          <input class="form-control" name="telefone_fixo" value="{{ aluno.telefone_fixo if aluno else '' }}">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Escola / Série / Horário -->
+  <div class="card bg-black border-secondary mb-3">
+    <div class="card-header border-secondary">Vínculo Escolar</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Escola</label>
+          <select class="form-select" name="escola_id">
+            <option value="">—</option>
+            {% set eid = aluno.escola_id if aluno else None %}
+            {% for e in escolas %}
+              <option value="{{ e.id }}" {{ 'selected' if eid==e.id else '' }}>{{ e.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Série</label>
+          <select class="form-select" name="serie_id">
+            <option value="">—</option>
+            {% set sid = aluno.serie_id if aluno else None %}
+            {% for s in series %}
+              <option value="{{ s.id }}" {{ 'selected' if sid==s.id else '' }}>{{ s.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Horário (tabela)</label>
+          <select class="form-select" name="horario_id">
+            <option value="">—</option>
+            {% set hid = aluno.horario_id if aluno else None %}
+            {% for h in horarios %}
+              <option value="{{ h.id }}" {{ 'selected' if hid==h.id else '' }}>
+                {{ h.hora_inicio }} — {{ h.hora_fim }}
+              </option>
+            {% endfor %}
+          </select>
+          <div class="form-text text-secondary">Selecione apenas pela tabela de horários cadastrada.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Condições / Observações -->
+  <div class="card bg-black border-secondary mb-3">
+    <div class="card-header border-secondary">Condições e Observações</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label d-block">Possui alguma dificuldade?</label>
+          {% set dif = 'S' if aluno and aluno.tem_dificuldade else 'N' %}
+          <div class="btn-group" role="group">
+            <input type="radio" class="btn-check" name="tem_dificuldade" id="difS" value="S" {{ 'checked' if dif=='S' else '' }}>
+            <label class="btn btn-outline-light" for="difS">Sim</label>
+            <input type="radio" class="btn-check" name="tem_dificuldade" id="difN" value="N" {{ 'checked' if dif=='N' else '' }}>
+            <label class="btn btn-outline-light" for="difN">Não</label>
+          </div>
+        </div>
+        <div class="col-md-9">
+          <label class="form-label">Qual?</label>
+          <input class="form-control" name="qual_dificuldade" value="{{ aluno.qual_dificuldade if aluno else '' }}">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label d-block">Toma medicamento controlado?</label>
+          {% set med = 'S' if aluno and aluno.toma_medicamento else 'N' %}
+          <div class="btn-group" role="group">
+            <input type="radio" class="btn-check" name="toma_medicamento" id="medS" value="S" {{ 'checked' if med=='S' else '' }}>
+            <label class="btn btn-outline-light" for="medS">Sim</label>
+            <input type="radio" class="btn-check" name="toma_medicamento" id="medN" value="N" {{ 'checked' if med=='N' else '' }}>
+            <label class="btn btn-outline-light" for="medN">Não</label>
+          </div>
+        </div>
+        <div class="col-md-9">
+          <label class="form-label">Qual?</label>
+          <input class="form-control" name="qual_medicamento" value="{{ aluno.qual_medicamento if aluno else '' }}">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Início das aulas</label>
+          <input type="date" class="form-control" name="inicio_aulas" value="{{ aluno.inicio_aulas if aluno and aluno.inicio_aulas }}">
+        </div>
+        <div class="col-md-9">
+          <label class="form-label">Mensalidade</label>
+          {% set m = aluno.mensalidade_opcao if aluno else '' %}
+          <div class="row g-2">
+            <div class="col-md-4">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="mensalidade_opcao" id="m170" value="170" {{ 'checked' if m=='170' else '' }}>
+                <label class="form-check-label" for="m170">Pré 1 a 5º ano — R$ 170,00</label>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="mensalidade_opcao" id="m180" value="180" {{ 'checked' if m=='180' else '' }}>
+                <label class="form-check-label" for="m180">6º a 7º ano — R$ 180,00</label>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="mensalidade_opcao" id="m190" value="190" {{ 'checked' if m=='190' else '' }}>
+                <label class="form-check-label" for="m190">8º a 9º ano — R$ 190,00</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-text text-secondary">Selecione apenas uma opção.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Foto -->
+  <div class="card bg-black border-secondary mb-3">
+    <div class="card-header border-secondary">Foto (opcional)</div>
+    <div class="card-body">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-6">
+          <input type="file" class="form-control" name="foto" accept="image/*">
+        </div>
+        {% if aluno and aluno.foto_path %}
+        <div class="col-md-6">
+          <img src="{{ url_for('static', filename='../uploads/' ~ aluno.foto_path) if false else url_for('uploads', filename=aluno.foto_path) }}"
+               alt="Foto do aluno" class="rounded" style="max-height: 96px;">
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button class="btn btn-primary">Salvar</button>
+    <a class="btn btn-secondary" href="{{ url_for('alunos_list') }}">Voltar</a>
+  </div>
+</form>
+{% endblock %}

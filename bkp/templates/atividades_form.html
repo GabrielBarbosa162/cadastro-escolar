@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar atividade' if atividade else 'Lançar atividade' }}{% endblock %}
+{% block content %}
+<div class="container py-3">
+  <div class="card">
+    <div class="card-body">
+      <h4 class="mb-3">{{ 'Editar atividade' if atividade else 'Lançar atividade' }}</h4>
+      <form method="post">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Aluno</label>
+            <!-- datalist para busca rápida por nome -->
+            <input class="form-control" list="alunos-list" id="alunoNome" placeholder="Digite para procurar" oninput="syncAlunoId(this.value)">
+            <datalist id="alunos-list">
+              {% for a in alunos %}
+                <option data-id="{{ a.id }}" value="{{ a.nome }}"></option>
+              {% endfor %}
+            </datalist>
+            <input type="hidden" name="aluno_id" id="alunoIdHidden" value="{{ atividade.aluno_id if atividade else '' }}">
+            <small class="text-secondary">Se preferir, apenas selecione na lista acima digitando o nome do aluno.</small>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Data da atividade</label>
+            <input type="date" name="data" class="form-control" value="{{ atividade.data.isoformat() if atividade and atividade.data else '' }}">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Conteúdo estudado</label>
+            <textarea name="conteudo" class="form-control" rows="4" placeholder="Descrição do conteúdo">{{ atividade.conteudo if atividade else '' }}</textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Observação</label>
+            <textarea name="observacao" class="form-control" rows="2" placeholder="Observações gerais">{{ atividade.observacao if atividade else '' }}</textarea>
+          </div>
+          <div class="col-12 d-flex justify-content-end gap-2">
+            <a href="{{ url_for('atividades.listar') }}" class="btn btn-outline-light">Voltar</a>
+            <button class="btn btn-light">{{ 'Salvar alterações' if atividade else 'Lançar' }}</button>
+          </div>
+        </div>
+      </form>
+
+      <script>
+        // mapeia nome -> id usando a datalist
+        function syncAlunoId(nome) {
+          const opts = document.querySelectorAll('#alunos-list option');
+          const hidden = document.getElementById('alunoIdHidden');
+          let found = "";
+          opts.forEach(o => {
+            if (o.value === nome) {
+              found = o.getAttribute('data-id');
+            }
+          });
+          hidden.value = found;
+        }
+      </script>
+    </div>
+  </div>
+</div>
+{% endblock %}

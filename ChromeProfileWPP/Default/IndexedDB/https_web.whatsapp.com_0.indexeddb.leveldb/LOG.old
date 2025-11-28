@@ -1,0 +1,36 @@
+2025/11/28-10:12:16.421 19b4 Reusing MANIFEST C:\alunos_app\ChromeProfileWPP\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/11/28-10:12:16.421 19b4 Recovering log #85
+2025/11/28-10:12:16.446 19b4 Reusing old log C:\alunos_app\ChromeProfileWPP\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/000085.log 
+2025/11/28-10:12:17.628 19b4 Level-0 table #90: started
+2025/11/28-10:12:17.648 19b4 Level-0 table #90: 606924 bytes OK
+2025/11/28-10:12:17.655 19b4 Delete type=0 #85
+2025/11/28-10:12:17.656 19b4 Manual compaction at level-0 from '\x00*\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00+\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/11/28-10:12:17.697 44e8 Compacting 1@1 + 1@2 files
+2025/11/28-10:12:17.735 44e8 Generated table #91@1: 27635 keys, 1312143 bytes
+2025/11/28-10:12:17.735 44e8 Compacted 1@1 + 1@2 files => 1312143 bytes
+2025/11/28-10:12:17.737 44e8 compacted to: files[ 0 0 1 0 0 0 0 ]
+2025/11/28-10:12:17.737 44e8 Delete type=2 #87
+2025/11/28-10:12:17.738 44e8 Delete type=2 #90
+2025/11/28-10:12:37.669 44e8 Level-0 table #93: started
+2025/11/28-10:12:37.694 44e8 Level-0 table #93: 1232296 bytes OK
+2025/11/28-10:12:37.695 44e8 Delete type=0 #89
+2025/11/28-10:12:37.698 44e8 Compacting 1@1 + 1@2 files
+2025/11/28-10:12:37.764 44e8 Generated table #94@1: 36986 keys, 2200908 bytes
+2025/11/28-10:12:37.770 44e8 Generated table #95@1: 3928 keys, 162299 bytes
+2025/11/28-10:12:37.770 44e8 Compacted 1@1 + 1@2 files => 2363207 bytes
+2025/11/28-10:12:37.771 44e8 compacted to: files[ 0 0 2 0 0 0 0 ]
+2025/11/28-10:12:37.771 44e8 Delete type=2 #91
+2025/11/28-10:12:37.771 44e8 Delete type=2 #93
+2025/11/28-10:12:37.805 44e8 Level-0 table #97: started
+2025/11/28-10:12:37.840 44e8 Level-0 table #97: 1332784 bytes OK
+2025/11/28-10:12:37.842 44e8 Delete type=0 #92
+2025/11/28-10:12:37.845 44e8 Compacting 1@1 + 1@2 files
+2025/11/28-10:12:37.918 44e8 Generated table #98@1: 32440 keys, 2190093 bytes
+2025/11/28-10:12:37.954 44e8 Generated table #99@1: 14663 keys, 1338223 bytes
+2025/11/28-10:12:37.954 44e8 Compacted 1@1 + 1@2 files => 3528316 bytes
+2025/11/28-10:12:37.955 44e8 compacted to: files[ 0 0 3 0 0 0 0 ]
+2025/11/28-10:12:37.956 44e8 Delete type=2 #94
+2025/11/28-10:12:37.956 44e8 Delete type=2 #97
+2025/11/28-10:12:37.966 44e8 Level-0 table #101: started
+2025/11/28-10:12:38.000 44e8 Level-0 table #101: 1353100 bytes OK
+2025/11/28-10:12:38.001 44e8 Delete type=0 #96

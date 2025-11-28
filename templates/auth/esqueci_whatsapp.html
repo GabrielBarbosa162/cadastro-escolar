@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Recuperar Senha - WhatsApp{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-center mt-5">
+  <div class="card bg-dark text-light border-secondary shadow-sm" style="width: 460px;">
+    <div class="card-body">
+
+      <h4 class="mb-3 text-center">Receber código por WhatsApp</h4>
+      <p class="text-muted text-center mb-4">
+        Informe o número do seu WhatsApp para receber o código de recuperação.
+      </p>
+
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">Número WhatsApp</label>
+          <input type="text"
+                 name="whatsapp"
+                 class="form-control"
+                 placeholder="(DDD) 99999-9999"
+                 required>
+          <small class="text-muted">
+            Exemplo: (33) 98888-7777
+          </small>
+        </div>
+
+        <button class="btn btn-success w-100 py-2">
+          Enviar código
+        </button>
+      </form>
+
+      <div class="text-center mt-3">
+        <a href="{{ url_for('esqueci') }}" class="text-muted">
+          &larr; Voltar e escolher outra opção
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

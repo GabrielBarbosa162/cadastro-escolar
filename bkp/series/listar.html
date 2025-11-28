@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h4 class="mb-0">Séries</h4>
+  {% if can('SERIE_ADICIONAR') %}
+  <a class="btn btn-sm btn-primary" href="{{ url_for('series_nova') }}">Nova Série</a>
+  {% endif %}
+</div>
+
+<div class="card p-3">
+  <div class="table-responsive">
+    <table class="table table-dark table-striped align-middle">
+      <thead>
+      <tr><th>ID</th><th>Nome</th><th>Criado em</th></tr>
+      </thead>
+      <tbody>
+      {% for s in series %}
+        <tr>
+          <td>{{ s.id }}</td>
+          <td>{{ s.nome }}</td>
+          <td>{{ s.criado_em }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

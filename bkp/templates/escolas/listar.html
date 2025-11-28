@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Escolas{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h1 class="h4 mb-0">Escolas</h1>
+  <a href="{{ url_for('escolas_nova') }}" class="btn btn-primary btn-sm">Nova Escola</a>
+</div>
+
+<div class="card bg-secondary border-0">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-dark table-striped align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th class="table-actions text-end">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in items %}
+          <tr>
+            <td>{{ e.nome }}</td>
+            <td class="text-end">
+              <form class="d-inline" method="post" action="{{ url_for('escolas_editar', id=e.id) }}">
+                <input type="hidden" name="nome" value="{{ e.nome }}">
+                <button class="btn btn-sm btn-outline-light" onclick="return promptEditEscola(this.form)">Editar</button>
+              </form>
+              <form class="d-inline" method="post" action="{{ url_for('escolas_excluir', id=e.id) }}"
+                    onsubmit="return confirm('Excluir esta escola?');">
+                <button class="btn btn-sm btn-outline-danger">Excluir</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="2" class="text-center text-light-50 py-4">Nenhuma escola cadastrada.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  function promptEditEscola(form){
+    const atual = form.querySelector('input[name=nome]').value;
+    const novo = prompt('Editar nome da escola:', atual);
+    if(novo && novo.trim() && novo.trim() !== atual){
+      form.querySelector('input[name=nome]').value = novo.trim();
+      return true;
+    }
+    return false;
+  }
+</script>
+{% endblock %}

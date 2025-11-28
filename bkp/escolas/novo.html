@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Nova Escola{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">Nova Escola</h3>
+  <form method="post" class="row g-3">
+    <div class="col-12 col-md-6">
+      <label class="form-label">Nome da escola</label>
+      <input name="nome" class="form-control" required>
+    </div>
+    <div class="col-12 text-end">
+      <a class="btn btn-outline-light" href="{{ url_for('escolas_listar') }}">Cancelar</a>
+      <button class="btn btn-light">Salvar</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

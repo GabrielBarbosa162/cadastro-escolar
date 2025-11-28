@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h3 class="mb-0">Séries</h3>
+  {% if can('SERIE_CRIAR') %}
+  <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#novaSerie" aria-expanded="false">
+    Nova Série
+  </button>
+  {% endif %}
+</div>
+
+{% if can('SERIE_CRIAR') %}
+<div class="collapse mb-3" id="novaSerie">
+  <div class="card bg-dark border-secondary">
+    <div class="card-body">
+      <form method="post" action="{{ url_for('series_nova') }}" class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label">Nome da Série</label>
+          <input type="text" name="nome" class="form-control" required maxlength="120" />
+        </div>
+        <div class="col-12 text-end">
+          <button class="btn btn-success">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card bg-dark border-secondary">
+  <div class="card-body p-0">
+    <table class="table table-dark table-striped table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th class="text-end">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in series %}
+        <tr>
+          <td>{{ s.nome }}</td>
+          <td class="text-end">
+            {% if can('SERIE_EDITAR') %}
+            <button class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#editarSerie{{ s.id }}">Editar</button>
+            {% endif %}
+            {% if can('SERIE_EXCLUIR') %}
+            <form class="d-inline" method="post" action="{{ url_for('series_excluir', id=s.id) }}" onsubmit="return confirm('Excluir esta série?');">
+              <button class="btn btn-sm btn-outline-danger">Excluir</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+
+        {% if can('SERIE_EDITAR') %}
+        <!-- Modal Editar Série -->
+        <div class="modal fade" id="editarSerie{{ s.id }}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-light border-secondary">
+              <div class="modal-header">
+                <h5 class="modal-title">Editar Série</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+              </div>
+              <form method="post" action="{{ url_for('series_editar', id=s.id) }}">
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label class="form-label">Nome</label>
+                    <input type="text" name="nome" class="form-control" value="{{ s.nome }}" required maxlength="120" />
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button class="btn btn-primary">Salvar</button>
+                  <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <tr>
+          <td colspan="2" class="text-center text-secondary py-4">Nenhuma série cadastrada.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

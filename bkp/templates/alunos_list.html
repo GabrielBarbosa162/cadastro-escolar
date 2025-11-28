@@ -2,67 +2,70 @@
 {% block title %}Alunos{% endblock %}
 {% block content %}
 <div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="mb-0">Alunos</h3>
+
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="m-0">Alunos</h3>
+
     <div class="d-flex gap-2">
-      <form method="get" class="d-flex">
-        <input name="q" class="form-control me-2" placeholder="Buscar por nome..." value="{{ request.args.get('q','') }}">
-        <button class="btn btn-outline-light">Buscar</button>
-      </form>
-      <a href="{{ url_for('alunos.novo') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i> Cadastrar Aluno
-      </a>
+      {% if can('ALUNO_CRIAR') and 'alunos_novo' in view_functions %}
+        <a href="{{ url_for('alunos_novo') }}" class="btn btn-brand">
+          <i class="bi bi-person-plus"></i> Cadastrar aluno
+        </a>
+      {% endif %}
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm">
+  <div class="card card-soft">
     <div class="card-body p-0">
-      <table class="table table-dark align-middle mb-0">
-        <thead>
-          <tr>
-            <th>Aluno</th>
-            <th>Escola</th>
-            <th>Horário</th>
-            <th>Telefone da Mãe</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for a in alunos %}
+      <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0">
+          <thead>
+            <tr class="text-uppercase small">
+              <th style="width:72px;">Foto</th>
+              <th>Nome</th>
+              <th>Escola</th>
+              <th>Horário</th>
+              <th>Telefone da mãe</th>
+              <th style="width:160px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in alunos %}
             <tr>
-              <!-- Foto + Nome no MESMO campo -->
               <td>
-                <div class="d-flex align-items-center">
-                  {% if a.foto_path %}
-                    <img src="{{ a.foto_path }}" alt="foto"
-                         class="rounded me-3" style="height:48px;width:48px;object-fit:cover;">
-                  {% else %}
-                    <div class="bg-secondary rounded me-3" style="height:48px;width:48px;"></div>
-                  {% endif %}
-                  <div class="fw-semibold">{{ a.nome }}</div>
-                </div>
-              </td>
-
-              <!-- Escola -->
-              <td>{{ a.escola or '—' }}</td>
-
-              <!-- Horário (usa resumo gravado no aluno) -->
-              <td>{{ a.horario_resumo or '—' }}</td>
-
-              <!-- Telefone da Mãe -->
-              <td>
-                {% if a.telefone_mae %}
-                  <a class="text-decoration-none" href="tel:{{ a.telefone_mae }}">{{ a.telefone_mae }}</a>
+                {% if a.foto_path %}
+                  <img src="{{ url_for('static', filename=a.foto_path) }}" class="avatar-sm" alt="foto">
                 {% else %}
-                  —
+                  <img src="{{ url_for('static', filename='img/placeholder.png') }}" class="avatar-sm" alt="foto">
                 {% endif %}
               </td>
+              <td>{{ a.nome }}</td>
+              <td>{{ a.escola or '-' }}</td>
+              <td>{{ a.horario_resumo or '-' }}</td>
+              <td>{{ a.telefone_mae or '-' }}</td>
+              <td>
+                <div class="d-flex gap-2">
+                  {% if can('ALUNO_EDITAR') and 'alunos_editar' in view_functions %}
+                    <a class="btn btn-sm btn-outline-light" href="{{ url_for('alunos_editar', aluno_id=a.id) }}">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                  {% endif %}
+                  {% if can('ALUNO_EXCLUIR') and 'alunos_excluir' in view_functions %}
+                    <form method="post" action="{{ url_for('alunos_excluir', aluno_id=a.id) }}" onsubmit="return confirm('Excluir este aluno?');">
+                      <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
             </tr>
-          {% else %}
-            <tr><td colspan="4" class="text-center text-secondary py-4">Nenhum aluno cadastrado.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-4">Nenhum aluno cadastrado.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
+
 </div>
 {% endblock %}

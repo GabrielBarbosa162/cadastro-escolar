@@ -2,44 +2,75 @@
 {% block title %}Início{% endblock %}
 
 {% block content %}
-<div class="container py-5 text-white">
-  <h2 class="mb-3">Bem-vindo ao Sistema Escolar</h2>
-  <p class="text-secondary">Use o menu acima para navegar pelas funcionalidades.</p>
+<h1 class="h4 mb-4">Painel</h1>
 
-  <div class="mt-4 d-flex flex-wrap gap-3">
-    <a href="{{ url_for('alunos.listar') }}" class="btn btn-primary">
-      <i class="bi bi-people-fill me-1"></i> Gerenciar Alunos
+<div class="row g-3">
+  <div class="col-12 col-md-6 col-lg-4">
+    <a href="{{ url_for('alunos_list') }}" class="text-decoration-none text-light">
+      <div class="card bg-secondary border-0 card-hover">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Alunos</h5>
+          <p class="card-text text-light-50 mb-0">Gerencie cadastros de alunos</p>
+        </div>
+      </div>
     </a>
-
-    {% if 'escolas' in bp_names %}
-    <a href="{{ url_for('escolas.listar') }}" class="btn btn-outline-light">
-      <i class="bi bi-building me-1"></i> Escolas
-    </a>
-    {% endif %}
-
-    {% if 'series' in bp_names %}
-    <a href="{{ url_for('series.listar') }}" class="btn btn-outline-light">
-      <i class="bi bi-collection me-1"></i> Séries
-    </a>
-    {% endif %}
-
-    {% if 'atividades' in bp_names %}
-    <a href="{{ url_for('atividades.listar') }}" class="btn btn-outline-light">
-      <i class="bi bi-journal-text me-1"></i> Atividades
-    </a>
-    {% endif %}
-
-    {% if 'horarios' in bp_names %}
-    <a href="{{ url_for('horarios.listar') }}" class="btn btn-outline-light">
-      <i class="bi bi-calendar-week me-1"></i> Horários
-    </a>
-    {% endif %}
-
-    {% if current_user.is_authenticated and current_user.papel == 'DIRETORIA' %}
-    <a href="{{ url_for('usuarios_list') }}" class="btn btn-warning text-dark">
-      <i class="bi bi-person-gear me-1"></i> Usuários
-    </a>
-    {% endif %}
   </div>
+
+  <div class="col-12 col-md-6 col-lg-4">
+    <a href="{{ url_for('series_list') }}" class="text-decoration-none text-light">
+      <div class="card bg-secondary border-0 card-hover">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Séries</h5>
+          <p class="card-text text-light-50 mb-0">Cadastre e edite séries</p>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-4">
+    <a href="{{ url_for('escolas_list') }}" class="text-decoration-none text-light">
+      <div class="card bg-secondary border-0 card-hover">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Escolas</h5>
+          <p class="card-text text-light-50 mb-0">Unidades e instituições</p>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-4">
+    <a href="{{ url_for('horarios_list') }}" class="text-decoration-none text-light">
+      <div class="card bg-secondary border-0 card-hover">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Horários</h5>
+          <p class="card-text text-light-50 mb-0">Faixas de aula (início/fim)</p>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-4">
+    <a href="{{ url_for('atividades_list') }}" class="text-decoration-none text-light">
+      <div class="card bg-secondary border-0 card-hover">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Atividades</h5>
+          <p class="card-text text-light-50 mb-0">Conteúdo e observações</p>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  {% if is_diretoria %}
+  <div class="col-12 col-md-6 col-lg-4">
+    <a href="{{ url_for('usuarios_list') }}" class="text-decoration-none text-light">
+      <div class="card bg-secondary border-0 card-hover">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Usuários</h5>
+          <p class="card-text text-light-50 mb-0">Perfis e permissões</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h3 class="mb-0">Atividades</h3>
+  {% if can('ATIVIDADE_CRIAR') %}
+  <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#novaAtividade" aria-expanded="false">
+    Adicionar Atividade
+  </button>
+  {% endif %}
+</div>
+
+{% if can('ATIVIDADE_CRIAR') %}
+<div class="collapse mb-3" id="novaAtividade">
+  <div class="card bg-dark border-secondary">
+    <div class="card-body">
+      <form method="post" action="{{ url_for('atividades_nova') }}" class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Aluno</label>
+          <select name="aluno_id" class="form-select" required>
+            <option value="">Selecione…</option>
+            {% for a in alunos %}
+            <option value="{{ a.id }}">{{ a.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Data</label>
+          <input type="date" name="data" class="form-control" required />
+        </div>
+        <div class="col-md-5">
+          <label class="form-label">Professor</label>
+          <input type="text" name="professor" class="form-control" required />
+        </div>
+        <div class="col-12">
+          <label class="form-label">Conteúdo (a estudar/estudado)</label>
+          <textarea name="conteudo" class="form-control" rows="3" required></textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Observação (opcional)</label>
+          <textarea name="observacao" class="form-control" rows="2"></textarea>
+        </div>
+        <div class="col-12 text-end">
+          <button class="btn btn-success">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card bg-dark border-secondary">
+  <div class="card-body p-0">
+    <table class="table table-dark table-striped table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Aluno</th>
+          <th>Professor</th>
+          <th>Conteúdo</th>
+          <th>Observação</th>
+          <th class="text-end">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for it in atividades %}
+        <tr>
+          <td>{{ it.data.strftime('%d/%m/%Y') if it.data }}</td>
+          <td>{{ it.aluno.nome if it.aluno }}</td>
+          <td>{{ it.professor }}</td>
+          <td style="max-width:420px; white-space:pre-wrap;">{{ it.conteudo }}</td>
+          <td style="max-width:320px; white-space:pre-wrap;" class="text-secondary">{{ it.observacao }}</td>
+          <td class="text-end">
+            {% if can('ATIVIDADE_EDITAR') %}
+            <a href="{{ url_for('atividades_editar', id=it.id) }}" class="btn btn-sm btn-outline-light">Editar</a>
+            {% endif %}
+            {% if can('ATIVIDADE_EXCLUIR') %}
+            <form class="d-inline" method="post" action="{{ url_for('atividades_excluir', id=it.id) }}" onsubmit="return confirm('Excluir esta atividade?');">
+              <button class="btn btn-sm btn-outline-danger">Excluir</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="text-center text-secondary py-4">Nenhuma atividade cadastrada.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

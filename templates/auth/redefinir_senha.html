@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Redefinir Senha{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-center mt-5">
+  <div class="card bg-dark text-light border-secondary shadow-sm" style="width: 420px;">
+    <div class="card-body">
+
+      <h4 class="mb-4 text-center">Redefinir Senha</h4>
+
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">Nova senha</label>
+          <input type="password"
+                 name="senha1"
+                 class="form-control"
+                 placeholder="Digite a nova senha"
+                 required>
+          <small class="text-muted">
+            Mínimo de 8 caracteres e pelo menos 1 número.
+          </small>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label">Confirmar senha</label>
+          <input type="password"
+                 name="senha2"
+                 class="form-control"
+                 placeholder="Confirme a nova senha"
+                 required>
+        </div>
+
+        <button class="btn btn-success w-100 py-2">
+          Redefinir senha
+        </button>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
