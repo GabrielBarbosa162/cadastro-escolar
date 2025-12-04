@@ -47,9 +47,10 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 app.config["SMTP_SERVER"] = "smtp.gmail.com"
 app.config["SMTP_PORT"] = 587
-app.config["SMTP_USER"] = "SEU_EMAIL@gmail.com"
-app.config["SMTP_PASS"] = "SENHA_DE_APP_GERADA"
-app.config["SMTP_FROM"] = "SEU_EMAIL@gmail.com"
+app.config["SMTP_USER"] = "gabrielbarbosac2013@gmail.com"
+app.config["SMTP_PASS"] = "zkmxnnhhmukeiybo"  # senha de app sem espaços
+app.config["SMTP_FROM"] = "gabrielbarbosac2013@gmail.com"
+
 
 
 db = SQLAlchemy(app)
@@ -121,6 +122,56 @@ def enviar_codigo_email(email, codigo) -> bool:
     except Exception:
         return False
 
+def enviar_email_generico(destinatarios, assunto, mensagem) -> bool:
+    """
+    Envia um e-mail usando as configurações SMTP do app.
+
+    - destinatarios: pode ser string
+        "a@b.com"
+        "a@b.com; c@d.com"
+        "a@b.com,c@d.com"
+      ou lista:
+        ["a@b.com", "c@d.com"]
+
+    - assunto: texto do assunto
+    - mensagem: corpo do e-mail (texto simples)
+
+    Retorna True se enviou com sucesso, False se deu erro.
+    """
+    smtp_server = app.config.get("SMTP_SERVER")
+    smtp_port = app.config.get("SMTP_PORT")
+    smtp_user = app.config.get("SMTP_USER")
+    smtp_pass = app.config.get("SMTP_PASS")
+    smtp_from = app.config.get("SMTP_FROM") or smtp_user
+
+    # Verifica se SMTP está configurado
+    if not (smtp_server and smtp_user and smtp_pass and smtp_from):
+        return False
+
+    # Normaliza destinatários
+    if isinstance(destinatarios, str):
+        # aceita ; ou , como separadores
+        texto = destinatarios.replace(",", ";")
+        destinatarios = [e.strip() for e in texto.split(";") if e.strip()]
+
+    if not isinstance(destinatarios, (list, tuple)) or not destinatarios:
+        return False
+
+    try:
+        msg = MIMEText(mensagem)
+        msg["Subject"] = assunto
+        msg["From"] = smtp_from
+        msg["To"] = ", ".join(destinatarios)
+
+        servidor = smtplib.SMTP(smtp_server, smtp_port, timeout=20)
+        servidor.starttls()
+        servidor.login(smtp_user, smtp_pass)
+        servidor.sendmail(smtp_from, destinatarios, msg.as_string())
+        servidor.quit()
+        return True
+    except Exception as e:
+        print("Erro ao enviar e-mail genérico:", e)
+        return False
 
 def enviar_codigo_whatsapp(numero, codigo) -> bool:
     """
