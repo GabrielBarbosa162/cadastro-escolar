@@ -47,9 +47,10 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 app.config["SMTP_SERVER"] = "smtp.gmail.com"
 app.config["SMTP_PORT"] = 587
-app.config["SMTP_USER"] = "gabrielbarbosac2013@gmail.com"
-app.config["SMTP_PASS"] = "zkmxnnhhmukeiybo"  # senha de app sem espaços
-app.config["SMTP_FROM"] = "gabrielbarbosac2013@gmail.com"
+app.config["SMTP_USER"] = "amos.carvalho@gmail.com"
+app.config["SMTP_PASS"] = "zhswmywmylvkrcnw"
+app.config["SMTP_FROM"] = "amos.carvalho@gmail.com"
+
 
 
 

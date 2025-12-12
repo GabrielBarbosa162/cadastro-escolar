@@ -1,12 +1,61 @@
 {% extends "base.html" %}
 {% block content %}
 
+<style>
+  .info-card {
+    background: #0b1220;
+    border: 1px solid #334155;
+    border-radius: 14px;
+    padding: 14px 16px;
+    height: 100%;
+  }
+
+  .section-title {
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #93c5fd;
+    margin: 0 0 10px 0;
+    font-weight: 700;
+  }
+
+  .info-row {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px dashed rgba(148,163,184,.25);
+  }
+  .info-row:last-child { border-bottom: none; }
+
+  .info-label {
+    min-width: 150px;
+    color: #9ca3af;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .info-value {
+    color: #ffffff;
+    font-size: 14px;
+  }
+
+  .badge-soft {
+    background: rgba(148,163,184,.18);
+    border: 1px solid rgba(148,163,184,.25);
+    color: #e5e7eb;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+</style>
+
 <div class="page-title-row mb-3">
   <div>
     <h2>Dados do aluno</h2>
     <div class="subtitle">Visualização do cadastro completo.</div>
   </div>
-  <div>
+  <div class="d-flex gap-2">
     <a href="{{ url_for('alunos_list') }}" class="btn btn-outline-light btn-sm">
       Voltar para lista
     </a>
@@ -15,175 +64,217 @@
 
 <section class="card bg-dark border-secondary">
   <div class="card-body">
-    <div class="row g-4">
+
+    <!-- CABEÇALHO (perfil) -->
+    <div class="row g-4 align-items-start">
       <div class="col-md-3 d-flex flex-column align-items-center text-center">
+
         {% if aluno.foto_path %}
           <img src="{{ url_for('static', filename=aluno.foto_path) }}"
                alt="Foto de {{ aluno.nome }}"
-               style="width:140px; height:140px; border-radius:50%; object-fit:cover; border:2px solid #22c55e; margin-bottom:0.75rem;">
+               style="width:150px; height:150px; border-radius:50%; object-fit:cover; border:2px solid #22c55e; margin-bottom:0.9rem;">
         {% else %}
-          <div style="width:140px; height:140px; border-radius:50%;
+          <div style="width:150px; height:150px; border-radius:50%;
                       display:flex; align-items:center; justify-content:center;
-                      background:#020617; border:2px solid #1f2937; margin-bottom:0.75rem;
-                      font-size:2.5rem; color:#9ca3af;">
+                      background:#020617; border:2px solid #1f2937; margin-bottom:0.9rem;
+                      font-size:2.8rem; color:#9ca3af;">
             {{ aluno.nome[0]|upper }}
           </div>
         {% endif %}
 
         <h5 class="mb-1">{{ aluno.nome }}</h5>
-        <p class="text-muted small mb-0">
+
+        <div class="text-muted small">
           {% if aluno.serie %}{{ aluno.serie.nome }}{% else %}Série não informada{% endif %}
           <br>
           {% if aluno.escola %}{{ aluno.escola.nome }}{% else %}Escola não informada{% endif %}
-        </p>
+        </div>
+
+        <div class="mt-3 d-flex flex-wrap gap-2 justify-content-center">
+          {% if aluno.sexo == 'M' %}
+            <span class="badge-soft">Masculino</span>
+          {% elif aluno.sexo == 'F' %}
+            <span class="badge-soft">Feminino</span>
+          {% else %}
+            <span class="badge-soft">Sexo: Não informado</span>
+          {% endif %}
+
+          {% if aluno.idade %}
+            <span class="badge-soft">{{ aluno.idade }} anos</span>
+          {% else %}
+            <span class="badge-soft">Idade: N/I</span>
+          {% endif %}
+        </div>
+
       </div>
 
       <div class="col-md-9">
         <div class="row g-3">
-          <div class="col-md-4">
-            <span class="form-label">Data de nascimento</span>
-            <div class="text-white">
-              {% if aluno.data_nascimento %}
-                {{ aluno.data_nascimento.strftime('%d/%m/%Y') }}
-              {% else %}
-                <span class="text-muted">Não informado</span>
-              {% endif %}
+
+          <!-- DADOS BÁSICOS -->
+          <div class="col-lg-6">
+            <div class="info-card">
+              <div class="section-title">Dados básicos</div>
+
+              <div class="info-row">
+                <div class="info-label">Nascimento</div>
+                <div class="info-value">
+                  {% if aluno.data_nascimento %}
+                    {{ aluno.data_nascimento.strftime('%d/%m/%Y') }}
+                  {% else %}
+                    <span class="text-muted">Não informado</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="info-row">
+                <div class="info-label">Horário</div>
+                <div class="info-value">
+                  {% if aluno.horario %}
+                    {{ aluno.horario.hora_inicio }} - {{ aluno.horario.hora_fim }}
+                  {% else %}
+                    <span class="text-muted">Não informado</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="info-row">
+                <div class="info-label">Início das aulas</div>
+                <div class="info-value">
+                  {% if aluno.inicio_aulas %}
+                    {{ aluno.inicio_aulas.strftime('%d/%m/%Y') }}
+                  {% else %}
+                    <span class="text-muted">Não informado</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="info-row">
+                <div class="info-label">Mensalidade / plano</div>
+                <div class="info-value">
+                  {{ aluno.mensalidade_opcao or 'Não informado' }}
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="col-md-2">
-            <span class="form-label">Idade</span>
-            <div class="text-white">
-              {% if aluno.idade %}
-                {{ aluno.idade }} anos
-              {% else %}
-                <span class="text-muted">Não informado</span>
-              {% endif %}
+          <!-- RESPONSÁVEIS -->
+          <div class="col-lg-6">
+            <div class="info-card">
+              <div class="section-title">Responsáveis</div>
+
+              <div class="info-row">
+                <div class="info-label">Nome do pai</div>
+                <div class="info-value">{{ aluno.nome_pai or 'Não informado' }}</div>
+              </div>
+
+              <div class="info-row">
+                <div class="info-label">Nome da mãe</div>
+                <div class="info-value">{{ aluno.nome_mae or 'Não informado' }}</div>
+              </div>
+
+              <div class="info-row">
+                <div class="info-label">Telefones</div>
+                <div class="info-value">
+                  {% if aluno.telefone_cel %}
+                    <span class="badge bg-secondary me-1">{{ aluno.telefone_cel }}</span>
+                  {% endif %}
+                  {% if aluno.telefone_fixo %}
+                    <span class="badge bg-secondary">{{ aluno.telefone_fixo }}</span>
+                  {% endif %}
+                  {% if not aluno.telefone_cel and not aluno.telefone_fixo %}
+                    <span class="text-muted">Não informado</span>
+                  {% endif %}
+                </div>
+              </div>
+
             </div>
           </div>
 
-          <div class="col-md-2">
-            <span class="form-label">Sexo</span>
-            <div class="text-white">
-              {% if aluno.sexo == 'M' %}Masculino{% elif aluno.sexo == 'F' %}Feminino{% else %}
-                <span class="text-muted">Não informado</span>
-              {% endif %}
+          <!-- ENDEREÇO -->
+          <div class="col-lg-6">
+            <div class="info-card">
+              <div class="section-title">Endereço</div>
+
+              <div class="info-row">
+                <div class="info-label">Endereço</div>
+                <div class="info-value">
+                  {% if aluno.endereco %}
+                    {{ aluno.endereco }}
+                    {% if aluno.numero %}, {{ aluno.numero }}{% endif %}
+                    {% if aluno.bairro %} - {{ aluno.bairro }}{% endif %}
+                  {% else %}
+                    <span class="text-muted">Não informado</span>
+                  {% endif %}
+                </div>
+              </div>
+
             </div>
           </div>
 
-          <div class="col-md-4">
-            <span class="form-label">Horário</span>
-            <div class="text-white">
-              {% if aluno.horario %}
-                {{ aluno.horario.hora_inicio }} - {{ aluno.horario.hora_fim }}
-              {% else %}
-                <span class="text-muted">Não informado</span>
-              {% endif %}
+          <!-- ORIGEM -->
+          <div class="col-lg-6">
+            <div class="info-card">
+              <div class="section-title">Origem</div>
+
+              <div class="info-row">
+                <div class="info-label">Naturalidade</div>
+                <div class="info-value">{{ aluno.naturalidade or 'Não informado' }}</div>
+              </div>
+
+              <div class="info-row">
+                <div class="info-label">Nacionalidade</div>
+                <div class="info-value">{{ aluno.nacionalidade or 'Não informado' }}</div>
+              </div>
+
             </div>
           </div>
 
-          <div class="col-md-6">
-            <span class="form-label">Nome do pai</span>
-            <div class="text-white">
-              {{ aluno.nome_pai or 'Não informado' }}
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <span class="form-label">Nome da mãe</span>
-            <div class="text-white">
-              {{ aluno.nome_mae or 'Não informado' }}
-            </div>
-          </div>
-
-          <div class="col-md-8">
-            <span class="form-label">Endereço</span>
-            <div class="text-white">
-              {% if aluno.endereco %}
-                {{ aluno.endereco }}
-                {% if aluno.numero %}, {{ aluno.numero }}{% endif %}
-                {% if aluno.bairro %} - {{ aluno.bairro }}{% endif %}
-              {% else %}
-                <span class="text-muted">Não informado</span>
-              {% endif %}
-            </div>
-          </div>
-
-          <div class="col-md-4">
-            <span class="form-label">Telefones</span>
-            <div class="text-white">
-              {% if aluno.telefone_cel %}
-                <span class="badge bg-secondary me-1">{{ aluno.telefone_cel }}</span>
-              {% endif %}
-              {% if aluno.telefone_fixo %}
-                <span class="badge bg-secondary">{{ aluno.telefone_fixo }}</span>
-              {% endif %}
-              {% if not aluno.telefone_cel and not aluno.telefone_fixo %}
-                <span class="text-muted">Não informado</span>
-              {% endif %}
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <span class="form-label">Naturalidade</span>
-            <div class="text-white">
-              {{ aluno.naturalidade or 'Não informado' }}
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <span class="form-label">Nacionalidade</span>
-            <div class="text-white">
-              {{ aluno.nacionalidade or 'Não informado' }}
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <span class="form-label">Início das aulas</span>
-            <div class="text-white">
-              {% if aluno.inicio_aulas %}
-                {{ aluno.inicio_aulas.strftime('%d/%m/%Y') }}
-              {% else %}
-                <span class="text-muted">Não informado</span>
-              {% endif %}
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <span class="form-label">Mensalidade / plano</span>
-            <div class="text-white">
-              {{ aluno.mensalidade_opcao or 'Não informado' }}
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <span class="form-label">Dificuldades</span>
-            <div class="text-white">
-              {% if aluno.tem_dificuldade %}
-                {{ aluno.qual_dificuldade or 'Sim, mas não detalhado' }}
-              {% else %}
-                <span class="text-muted">Nenhuma ou não informado</span>
-              {% endif %}
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <span class="form-label">Medicamentos</span>
-            <div class="text-white">
-              {% if aluno.toma_medicamento %}
-                {{ aluno.qual_medicamento or 'Sim, mas não detalhado' }}
-              {% else %}
-                <span class="text-muted">Nenhum ou não informado</span>
-              {% endif %}
-            </div>
-          </div>
-
+          <!-- SAÚDE / OBSERVAÇÕES -->
           <div class="col-12">
-            <span class="form-label">Observações</span>
-            <div class="text-white">
-              {{ aluno.observacoes or 'Sem observações.' }}
+            <div class="info-card">
+              <div class="section-title">Saúde e observações</div>
+
+              <div class="row g-3">
+                <div class="col-lg-6">
+                  <div class="info-row">
+                    <div class="info-label">Dificuldades</div>
+                    <div class="info-value">
+                      {% if aluno.tem_dificuldade %}
+                        {{ aluno.qual_dificuldade or 'Sim, mas não detalhado' }}
+                      {% else %}
+                        <span class="text-muted">Nenhuma ou não informado</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-6">
+                  <div class="info-row">
+                    <div class="info-label">Medicamentos</div>
+                    <div class="info-value">
+                      {% if aluno.toma_medicamento %}
+                        {{ aluno.qual_medicamento or 'Sim, mas não detalhado' }}
+                      {% else %}
+                        <span class="text-muted">Nenhum ou não informado</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="info-row">
+                    <div class="info-label">Observações</div>
+                    <div class="info-value">
+                      {{ aluno.observacoes or 'Sem observações.' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
+
         </div>
       </div>
     </div>

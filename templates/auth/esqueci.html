@@ -1,67 +1,145 @@
 {% extends "base.html" %}
-{% block title %}Recuperar Senha{% endblock %}
+
+{% block title %}Esqueci minha senha - Sistema Escolar{% endblock %}
 
 {% block content %}
 
-<div class="d-flex justify-content-center mt-5">
-  <div class="card bg-dark text-light border-secondary shadow-sm" style="width: 460px;">
-    <div class="card-body">
+<style>
+  html, body { height: 100%; }
 
-      <h4 class="mb-3 text-center">Recuperar Senha</h4>
-      <p class="text-muted text-center mb-4">
-        Informe seu e-mail cadastrado e escolha como deseja receber o código.
-      </p>
+  /* Fundo azul ocupando a tela toda (igual no login) */
+  body {
+    background: #0f172a;
+  }
 
-      <form method="post">
-        <div class="mb-3">
-          <label class="form-label">E-mail cadastrado</label>
-          <input type="email"
-                 name="email"
-                 class="form-control"
-                 placeholder="seuemail@exemplo.com"
-                 required>
-        </div>
+  .forgot-container {
+    min-height: calc(100vh - 60px); /* ajusta considerando a navbar */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
 
-        <div class="mb-3">
-          <label class="form-label d-block">Como deseja receber o código?</label>
+  .forgot-card {
+    width: 100%;
+    max-width: 520px;
+    padding: 28px 30px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #1f2937, #111827);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    color: #f9fafb;
+  }
 
-          <div class="form-check">
-            <input class="form-check-input"
-                   type="radio"
-                   name="metodo"
-                   id="met_email"
-                   value="email"
-                   checked>
-            <label class="form-check-label" for="met_email">
-              Receber código por e-mail
-            </label>
-          </div>
+  .forgot-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #ffffff;
+  }
 
-          <div class="form-check mt-1">
-            <input class="form-check-input"
-                   type="radio"
-                   name="metodo"
-                   id="met_whatsapp"
-                   value="whatsapp">
-            <label class="form-check-label" for="met_whatsapp">
-              Receber código por WhatsApp
-            </label>
-          </div>
-        </div>
+  .forgot-subtitle {
+    margin: 6px 0 18px 0;
+    font-size: 13px;
+    color: #e5e7eb; /* mais claro (sem apagado) */
+  }
 
-        <button class="btn btn-success w-100 py-2">
-          Continuar
-        </button>
-      </form>
+  .forgot-group {
+    margin-bottom: 16px;
+  }
 
-      <div class="text-center mt-3">
-        <a href="{{ url_for('login') }}" class="text-muted">
-          Voltar para o login
-        </a>
+  .forgot-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #ffffff; /* branco */
+  }
+
+  .forgot-input, .forgot-select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #4b5563;
+    background: #020617;
+    color: #f9fafb;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .forgot-input::placeholder {
+    color: #9ca3af; /* placeholder mais visível */
+  }
+
+  .forgot-input:focus, .forgot-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.45);
+  }
+
+  .forgot-footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    gap: 12px;
+  }
+
+  .forgot-link {
+    font-size: 13px;
+    color: #93c5fd;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .forgot-link:hover {
+    text-decoration: underline;
+  }
+
+  .forgot-btn {
+    padding: 9px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    background: #3b82f6;
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
+    transition: background 0.15s, transform 0.05s;
+  }
+
+  .forgot-btn:hover { background: #2563eb; }
+  .forgot-btn:active { transform: scale(0.97); }
+</style>
+
+<div class="forgot-container">
+  <section class="card forgot-card">
+    <h2 class="forgot-title">Recuperar senha</h2>
+    <p class="forgot-subtitle">
+      Informe seu e-mail cadastrado e escolha como deseja receber o código.
+    </p>
+
+    <form method="POST" action="{{ url_for('esqueci') }}">
+      <div class="forgot-group">
+        <label class="forgot-label" for="email">E-mail</label>
+        <input
+          class="forgot-input"
+          type="email"
+          id="email"
+          name="email"
+          placeholder="seuemail@exemplo.com"
+          required
+        >
       </div>
 
-    </div>
-  </div>
+
+      <div class="forgot-footer-row">
+        <a class="forgot-link" href="{{ url_for('login') }}">Voltar para o login</a>
+        <button class="forgot-btn" type="submit">Enviar código</button>
+      </div>
+    </form>
+  </section>
 </div>
 
 {% endblock %}

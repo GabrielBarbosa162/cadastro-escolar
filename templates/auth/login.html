@@ -1,29 +1,167 @@
-{% extends 'base.html' %}
-{% block title %}Entrar{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}Login - Sistema Escolar{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-  <div class="row justify-content-center">
-    <div class="col-md-5">
-      <div class="card bg-dark text-light border-secondary">
-        <div class="card-body">
-          <h5 class="card-title mb-3">Entrar</h5>
-          <form method="post" action="{{ url_for('login') }}">
-            <div class="mb-3">
-              <label class="form-label">E-mail</label>
-              <input type="email" name="email" class="form-control bg-dark text-light border-secondary" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Senha</label>
-              <input type="password" name="senha" class="form-control bg-dark text-light border-secondary" required>
-            </div>
-            <button class="btn btn-light w-100">Entrar</button>
-          </form>
-          <div class="mt-3 text-center">
-            <a class="link-light link-offset-2" href="{{ url_for('esqueci') }}">Esqueci minha senha</a>
-          </div>
-        </div>
+
+<style>
+  /* Fundo azul em toda a página dessa tela */
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    background: #0f172a; /* azul escuro da sua imagem */
+  }
+
+  /* Wrapper centralizador do card */
+  .login-container {
+    min-height: calc(100vh - 60px); /* 100% da tela menos a navbar aproximada */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 480px;
+    padding: 28px 30px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #1f2937, #111827);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    color: #f9fafb;
+  }
+
+  .login-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .login-subtitle {
+    margin: 4px 0 18px 0;
+    font-size: 13px;
+    color: #d1d5db;
+  }
+
+  .login-group {
+    margin-bottom: 16px;
+  }
+
+  .login-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #ffffff;
+  }
+
+  .login-input {
+    width: 100%;
+    padding: 9px 11px;
+    border-radius: 6px;
+    border: 1px solid #4b5563;
+    background: #020617;
+    color: #f9fafb;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .login-input::placeholder {
+    color: #6b7280;
+  }
+
+  .login-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.45);
+  }
+
+  .login-footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+  }
+
+  .login-link {
+    font-size: 13px;
+    color: #93c5fd;
+    text-decoration: none;
+  }
+
+  .login-link:hover {
+    text-decoration: underline;
+  }
+
+  .login-btn {
+    padding: 9px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    background: #3b82f6;
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
+    transition: background 0.15s, transform 0.05s;
+  }
+
+  .login-btn:hover {
+    background: #2563eb;
+  }
+
+  .login-btn:active {
+    transform: scale(0.97);
+  }
+</style>
+
+<div class="login-container">
+  <section class="card login-card">
+
+    <h2 class="login-title">Acesso ao Sistema</h2>
+    <p class="login-subtitle">Informe seu e-mail e senha para continuar.</p>
+
+    <form method="POST" action="{{ url_for('login') }}">
+
+      <div class="login-group">
+        <label class="login-label" for="email">E-mail</label>
+        <input 
+          type="email" 
+          id="email"
+          name="email" 
+          class="login-input"
+          placeholder="seuemail@exemplo.com"
+          required
+        >
       </div>
-    </div>
-  </div>
+
+      <div class="login-group">
+        <label class="login-label" for="senha">Senha</label>
+        <input 
+          type="password" 
+          id="senha"
+          name="senha" 
+          class="login-input"
+          placeholder="Digite sua senha"
+          required
+        >
+      </div>
+
+      <div class="login-footer-row">
+        <a href="{{ url_for('esqueci') }}" class="login-link">
+          Esqueci minha senha
+        </a>
+
+        <button type="submit" class="login-btn">
+          Entrar
+        </button>
+      </div>
+
+    </form>
+
+  </section>
 </div>
+
 {% endblock %}
