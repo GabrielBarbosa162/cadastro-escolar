@@ -95,3 +95,9 @@
 </section>
 
 {% endblock %}
+{% if current_user.papel_upper() == 'DIRETORIA' %}
+  <!-- botão Novo Aluno aqui -->
+{% endif %}
+{% if current_user.papel_upper() == 'DIRETORIA' %}
+  <!-- botões Editar/Excluir aqui -->
+{% endif %}

@@ -292,3 +292,69 @@ textarea.form-control:focus {
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
+/* === FIX DEFINITIVO: corte real da tabela dentro do card === */
+.card > .table-responsive {
+  overflow: hidden;
+}
+/* === CORREÇÃO DEFINITIVA: MÁSCARA DE CANTOS DO CARD === */
+.card {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden; /* Isso já corta a tabela dentro do card */
+}
+
+/* Camada visual para as bordas arredondadas */
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px #1f2937; /* Aplica o contorno arredondado por cima */
+}
+/* ===== Menu (cards) - texto levemente mais escuro ===== */
+.page-wrapper .card h5,
+.page-wrapper .card .card-title {
+  color: #e5e7eb !important; /* branco levemente acinzentado */
+}
+
+.page-wrapper .card .text-muted,
+.page-wrapper .card .card-text {
+  color: rgba(229, 231, 235, 0.65) !important; /* um pouquinho mais escuro */
+}
+
+/* garante que o link não "apague" o texto */
+.page-wrapper a.text-decoration-none,
+.page-wrapper a.text-decoration-none:hover,
+.page-wrapper a.text-decoration-none:focus {
+  color: inherit !important;
+}
+
+/* Navbar (canto superior direito) - e-mail mais visível */
+.app-navbar .text-muted {
+  color: rgba(255, 255, 255, 0.80) !important;
+}
+
+/* opcional: deixa o e-mail um pouco mais “forte” */
+.app-navbar .text-muted div:first-child {
+  font-weight: 500;
+}
+/* ===== Menu inicial (cards) – letras um pouco mais escuras ===== */
+/* ===== Menu inicial (cards) – letras MAIS escuras ===== */
+.page-wrapper .card h5,
+.page-wrapper .card .card-title {
+  color: #94a3b8 !important; /* cinza mais escuro */
+}
+
+.page-wrapper .card .text-muted,
+.page-wrapper .card .card-text {
+  color: rgba(148, 163, 184, 0.55) !important; /* descrição ainda mais escura */
+}
+
+/* garante que o link do card não altere a cor */
+.page-wrapper a.text-decoration-none,
+.page-wrapper a.text-decoration-none:hover,
+.page-wrapper a.text-decoration-none:focus {
+  color: inherit !important;
+}
+

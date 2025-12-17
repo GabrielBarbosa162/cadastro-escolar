@@ -1,36 +1,39 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block title %}Atividades{% endblock %}
+
 {% block content %}
 
 <style>
-  /* ====== ARREDONDADO DEFINITIVO (FUNCIONA COM BOOTSTRAP) ====== */
-  .table-round-shell{
+  /* ===== SOLUÇÃO DEFINITIVA (SEM CLIP-PATH) ===== */
+
+  .atividades-card {
+    background: #111827;                 /* fundo vem do CARD */
+    border: 1px solid #1f2937;
     border-radius: 14px;
-    overflow: hidden; /* corta as “pontas quadradas” internas */
-    border: 1px solid rgba(148,163,184,.35);
-    box-shadow: 0 10px 26px rgba(0,0,0,.25);
+    overflow: hidden;                    /* 🔥 corte REAL */
   }
 
-  /* camada interna para permitir scroll sem quebrar o border-radius */
-  .table-round-scroll{
-    overflow-x: auto;
-    overflow-y: hidden;
+  /* remove fundos próprios da tabela */
+  .atividades-card table,
+  .atividades-card thead,
+  .atividades-card tbody,
+  .atividades-card tr,
+  .atividades-card th,
+  .atividades-card td {
+    background-color: transparent !important;
   }
 
-  /* tabela limpa */
-  .table-round-shell table{
-    margin: 0;
-    border-collapse: separate;
-    border-spacing: 0;
+  .atividades-card th {
+    color: #9ca3af;
+    font-weight: 600;
   }
 
-  /* garante que o fundo do thead/tbody não “vaze” */
-  .table-round-shell thead,
-  .table-round-shell tbody,
-  .table-round-shell tr,
-  .table-round-shell th,
-  .table-round-shell td{
-    background-clip: padding-box;
+  .atividades-card td {
+    color: #e5e7eb;
+  }
+
+  .atividades-card tbody tr:hover {
+    background: rgba(255,255,255,0.04);
   }
 </style>
 
@@ -38,6 +41,7 @@
 
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="mb-0">Atividades</h3>
+
     <a href="{{ url_for('atividades.novo') }}" class="btn btn-primary">
       <i class="bi bi-plus-circle me-1"></i> Nova Atividade
     </a>
@@ -45,80 +49,81 @@
 
   <form class="mb-3" method="get">
     <div class="input-group">
-      <input name="q" class="form-control" placeholder="Buscar por título..." value="{{ request.args.get('q','') }}">
+      <input name="q" class="form-control" placeholder="Buscar..." value="{{ request.args.get('q','') }}">
       <button class="btn btn-outline-light">Buscar</button>
     </div>
   </form>
 
-  <!-- ✅ wrapper com borda arredondada -->
-  <div class="table-round-shell">
-    <!-- ✅ scroll separado (não quebra o radius) -->
-    <div class="table-round-scroll">
-      <table class="table table-dark align-middle mb-0">
-        <thead>
-          <tr>
-            <th>Título</th>
-            <th>Aluno</th>
-            <th style="width:140px">Data</th>
-            <th>Conteúdo</th>
-            <th class="text-center" style="width:120px">WhatsApp</th>
-            <th class="text-end" style="width:140px">Ações</th>
-          </tr>
-        </thead>
+  <!-- ✅ CARD CORRETO -->
+  <div class="card atividades-card">
+    <div class="card-body p-0">
 
-        <tbody>
-          {% for it in itens %}
+      <div class="table-responsive">
+        <!-- ❌ SEM table-dark -->
+        <table class="table align-middle mb-0">
+          <thead>
             <tr>
-              <td class="fw-semibold">{{ it.nome }}</td>
-              <td>{{ it.aluno_nome or '—' }}</td>
-              <td class="text-secondary">
-                {{ it.data_atividade.strftime('%d/%m/%Y') if it.data_atividade else '—' }}
-              </td>
-              <td class="text-truncate" style="max-width:260px;">
-                {{ it.conteudo or '—' }}
-              </td>
-
-              <td class="text-center">
-                {% set w = wa_link(it) %}
-                {% if w %}
-                  <a class="btn btn-success btn-sm"
-                     href="{{ w }}"
-                     target="_blank" rel="noopener"
-                     title="Abrir no WhatsApp Web">
-                    <i class="bi bi-whatsapp"></i>
-                  </a>
-                {% else %}
-                  <span class="text-secondary small">—</span>
-                {% endif %}
-              </td>
-
-              <td class="text-end">
-                <div class="btn-group btn-group-sm">
-                  <a href="{{ url_for('atividades.editar', id=it.id) }}"
-                     class="btn btn-outline-light"
-                     title="Editar">
-                    <i class="bi bi-pencil-square"></i>
-                  </a>
-
-                  <form method="post"
-                        action="{{ url_for('atividades.excluir', id=it.id) }}"
-                        onsubmit="return confirm('Excluir esta atividade?');">
-                    <button class="btn btn-outline-danger" title="Excluir">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </form>
-                </div>
-              </td>
+              <th>Título</th>
+              <th>Aluno</th>
+              <th style="width:140px">Data</th>
+              <th>Conteúdo</th>
+              <th class="text-center" style="width:120px">WhatsApp</th>
+              <th class="text-end" style="width:140px">Ações</th>
             </tr>
-          {% else %}
-            <tr>
-              <td colspan="6" class="text-center text-secondary py-4">
-                Nenhuma atividade cadastrada.
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {% for it in itens %}
+              <tr>
+                <td class="fw-semibold">{{ it.nome }}</td>
+                <td>{{ it.aluno_nome or '—' }}</td>
+                <td class="text-secondary">
+                  {{ it.data_atividade.strftime('%d/%m/%Y') if it.data_atividade else '—' }}
+                </td>
+                <td class="text-truncate" style="max-width:260px;">
+                  {{ it.conteudo or '—' }}
+                </td>
+
+                <td class="text-center">
+                  {% set w = wa_link(it) %}
+                  {% if w %}
+                    <a class="btn btn-success btn-sm"
+                       href="{{ w }}" target="_blank" rel="noopener">
+                      <i class="bi bi-whatsapp"></i>
+                    </a>
+                  {% else %}
+                    <span class="text-secondary small">—</span>
+                  {% endif %}
+                </td>
+
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm">
+                    <a href="{{ url_for('atividades.editar', id=it.id) }}"
+                       class="btn btn-outline-light">
+                      <i class="bi bi-pencil-square"></i>
+                    </a>
+
+                    <form method="post"
+                          action="{{ url_for('atividades.excluir', id=it.id) }}"
+                          onsubmit="return confirm('Excluir esta atividade?');">
+                      <button class="btn btn-outline-danger">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="6" class="text-center text-secondary py-4">
+                  Nenhuma atividade cadastrada.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
     </div>
   </div>
 

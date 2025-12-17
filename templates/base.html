@@ -26,14 +26,16 @@
       </a>
 
       {% if current_user.is_authenticated %}
+        {% set papel = current_user.papel_upper() %}
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
           <span class="navbar-toggler-icon"></span>
         </button>
 
         <div class="collapse navbar-collapse" id="mainNav">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0 app-menu">
-            {% set papel = current_user.papel_upper() if current_user.is_authenticated else '' %}
 
+            <!-- ✅ ALUNOS: TODOS os perfis veem -->
             <li class="nav-item">
               <a class="nav-link {% if request.endpoint and 'alunos' in request.endpoint %}active{% endif %}"
                  href="{{ url_for('alunos_list') }}">
@@ -41,28 +43,7 @@
               </a>
             </li>
 
-            {# escolas / séries / horários - ocultar para RESPONSAVEL e ALUNO #}
-            {% if papel not in ['RESPONSAVEL', 'ALUNO'] %}
-              <li class="nav-item">
-                <a class="nav-link {% if request.endpoint and 'series_' in request.endpoint %}active{% endif %}"
-                   href="{{ url_for('series_list') }}">
-                  Séries
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link {% if request.endpoint and 'escolas_' in request.endpoint %}active{% endif %}"
-                   href="{{ url_for('escolas_list') }}">
-                  Escolas
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link {% if request.endpoint and 'horarios_' in request.endpoint %}active{% endif %}"
-                   href="{{ url_for('horarios_list') }}">
-                  Horários
-                </a>
-              </li>
-            {% endif %}
-
+            <!-- ✅ ATIVIDADES: você disse que ALUNO/RESPONSÁVEL devem ter acesso -->
             <li class="nav-item">
               <a class="nav-link {% if request.endpoint and 'atividades_' in request.endpoint %}active{% endif %}"
                  href="{{ url_for('atividades_listar') }}">
@@ -70,8 +51,29 @@
               </a>
             </li>
 
-            {# menu Usuários só para DIRETORIA #}
+            <!-- 🔒 Menus administrativos: somente DIRETORIA -->
             {% if papel == 'DIRETORIA' %}
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and 'series_' in request.endpoint %}active{% endif %}"
+                   href="{{ url_for('series_list') }}">
+                  Séries
+                </a>
+              </li>
+
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and 'escolas_' in request.endpoint %}active{% endif %}"
+                   href="{{ url_for('escolas_list') }}">
+                  Escolas
+                </a>
+              </li>
+
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and 'horarios_' in request.endpoint %}active{% endif %}"
+                   href="{{ url_for('horarios_list') }}">
+                  Horários
+                </a>
+              </li>
+
               <li class="nav-item">
                 <a class="nav-link {% if request.endpoint and 'usuarios_' in request.endpoint %}active{% endif %}"
                    href="{{ url_for('usuarios_list') }}">
@@ -79,12 +81,13 @@
                 </a>
               </li>
             {% endif %}
+
           </ul>
 
           <div class="d-flex align-items-center gap-3">
             <div class="text-end small text-muted d-none d-md-block">
               <div>{{ current_user.email }}</div>
-              <div class="text-accent">{{ current_user.papel_upper() }}</div>
+              <div class="text-accent">{{ papel }}</div>
             </div>
             <form method="post" action="{{ url_for('logout') }}">
               <button class="btn btn-sm btn-outline-light" type="submit">Sair</button>
@@ -114,7 +117,7 @@
     </div>
   </main>
 
-  <!-- Bootstrap 5 JS (opcional, mas útil para navbar mobile) -->
+  <!-- Bootstrap 5 JS -->
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"

@@ -1,76 +1,86 @@
-{% extends 'base.html' %}
-{% block title %}Início{% endblock %}
+{% extends "base.html" %}
+{% block title %}Painel{% endblock %}
 
 {% block content %}
-<h1 class="h4 mb-4">Painel</h1>
+{% set papel = current_user.papel_upper() if current_user.is_authenticated else '' %}
 
-<div class="row g-3">
-  <div class="col-12 col-md-6 col-lg-4">
-    <a href="{{ url_for('alunos_list') }}" class="text-decoration-none text-light">
-      <div class="card bg-secondary border-0 card-hover">
-        <div class="card-body">
-          <h5 class="card-title mb-1">Alunos</h5>
-          <p class="card-text text-light-50 mb-0">Gerencie cadastros de alunos</p>
-        </div>
-      </div>
-    </a>
-  </div>
+<div class="container py-4">
+  <h2 class="mb-4">Painel</h2>
 
-  <div class="col-12 col-md-6 col-lg-4">
-    <a href="{{ url_for('series_list') }}" class="text-decoration-none text-light">
-      <div class="card bg-secondary border-0 card-hover">
-        <div class="card-body">
-          <h5 class="card-title mb-1">Séries</h5>
-          <p class="card-text text-light-50 mb-0">Cadastre e edite séries</p>
-        </div>
-      </div>
-    </a>
-  </div>
+  <div class="row g-3">
 
-  <div class="col-12 col-md-6 col-lg-4">
-    <a href="{{ url_for('escolas_list') }}" class="text-decoration-none text-light">
-      <div class="card bg-secondary border-0 card-hover">
-        <div class="card-body">
-          <h5 class="card-title mb-1">Escolas</h5>
-          <p class="card-text text-light-50 mb-0">Unidades e instituições</p>
+    {# ✅ ALUNOS: TODOS podem acessar (lista) #}
+    <div class="col-12 col-md-4">
+      <a href="{{ url_for('alunos_list') }}" class="text-decoration-none">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="mb-1">Alunos</h5>
+            <div class="text-muted">Consultar lista de alunos</div>
+          </div>
         </div>
-      </div>
-    </a>
-  </div>
+      </a>
+    </div>
 
-  <div class="col-12 col-md-6 col-lg-4">
-    <a href="{{ url_for('horarios_list') }}" class="text-decoration-none text-light">
-      <div class="card bg-secondary border-0 card-hover">
-        <div class="card-body">
-          <h5 class="card-title mb-1">Horários</h5>
-          <p class="card-text text-light-50 mb-0">Faixas de aula (início/fim)</p>
+    {# ✅ ATIVIDADES: mantendo para todos os perfis logados (ajusto se você quiser restringir) #}
+    <div class="col-12 col-md-4">
+      <a href="{{ url_for('atividades_listar') }}" class="text-decoration-none">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="mb-1">Atividades</h5>
+            <div class="text-muted">Conteúdo e observações</div>
+          </div>
         </div>
-      </div>
-    </a>
-  </div>
+      </a>
+    </div>
 
-  <div class="col-12 col-md-6 col-lg-4">
-    <a href="{{ url_for('atividades_list') }}" class="text-decoration-none text-light">
-      <div class="card bg-secondary border-0 card-hover">
-        <div class="card-body">
-          <h5 class="card-title mb-1">Atividades</h5>
-          <p class="card-text text-light-50 mb-0">Conteúdo e observações</p>
-        </div>
+    {# ✅ Áreas administrativas: somente DIRETORIA #}
+    {% if papel == 'DIRETORIA' %}
+      <div class="col-12 col-md-4">
+        <a href="{{ url_for('series_list') }}" class="text-decoration-none">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="mb-1">Séries</h5>
+              <div class="text-muted">Cadastre e edite séries</div>
+            </div>
+          </div>
+        </a>
       </div>
-    </a>
-  </div>
 
-  {% if is_diretoria %}
-  <div class="col-12 col-md-6 col-lg-4">
-    <a href="{{ url_for('usuarios_list') }}" class="text-decoration-none text-light">
-      <div class="card bg-secondary border-0 card-hover">
-        <div class="card-body">
-          <h5 class="card-title mb-1">Usuários</h5>
-          <p class="card-text text-light-50 mb-0">Perfis e permissões</p>
-        </div>
+      <div class="col-12 col-md-4">
+        <a href="{{ url_for('escolas_list') }}" class="text-decoration-none">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="mb-1">Escolas</h5>
+              <div class="text-muted">Unidades e instituições</div>
+            </div>
+          </div>
+        </a>
       </div>
-    </a>
+
+      <div class="col-12 col-md-4">
+        <a href="{{ url_for('horarios_list') }}" class="text-decoration-none">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="mb-1">Horários</h5>
+              <div class="text-muted">Faixas de aula (início/fim)</div>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-12 col-md-4">
+        <a href="{{ url_for('usuarios_list') }}" class="text-decoration-none">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="mb-1">Usuários</h5>
+              <div class="text-muted">Controle de acesso</div>
+            </div>
+          </div>
+        </a>
+      </div>
+    {% endif %}
+
   </div>
-  {% endif %}
 </div>
+
 {% endblock %}

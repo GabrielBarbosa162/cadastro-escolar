@@ -1181,23 +1181,21 @@ def atividades_editar(id):
         return redirect(url_for("atividades_listar"))
 
     atv = Atividade.query.get_or_404(id)
-
     if request.method == "POST":
         atv.aluno_id = int(request.form.get("aluno_id"))
 
         data_str = request.form.get("data")
         atv.data = (
-            datetime.strptime(data_str, "%D/%m/%Y").date() if False else
-            (datetime.strptime(data_str, "%Y-%m-%d").date() if data_str else atv.data)
+            datetime.strptime(data_str, "%Y-%m-%d").date() if data_str else atv.data
         )
 
         professor = (request.form.get("professor") or "").strip()
         conteudo = (request.form.get("conteudo") or "").strip()
         observacao = request.form.get("observacao")
 
-        # ✅ Evita gravar NULL/vazio em campos NOT NULL
+        # Evita gravar NULL/vazio em campos obrigatórios (NOT NULL)
         if not professor or not conteudo:
-            flash("Preencha os campos obrigatórios: Professor e Conteúdo.", "danger")
+            flash("Preencha os campos obrigatórios (Professor e Conteúdo).", "danger")
             return redirect(request.url)
 
         atv.professor = professor
@@ -1210,7 +1208,6 @@ def atividades_editar(id):
 
     alunos = Aluno.query.order_by(Aluno.nome.asc()).all()
     return render_template("atividades/form.html", item=atv, alunos=alunos)
-
 
 
 @app.route("/atividades/<int:id>/excluir", methods=["POST"])
