@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Professores{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Professores</h3>
+
+    <a href="{{ url_for('professores_novo') }}" class="btn btn-primary">
+      Novo Professor
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-0">
+
+      <div class="table-responsive">
+        <table class="table table-dark align-middle mb-0">
+          <thead>
+            <tr>
+              <th>NOME</th>
+              <th>E-MAIL</th>
+              <th style="width:160px">NASCIMENTO</th>
+              <th>SÉRIES</th>
+              <th class="text-end" style="width:120px">AÇÕES</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for p in itens %}
+              <tr>
+                <td class="fw-semibold">{{ p.nome }}</td>
+
+                <td class="text-secondary">
+                  {{ p.usuario.email if p.usuario else '—' }}
+                </td>
+
+                <td class="text-secondary">
+                  {{ p.data_nascimento.strftime('%d/%m/%Y') if p.data_nascimento else '—' }}
+                </td>
+
+                <td class="text-secondary">
+                  {# Formato bonito: "1º ao 9º" quando nomes forem tipo 1º,2º... #}
+                  {% set nomes = (p.series | map(attribute='nome') | list) if p.series else [] %}
+                  {% set ns = namespace(nums=[], ok=true) %}
+
+                  {% for n in nomes %}
+                    {% set t = (n|string)|trim %}
+                    {% if t and (t[0].isdigit()) %}
+                      {# pega o número inicial (até 2 dígitos) #}
+                      {% if t|length >= 2 and t[0].isdigit() and t[1].isdigit() %}
+                        {% set num = (t[0:2])|int %}
+                      {% else %}
+                        {% set num = (t[0:1])|int %}
+                      {% endif %}
+                      {% set ns.nums = ns.nums + [num] %}
+                    {% else %}
+                      {% set ns.ok = false %}
+                    {% endif %}
+                  {% endfor %}
+
+                  {% if ns.nums and ns.ok %}
+                    {% set mn = ns.nums|min %}
+                    {% set mx = ns.nums|max %}
+                    {{ mn }}º{% if mx != mn %} ao {{ mx }}º{% endif %}
+                  {% else %}
+                    {{ p.series_str() or '—' }}
+                  {% endif %}
+                </td>
+
+                <td class="text-end">
+                  <a class="btn btn-outline-light btn-sm" href="{{ url_for('professores_editar', id=p.id) }}">
+                    Editar
+                  </a>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="5" class="text-center text-secondary py-4">
+                  Nenhum professor cadastrado.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

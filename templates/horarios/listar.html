@@ -1,98 +1,134 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block title %}Horários{% endblock %}
 
 {% block content %}
-<div class="d-flex align-items-center justify-content-between mb-3">
-  <h1 class="h4 mb-0">Horários</h1>
-  <button class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#novoHorario">Novo Horário</button>
-</div>
+<div class="container py-4">
 
-<div id="novoHorario" class="collapse mb-4">
-  <div class="card bg-secondary border-0">
-    <div class="card-body">
-      <form method="post" action="{{ url_for('horarios_new') }}" class="row g-3" onsubmit="return validaHorario(this)">
-        <div class="col-12 col-md-3">
-          <label class="form-label">Hora Início</label>
-          <input type="time" class="form-control" name="hora_inicio" required>
-        </div>
-        <div class="col-12 col-md-3">
-          <label class="form-label">Hora Fim</label>
-          <input type="time" class="form-control" name="hora_fim" required>
-        </div>
-        <div class="col-12 d-flex justify-content-end">
-          <button class="btn btn-success">Salvar</button>
-        </div>
-      </form>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Horários</h3>
+
+    {% if current_user.is_diretoria() %}
+      <a href="{{ url_for('horarios_novo') }}" class="btn btn-primary">
+        Novo Horário
+      </a>
+    {% endif %}
+  </div>
+
+  <!-- Tabela (mantém a listagem normal) -->
+  <div class="card mb-4">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-dark align-middle mb-0">
+          <thead>
+            <tr>
+              <th style="width:220px">Horário</th>
+              <th class="text-center" style="width:180px">Qtd. Alunos</th>
+              {% if current_user.is_diretoria() %}
+                <th class="text-end" style="width:220px">Ações</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in items %}
+              {% set lista = alunos_por_horario.get(h.id, []) %}
+              <tr>
+                <td class="fw-semibold">{{ h.hora_inicio }} - {{ h.hora_fim }}</td>
+
+                <td class="text-center">
+                  <span class="badge">{{ lista|length }}</span>
+                </td>
+
+                {% if current_user.is_diretoria() %}
+                  <td class="text-end">
+                    <form method="post" action="{{ url_for('horarios_editar', id=h.id) }}" class="d-inline">
+                      <input class="form-control d-inline-block" style="width:110px" name="hora_inicio" value="{{ h.hora_inicio }}">
+                      <input class="form-control d-inline-block" style="width:110px" name="hora_fim" value="{{ h.hora_fim }}">
+                      <button class="btn btn-outline-light btn-sm">Salvar</button>
+                    </form>
+
+                    <form method="post" action="{{ url_for('horarios_excluir', id=h.id) }}" class="d-inline"
+                          onsubmit="return confirm('Excluir este horário?');">
+                      <button class="btn btn-outline-danger btn-sm">Excluir</button>
+                    </form>
+                  </td>
+                {% endif %}
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="{{ 3 if current_user.is_diretoria() else 2 }}" class="text-center text-secondary py-4">
+                  Nenhum horário cadastrado.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="card bg-secondary border-0">
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-dark table-striped align-middle mb-0">
-        <thead>
-          <tr>
-            <th>Início</th>
-            <th>Fim</th>
-            <th class="table-actions text-end">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for h in items %}
-          <tr>
-            <td>{{ h.hora_inicio.strftime('%H:%M') }}</td>
-            <td>{{ h.hora_fim.strftime('%H:%M') }}</td>
-            <td class="text-end">
-              <form class="d-inline" method="post" action="{{ url_for('horarios_editar', id=h.id) }}" onsubmit="return editarHorario(this)">
-                <input type="hidden" name="hora_inicio" value="{{ h.hora_inicio.strftime('%H:%M') }}">
-                <input type="hidden" name="hora_fim" value="{{ h.hora_fim.strftime('%H:%M') }}">
-                <button class="btn btn-sm btn-outline-light">Editar</button>
-              </form>
-              <form class="d-inline" method="post" action="{{ url_for('horarios_excluir', id=h.id) }}" onsubmit="return confirm('Excluir este horário?');">
-                <button class="btn btn-sm btn-outline-danger">Excluir</button>
-              </form>
-            </td>
-          </tr>
-          {% else %}
-          <tr><td colspan="3" class="text-center text-light-50 py-4">Nenhum horário cadastrado.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+  <!-- ✅ QUADROS / CARDS com alunos por horário -->
+  <h5 class="mb-3">Alunos por horário</h5>
+
+  <div class="row g-3">
+    {% for h in items %}
+      {% set lista = alunos_por_horario.get(h.id, []) %}
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="fw-semibold">{{ h.hora_inicio }} - {{ h.hora_fim }}</div>
+              <span class="badge">{{ lista|length }}</span>
+            </div>
+
+            {% if lista %}
+              <div class="list-group list-group-flush">
+                {% for a in lista %}
+                  <div class="list-group-item bg-transparent text-light border-top-0 border-start-0 border-end-0 border-bottom"
+                       style="border-color:#1f2937 !important;">
+                    <div class="fw-semibold">{{ a.nome }}</div>
+                    <div class="small text-secondary">
+                      {% if a.serie %}{{ a.serie.nome }}{% else %}—{% endif %}
+                      {% if a.escola %} • {{ a.escola.nome }}{% endif %}
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-secondary">Nenhum aluno neste horário.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+
+    {% if alunos_sem_horario and alunos_sem_horario|length > 0 %}
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="fw-semibold">Sem horário definido</div>
+              <span class="badge">{{ alunos_sem_horario|length }}</span>
+            </div>
+
+            <div class="row g-2">
+              {% for a in alunos_sem_horario %}
+                <div class="col-12 col-md-6 col-lg-4">
+                  <div class="p-2 rounded" style="background:#0b1220; border:1px solid #1f2937;">
+                    <div class="fw-semibold">{{ a.nome }}</div>
+                    <div class="small text-secondary">
+                      {% if a.serie %}{{ a.serie.nome }}{% else %}—{% endif %}
+                      {% if a.escola %} • {{ a.escola.nome }}{% endif %}
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+
+          </div>
+        </div>
+      </div>
+    {% endif %}
   </div>
-</div>
 
-<script>
-  function toMinutes(hhmm){
-    const [h,m] = (hhmm||'').split(':').map(Number);
-    if(Number.isFinite(h) && Number.isFinite(m)) return h*60+m;
-    return NaN;
-  }
-  function validaHorario(form){
-    const ini = form.hora_inicio.value, fim = form.hora_fim.value;
-    const a = toMinutes(ini), b = toMinutes(fim);
-    if(!Number.isFinite(a) || !Number.isFinite(b) || b<=a){
-      alert('Hora fim deve ser MAIOR que a hora início.');
-      return false;
-    }
-    return true;
-  }
-  function editarHorario(form){
-    const atualIni = form.querySelector('input[name=hora_inicio]').value;
-    const atualFim = form.querySelector('input[name=hora_fim]').value;
-    const novoIni = prompt('Nova hora de início (HH:MM):', atualIni);
-    if(!novoIni) return false;
-    const novoFim = prompt('Nova hora de fim (HH:MM):', atualFim);
-    if(!novoFim) return false;
-    const a = toMinutes(novoIni), b = toMinutes(novoFim);
-    if(!Number.isFinite(a) || !Number.isFinite(b) || b<=a){
-      alert('Hora fim deve ser MAIOR que a hora início.');
-      return false;
-    }
-    form.querySelector('input[name=hora_inicio]').value = novoIni;
-    form.querySelector('input[name=hora_fim]').value = novoFim;
-    return true;
-  }
-</script>
+</div>
 {% endblock %}

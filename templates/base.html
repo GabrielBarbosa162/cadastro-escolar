@@ -59,6 +59,12 @@
                   Séries
                 </a>
               </li>
+               <li class="nav-item">
+   <a class="nav-link {% if request.endpoint and 'professores' in request.endpoint %}active{% endif %}"
+     href="{{ url_for('professores_listar') }}">
+    Professores
+  </a>
+</li>
 
               <li class="nav-item">
                 <a class="nav-link {% if request.endpoint and 'escolas_' in request.endpoint %}active{% endif %}"
@@ -116,6 +122,11 @@
       {% block content %}{% endblock %}
     </div>
   </main>
+  <li class="nav-item">
+  <a class="nav-link {% if request.endpoint and 'professores_' in request.endpoint %}active{% endif %}"
+     href="{{ url_for('professores_listar') }}">
+  </a>
+</li>
 
   <!-- Bootstrap 5 JS -->
   <script
