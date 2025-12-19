@@ -253,6 +253,30 @@ class Serie(db.Model):
     __tablename__ = "serie"
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(120), nullable=False, unique=True)
+# -----------------------------
+# PROFESSOR (cadastro separado)
+# -----------------------------
+professor_serie = db.Table(
+    "professor_serie",
+    db.Column("professor_id", db.Integer, db.ForeignKey("professor.id"), primary_key=True),
+    db.Column("serie_id", db.Integer, db.ForeignKey("serie.id"), primary_key=True),
+)
+
+class Professor(db.Model):
+    __tablename__ = "professor"
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Email precisa existir em Usuario (vínculo)
+    usuario_id = db.Column(db.Integer, db.ForeignKey("usuario.id"), nullable=False, unique=True)
+    usuario = db.relationship("Usuario", lazy="joined")
+
+    nome = db.Column(db.String(120), nullable=False)
+    data_nascimento = db.Column(db.Date, nullable=True)
+
+    series = db.relationship("Serie", secondary=professor_serie, lazy="subquery")
+
+    def series_str(self):
+        return ", ".join([s.nome for s in self.series]) if self.series else ""
 
 
 class Horario(db.Model):
@@ -678,6 +702,149 @@ def usuarios_excluir(id):
     flash("Usuário removido.", "success")
     return redirect(url_for("usuarios_list"))
 
+# -------------------------------------------------------------------
+# PROFESSORES (somente Diretoria)
+# -------------------------------------------------------------------
+@app.route("/professores/")
+@login_required
+def professores_listar():
+    if not current_user.is_diretoria():
+        flash("Você não tem permissão para acessar Professores.", "warning")
+        return redirect(url_for("index"))
+
+    itens = Professor.query.order_by(Professor.nome.asc()).all()
+    return render_template("professores/listar.html", itens=itens)
+
+
+@app.route("/professores/novo", methods=["GET", "POST"])
+@login_required
+def professores_novo():
+    if not current_user.is_diretoria():
+        flash("Você não tem permissão para cadastrar Professores.", "warning")
+        return redirect(url_for("index"))
+
+    usuarios = Usuario.query.order_by(Usuario.email.asc()).all()
+    series = Serie.query.order_by(Serie.nome.asc()).all()
+
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip().lower()
+        nome = (request.form.get("nome") or "").strip()
+        dn_str = (request.form.get("data_nascimento") or "").strip()
+        series_ids = request.form.getlist("series_ids")
+
+        if not email or not nome:
+            flash("Preencha E-mail e Nome.", "danger")
+            return redirect(request.url)
+
+        u = Usuario.query.filter(sa_text("lower(email)=:e")).params(e=email).first()
+        if not u:
+            flash("E-mail não registrado.", "danger")
+            return redirect(request.url)
+
+            return redirect(request.url)
+
+        # data nascimento (opcional)
+        dn = None
+        if dn_str:
+            try:
+                dn = datetime.strptime(dn_str, "%Y-%m-%d").date()
+            except ValueError:
+                flash("Data de nascimento inválida. Use o seletor de data.", "danger")
+                return redirect(request.url)
+
+        # busca séries selecionadas
+        sel_series = []
+        if series_ids:
+            try:
+                ids_int = [int(x) for x in series_ids]
+                sel_series = Serie.query.filter(Serie.id.in_(ids_int)).all()
+            except ValueError:
+                flash("Seleção de séries inválida.", "danger")
+                return redirect(request.url)
+
+        # se já existir cadastro de professor para este usuário, atualiza (evita duplicar)
+        prof = Professor.query.filter_by(usuario_id=u.id).first()
+        if not prof:
+            prof = Professor(usuario_id=u.id, nome=nome, data_nascimento=dn)
+            db.session.add(prof)
+        else:
+            prof.nome = nome
+            prof.data_nascimento = dn
+
+        prof.series = sel_series
+
+        # transforma o usuário em PROFESSOR (perfil)
+        u.papel = "PROFESSOR"
+
+        db.session.commit()
+        flash("Professor cadastrado com sucesso.", "success")
+        return redirect(url_for("professores_listar"))
+
+    return render_template("professores/form.html", usuarios=usuarios, series=series, item=None)
+
+
+@app.route("/professores/<int:id>/editar", methods=["GET", "POST"])
+@login_required
+def professores_editar(id):
+    if not current_user.is_diretoria():
+        flash("Você não tem permissão para editar Professores.", "warning")
+        return redirect(url_for("index"))
+
+    prof = Professor.query.get_or_404(id)
+
+    usuarios = Usuario.query.order_by(Usuario.email.asc()).all()
+    series = Serie.query.order_by(Serie.nome.asc()).all()
+
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip().lower()
+        nome = (request.form.get("nome") or "").strip()
+        dn_str = (request.form.get("data_nascimento") or "").strip()
+        series_ids = request.form.getlist("series_ids")
+
+        if not email or not nome:
+            flash("Preencha E-mail e Nome.", "danger")
+            return redirect(request.url)
+
+        u = Usuario.query.filter(sa_text("lower(email)=:e")).params(e=email).first()
+        if not u:
+            flash("Este e-mail não está cadastrado no sistema.", "danger")
+            return redirect(request.url)
+
+        # garante unicidade: um usuário só pode ser um professor
+        outro = Professor.query.filter_by(usuario_id=u.id).first()
+        if outro and outro.id != prof.id:
+            flash("Este e-mail já está vinculado a outro professor.", "danger")
+            return redirect(request.url)
+
+        dn = None
+        if dn_str:
+            try:
+                dn = datetime.strptime(dn_str, "%Y-%m-%d").date()
+            except ValueError:
+                flash("Data de nascimento inválida. Use o seletor de data.", "danger")
+                return redirect(request.url)
+
+        sel_series = []
+        if series_ids:
+            try:
+                ids_int = [int(x) for x in series_ids]
+                sel_series = Serie.query.filter(Serie.id.in_(ids_int)).all()
+            except ValueError:
+                flash("Seleção de séries inválida.", "danger")
+                return redirect(request.url)
+
+        prof.usuario_id = u.id
+        prof.nome = nome
+        prof.data_nascimento = dn
+        prof.series = sel_series
+
+        u.papel = "PROFESSOR"
+
+        db.session.commit()
+        flash("Professor atualizado com sucesso.", "success")
+        return redirect(url_for("professores_listar"))
+
+    return render_template("professores/form.html", usuarios=usuarios, series=series, item=prof)
 
 # -------------------------------------------------------------------
 # ESCOLAS
@@ -834,10 +1001,26 @@ def horarios_list():
         return redirect(url_for("index"))
 
     items = Horario.query.order_by(Horario.hora_inicio.asc()).all()
-    for h in items:
-        h.hora_inicio = HoraStrWrapper(h.hora_inicio)
-        h.hora_fim = HoraStrWrapper(h.hora_fim)
-    return render_template("horarios/listar.html", items=items)
+
+    # ✅ Alunos agrupados por horário
+    alunos = Aluno.query.order_by(Aluno.nome.asc()).all()
+
+    alunos_por_horario = {}
+    alunos_sem_horario = []
+
+    for a in alunos:
+        if a.horario_id:
+            alunos_por_horario.setdefault(a.horario_id, []).append(a)
+        else:
+            alunos_sem_horario.append(a)
+
+    return render_template(
+        "horarios/listar.html",
+        items=items,
+        alunos_por_horario=alunos_por_horario,
+        alunos_sem_horario=alunos_sem_horario,
+    )
+
 
 
 @app.route("/horarios/novo", methods=["GET", "POST"])

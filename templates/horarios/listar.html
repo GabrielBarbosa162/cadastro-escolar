@@ -14,7 +14,7 @@
     {% endif %}
   </div>
 
-  <!-- Tabela (mantém a listagem normal) -->
+  <!-- Tabela (sem coluna Qtd. Alunos) -->
   <div class="card mb-4">
     <div class="card-body p-0">
       <div class="table-responsive">
@@ -22,52 +22,112 @@
           <thead>
             <tr>
               <th style="width:220px">Horário</th>
-              <th class="text-center" style="width:180px">Qtd. Alunos</th>
               {% if current_user.is_diretoria() %}
-                <th class="text-end" style="width:220px">Ações</th>
+                <th class="text-end" style="width:260px">Ações</th>
               {% endif %}
             </tr>
           </thead>
+
           <tbody>
             {% for h in items %}
-              {% set lista = alunos_por_horario.get(h.id, []) %}
               <tr>
-                <td class="fw-semibold">{{ h.hora_inicio }} - {{ h.hora_fim }}</td>
-
-                <td class="text-center">
-                  <span class="badge">{{ lista|length }}</span>
+                <td class="fw-semibold">
+                  {{ h.hora_inicio }} - {{ h.hora_fim }}
                 </td>
 
                 {% if current_user.is_diretoria() %}
                   <td class="text-end">
-                    <form method="post" action="{{ url_for('horarios_editar', id=h.id) }}" class="d-inline">
-                      <input class="form-control d-inline-block" style="width:110px" name="hora_inicio" value="{{ h.hora_inicio }}">
-                      <input class="form-control d-inline-block" style="width:110px" name="hora_fim" value="{{ h.hora_fim }}">
-                      <button class="btn btn-outline-light btn-sm">Salvar</button>
-                    </form>
 
-                    <form method="post" action="{{ url_for('horarios_excluir', id=h.id) }}" class="d-inline"
-                          onsubmit="return confirm('Excluir este horário?');">
-                      <button class="btn btn-outline-danger btn-sm">Excluir</button>
-                    </form>
+                    <!-- Botões -->
+                    <div class="d-inline-flex gap-2 align-items-center">
+                      <button
+                        type="button"
+                        class="btn btn-outline-light btn-sm btn-editar-horario"
+                        data-id="{{ h.id }}">
+                        Editar
+                      </button>
+
+                      <form method="post"
+                            action="{{ url_for('horarios_excluir', id=h.id) }}"
+                            class="d-inline"
+                            onsubmit="return confirm('Excluir este horário?');">
+                        <button class="btn btn-outline-danger btn-sm" type="submit">Excluir</button>
+                      </form>
+                    </div>
+
+                    <!-- Área de edição (começa escondida) -->
+                    <div class="mt-2 d-none editar-box" id="editar-box-{{ h.id }}">
+                      <form method="post"
+                            action="{{ url_for('horarios_editar', id=h.id) }}"
+                            class="d-inline-flex flex-wrap gap-2 justify-content-end">
+
+                        <input class="form-control form-control-sm"
+                               style="width:130px"
+                               name="hora_inicio"
+                               value="{{ h.hora_inicio }}"
+                               placeholder="Início"
+                               required>
+
+                        <input class="form-control form-control-sm"
+                               style="width:130px"
+                               name="hora_fim"
+                               value="{{ h.hora_fim }}"
+                               placeholder="Fim"
+                               required>
+
+                        <button class="btn btn-light btn-sm" type="submit">Salvar</button>
+
+                        <button type="button"
+                                class="btn btn-outline-light btn-sm btn-cancelar-edicao"
+                                data-id="{{ h.id }}">
+                          Cancelar
+                        </button>
+                      </form>
+                    </div>
+
                   </td>
                 {% endif %}
               </tr>
             {% else %}
               <tr>
-                <td colspan="{{ 3 if current_user.is_diretoria() else 2 }}" class="text-center text-secondary py-4">
+                <td colspan="{{ 2 if current_user.is_diretoria() else 1 }}"
+                    class="text-center text-secondary py-4">
                   Nenhum horário cadastrado.
                 </td>
               </tr>
             {% endfor %}
           </tbody>
+
         </table>
       </div>
     </div>
   </div>
 
-  <!-- ✅ QUADROS / CARDS com alunos por horário -->
+  <!-- Quadros / Cards com alunos por horário -->
   <h5 class="mb-3">Alunos por horário</h5>
+
+  <style>
+    /* item da lista no card */
+    .aluno-item {
+      border-bottom: 1px solid #1f2937;
+      padding: .5rem 0;
+    }
+    .aluno-item:last-child { border-bottom: none; }
+
+    /* textos dos quadros (cards) em branco */
+    .card .fw-semibold,
+    .card .aluno-item .fw-semibold,
+    .card .aluno-item,
+    .card .card-body {
+      color: #ffffff !important;
+    }
+
+    /* subtítulos (série/escola) em branco suave */
+    .card .small.text-secondary,
+    .card .text-secondary {
+      color: rgba(255, 255, 255, 0.75) !important;
+    }
+  </style>
 
   <div class="row g-3">
     {% for h in items %}
@@ -77,14 +137,13 @@
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <div class="fw-semibold">{{ h.hora_inicio }} - {{ h.hora_fim }}</div>
-              <span class="badge">{{ lista|length }}</span>
+              {# ✅ removido: quantidade de alunos #}
             </div>
 
             {% if lista %}
-              <div class="list-group list-group-flush">
+              <div>
                 {% for a in lista %}
-                  <div class="list-group-item bg-transparent text-light border-top-0 border-start-0 border-end-0 border-bottom"
-                       style="border-color:#1f2937 !important;">
+                  <div class="aluno-item">
                     <div class="fw-semibold">{{ a.nome }}</div>
                     <div class="small text-secondary">
                       {% if a.serie %}{{ a.serie.nome }}{% else %}—{% endif %}
@@ -107,7 +166,7 @@
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <div class="fw-semibold">Sem horário definido</div>
-              <span class="badge">{{ alunos_sem_horario|length }}</span>
+              {# ✅ removido: quantidade #}
             </div>
 
             <div class="row g-2">
@@ -131,4 +190,28 @@
   </div>
 
 </div>
+
+<script>
+  // Mostrar/ocultar campos de edição ao clicar em "Editar"
+  document.querySelectorAll('.btn-editar-horario').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+
+      // fecha qualquer outro aberto
+      document.querySelectorAll('.editar-box').forEach(box => box.classList.add('d-none'));
+
+      const box = document.getElementById('editar-box-' + id);
+      if (box) box.classList.remove('d-none');
+    });
+  });
+
+  // Cancelar edição
+  document.querySelectorAll('.btn-cancelar-edicao').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      const box = document.getElementById('editar-box-' + id);
+      if (box) box.classList.add('d-none');
+    });
+  });
+</script>
 {% endblock %}
