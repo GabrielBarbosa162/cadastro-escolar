@@ -366,6 +366,9 @@ def esqueci():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         metodo = request.form.get("metodo", "email")  # 'email' ou 'whatsapp'
+        except Exception as e:
+    print("ERRO AO ENVIAR EMAIL:", repr(e))
+    flash("Não foi possível enviar o e-mail (erro no servidor).", "danger")
 
         if not email:
             flash("Informe o e-mail cadastrado.", "danger")
