@@ -114,10 +114,13 @@ def enviar_codigo_email(email, codigo) -> bool:
         msg["From"] = smtp_from
         msg["To"] = email
 
-        servidor = smtplib.SMTP(smtp_server, smtp_port, timeout=20)
-        servidor.starttls()
-        servidor.login(smtp_user, smtp_pass)
-        servidor.sendmail(smtp_from, [email], msg.as_string())
+       servidor = smtplib.SMTP(smtp_server, smtp_port, timeout=20)
+       servidor.ehlo()
+       servidor.starttls()
+        servidor.ehlo()
+       servidor.login(smtp_user, smtp_pass)
+       servidor.sendmail(smtp_from, [email], msg.as_string())
+
         servidor.quit()
         return True
     except Exception:
@@ -165,9 +168,12 @@ def enviar_email_generico(destinatarios, assunto, mensagem) -> bool:
         msg["To"] = ", ".join(destinatarios)
 
         servidor = smtplib.SMTP(smtp_server, smtp_port, timeout=20)
+         servidor.ehlo()
         servidor.starttls()
+        servidor.ehlo()
         servidor.login(smtp_user, smtp_pass)
         servidor.sendmail(smtp_from, destinatarios, msg.as_string())
+
         servidor.quit()
         return True
     except Exception as e:
