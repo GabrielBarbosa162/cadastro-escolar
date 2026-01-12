@@ -109,22 +109,25 @@ def enviar_codigo_email(email, codigo) -> bool:
         return False
 
     try:
-        msg = MIMEText(msg_text)
-        msg["Subject"] = "Recuperação de senha - Sistema Escolar"
-        msg["From"] = smtp_from
-        msg["To"] = email
+try:
+    msg = MIMEText(msg_text)
+    msg["Subject"] = "Recuperação de senha - Sistema Escolar"
+    msg["From"] = smtp_from
+    msg["To"] = email
 
-       servidor = smtplib.SMTP(smtp_server, smtp_port, timeout=20)
-       servidor.ehlo()
-       servidor.starttls()
-        servidor.ehlo()
-       servidor.login(smtp_user, smtp_pass)
-       servidor.sendmail(smtp_from, [email], msg.as_string())
+    servidor = smtplib.SMTP(smtp_server, smtp_port, timeout=20)
+    servidor.ehlo()
+    servidor.starttls()
+    servidor.ehlo()
+    servidor.login(smtp_user, smtp_pass)
+    servidor.sendmail(smtp_from, [email], msg.as_string())
+    servidor.quit()
 
-        servidor.quit()
-        return True
-    except Exception:
-        return False
+    return True
+except Exception as e:
+    print("Erro ao enviar e-mail:", e)
+    return False
+
 
 def enviar_email_generico(destinatarios, assunto, mensagem) -> bool:
     """
@@ -200,7 +203,7 @@ def enviar_codigo_whatsapp(numero, codigo) -> bool:
         resultado = subprocess.run(
             shlex.split(cmd),
             capture_output=True,
-            text=True,
+            # text=True,
             timeout=180,
         )
         print("STDOUT enviar_whatsapp:", resultado.stdout)
