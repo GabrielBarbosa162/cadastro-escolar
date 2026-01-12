@@ -109,7 +109,7 @@ def enviar_codigo_email(email, codigo) -> bool:
         return False
 
     try:
-try:
+ try:
     msg = MIMEText(msg_text)
     msg["Subject"] = "Recuperação de senha - Sistema Escolar"
     msg["From"] = smtp_from
