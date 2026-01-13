@@ -109,24 +109,25 @@ def enviar_codigo_email(email, codigo) -> bool:
         return False
 
     try:
-   try:     
-    msg = MIMEText(msg_text)
-    msg["Subject"] = "Recuperação de senha - Sistema Escolar"
-    msg["From"] = smtp_from
-    msg["To"] = email
+        msg = MIMEText(msg_text)
+        msg["Subject"] = "Recuperação de senha - Sistema Escolar"
+        msg["From"] = smtp_from
+        msg["To"] = email
 
-    servidor = smtplib.SMTP(smtp_server, smtp_port, timeout=20)
-    servidor.ehlo()
-    servidor.starttls()
-    servidor.ehlo()
-    servidor.login(smtp_user, smtp_pass)
-    servidor.sendmail(smtp_from, [email], msg.as_string())
-    servidor.quit()
+        servidor = smtplib.SMTP(smtp_server, smtp_port, timeout=20)
+        servidor.ehlo()
+        servidor.starttls()
+        servidor.ehlo()
+        servidor.login(smtp_user, smtp_pass)
+        servidor.sendmail(smtp_from, [email], msg.as_string())
+        servidor.quit()
 
-    return True
-except Exception as e:
-    print("Erro ao enviar e-mail:", e)
-    return False
+        return True
+
+    except Exception as e:
+        print("Erro ao enviar e-mail:", e)
+        return False
+
 
 
 def enviar_email_generico(destinatarios, assunto, mensagem) -> bool:
