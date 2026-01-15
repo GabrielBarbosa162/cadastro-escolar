@@ -1,5 +1,6 @@
 ﻿import os
 import requests
+import resend
 from email.mime.text import MIMEText  # se já usa em outros lugares pode manter
 import random
 import smtplib
@@ -181,6 +182,16 @@ def enviar_email_generico(destinatarios, assunto, mensagem) -> bool:
         print("Erro ao enviar e-mail (Resend):", e)
         return False
 
+import resend
+
+resend.api_key = "re_9h1NooAW_87hE1xs5sJLQMYQj3SgfevSy"
+
+r = resend.Emails.send({
+  "from": "onboarding@resend.dev",
+  "to": "gabrielbarbosac2013@gmail.com",
+  "subject": "Hello World",
+  "html": "<p>Congrats on sending your <strong>first email</strong>!</p>"
+})
 
 def enviar_codigo_whatsapp(numero, codigo) -> bool:
     """
