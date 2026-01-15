@@ -1,4 +1,6 @@
 ﻿import os
+import requests
+from email.mime.text import MIMEText  # se já usa em outros lugares pode manter
 import random
 import smtplib
 from email.mime.text import MIMEText
@@ -91,98 +93,94 @@ def salvar_foto(file_storage, foto_atual=None):
 
 def enviar_codigo_email(email, codigo) -> bool:
     """
-    Tenta enviar o cÃ³digo por e-mail usando SMTP, SE estiver configurado.
-    - Retorna True se conseguiu enviar.
-    - Retorna False se nÃ£o conseguiu (faltando config ou erro).
-    NÃƒO levanta erro e NÃƒO imprime o cÃ³digo no terminal.
+    Envia código de recuperação via Resend (API HTTP).
+    Retorna True se enviou, False se falhou.
     """
-    msg_text = f"Seu cÃ³digo para redefiniÃ§Ã£o de senha Ã©: {codigo}"
+    api_key = os.getenv("RESEND_API_KEY", "").strip()
+    remetente = os.getenv("RESEND_FROM", "Sistema Escolar <onboarding@resend.dev>").strip()
 
-    smtp_server = app.config["SMTP_SERVER"]
-    smtp_port = app.config["SMTP_PORT"]
-    smtp_user = app.config["SMTP_USER"]
-    smtp_pass = app.config["SMTP_PASS"]
-    smtp_from = app.config["SMTP_FROM"] or smtp_user
-
-    # Sem configuraÃ§Ã£o? jÃ¡ sabemos que nÃ£o vai enviar
-    if not (smtp_server and smtp_user and smtp_pass and smtp_from):
+    if not api_key:
         return False
 
+    assunto = "Recuperação de senha - Sistema Escolar"
+    texto = f"Seu código para redefinição de senha é: {codigo}"
+
     try:
-        msg = MIMEText(msg_text)
-        msg["Subject"] = "RecuperaÃ§Ã£o de senha - Sistema Escolar"
-        msg["From"] = smtp_from
-        msg["To"] = email
+        r = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": remetente,
+                "to": [email],
+                "subject": assunto,
+                "text": texto,
+            },
+            timeout=20,
+        )
 
-        servidor = smtplib.SMTP(smtp_server, smtp_port, timeout=20)
-        servidor.ehlo()
-        servidor.starttls()
-        servidor.ehlo()
-        servidor.login(smtp_user, smtp_pass)
-        servidor.sendmail(smtp_from, [email], msg.as_string())
-        servidor.quit()
+        # 200/201 normalmente indicam sucesso
+        if r.status_code in (200, 201):
+            return True
 
-        return True
+        print("Erro Resend:", r.status_code, r.text)
+        return False
 
     except Exception as e:
-        print("Erro ao enviar e-mail:", e)
+        print("Erro ao enviar e-mail (Resend):", e)
         return False
 
 
 
 def enviar_email_generico(destinatarios, assunto, mensagem) -> bool:
     """
-    Envia um e-mail usando as configuraÃ§Ãµes SMTP do app.
-
-    - destinatarios: pode ser string
-        "a@b.com"
-        "a@b.com; c@d.com"
-        "a@b.com,c@d.com"
-      ou lista:
-        ["a@b.com", "c@d.com"]
-
-    - assunto: texto do assunto
-    - mensagem: corpo do e-mail (texto simples)
-
-    Retorna True se enviou com sucesso, False se deu erro.
+    Envia e-mail genérico via Resend (API HTTP).
+    destinatarios pode ser string com ; ou , ou lista.
     """
-    smtp_server = app.config.get("SMTP_SERVER")
-    smtp_port = app.config.get("SMTP_PORT")
-    smtp_user = app.config.get("SMTP_USER")
-    smtp_pass = app.config.get("SMTP_PASS")
-    smtp_from = app.config.get("SMTP_FROM") or smtp_user
+    api_key = os.getenv("RESEND_API_KEY", "").strip()
+    remetente = os.getenv("RESEND_FROM", "Sistema Escolar <onboarding@resend.dev>").strip()
 
-    # Verifica se SMTP estÃ¡ configurado
-    if not (smtp_server and smtp_user and smtp_pass and smtp_from):
+    if not api_key:
         return False
 
-    # Normaliza destinatÃ¡rios
+    # normaliza destinatários
     if isinstance(destinatarios, str):
-        # aceita ; ou , como separadores
-        texto = destinatarios.replace(",", ";")
-        destinatarios = [e.strip() for e in texto.split(";") if e.strip()]
+        d = destinatarios.replace(";", ",")
+        lista = [x.strip() for x in d.split(",") if x.strip()]
+    else:
+        lista = [x.strip() for x in destinatarios if str(x).strip()]
 
-    if not isinstance(destinatarios, (list, tuple)) or not destinatarios:
+    if not lista:
         return False
 
     try:
-        msg = MIMEText(mensagem)
-        msg["Subject"] = assunto
-        msg["From"] = smtp_from
-        msg["To"] = ", ".join(destinatarios)
+        r = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": remetente,
+                "to": lista,
+                "subject": assunto,
+                "text": mensagem,
+            },
+            timeout=20,
+        )
 
-        servidor = smtplib.SMTP(smtp_server, smtp_port, timeout=20)
-        servidor.ehlo()
-        servidor.starttls()
-        servidor.ehlo()
-        servidor.login(smtp_user, smtp_pass)
-        servidor.sendmail(smtp_from, destinatarios, msg.as_string())
+        if r.status_code in (200, 201):
+            return True
 
-        servidor.quit()
-        return True
-    except Exception as e:
-        print("Erro ao enviar e-mail genÃ©rico:", e)
+        print("Erro Resend:", r.status_code, r.text)
         return False
+
+    except Exception as e:
+        print("Erro ao enviar e-mail (Resend):", e)
+        return False
+
 
 def enviar_codigo_whatsapp(numero, codigo) -> bool:
     """
