@@ -1,6 +1,5 @@
 ﻿import os
 import requests
-import resend
 from email.mime.text import MIMEText  # se já usa em outros lugares pode manter
 import random
 import smtplib
@@ -49,7 +48,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 app.config["SMTP_SERVER"] = "smtp.gmail.com"
-app.config["SMTP_PORT"] = 587
+app.config["SMTP_PORT"] = 465
 app.config["SMTP_USER"] = "amos.carvalho@gmail.com"
 app.config["SMTP_PASS"] = "zhswmywmylvkrcnw"
 app.config["SMTP_FROM"] = "amos.carvalho@gmail.com"
@@ -93,44 +92,33 @@ def salvar_foto(file_storage, foto_atual=None):
 
 
 def enviar_codigo_email(email, codigo) -> bool:
-    """
-    Envia código de recuperação via Resend (API HTTP).
-    Retorna True se enviou, False se falhou.
-    """
-    api_key = os.getenv("RESEND_API_KEY", "").strip()
-    remetente = os.getenv("RESEND_FROM", "Sistema Escolar <onboarding@resend.dev>").strip()
+    from email.mime.text import MIMEText
+    import smtplib
 
-    if not api_key:
-        return False
-
-    assunto = "Recuperação de senha - Sistema Escolar"
-    texto = f"Seu código para redefinição de senha é: {codigo}"
+    msg = MIMEText(f"Seu código para redefinição de senha é: {codigo}")
+    msg["Subject"] = "Recuperação de senha - Sistema Escolar"
+    msg["From"] = app.config["SMTP_FROM"]
+    msg["To"] = email
 
     try:
-        r = requests.post(
-            "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "from": remetente,
-                "to": [email],
-                "subject": assunto,
-                "text": texto,
-            },
-            timeout=20,
+        servidor = smtplib.SMTP_SSL(
+            app.config["SMTP_SERVER"],
+            app.config["SMTP_PORT"],
+            timeout=20
         )
-
-        # 200/201 normalmente indicam sucesso
-        if r.status_code in (200, 201):
-            return True
-
-        print("Erro Resend:", r.status_code, r.text)
-        return False
-
+        servidor.login(
+            app.config["SMTP_USER"],
+            app.config["SMTP_PASS"]
+        )
+        servidor.sendmail(
+            app.config["SMTP_USER"],
+            [email],
+            msg.as_string()
+        )
+        servidor.quit()
+        return True
     except Exception as e:
-        print("Erro ao enviar e-mail (Resend):", e)
+        print("Erro ao enviar e-mail:", e)
         return False
 
 
@@ -144,14 +132,14 @@ def enviar_email_generico(destinatarios, assunto, mensagem) -> bool:
     remetente = os.getenv("RESEND_FROM", "Sistema Escolar <onboarding@resend.dev>").strip()
 
     if not api_key:
+        print("RESEND: faltando RESEND_API_KEY nas variáveis de ambiente.")
         return False
 
-    # normaliza destinatários
     if isinstance(destinatarios, str):
         d = destinatarios.replace(";", ",")
         lista = [x.strip() for x in d.split(",") if x.strip()]
     else:
-        lista = [x.strip() for x in destinatarios if str(x).strip()]
+        lista = [str(x).strip() for x in destinatarios if str(x).strip()]
 
     if not lista:
         return False
@@ -182,16 +170,7 @@ def enviar_email_generico(destinatarios, assunto, mensagem) -> bool:
         print("Erro ao enviar e-mail (Resend):", e)
         return False
 
-import resend
 
-resend.api_key = "re_9h1NooAW_87hE1xs5sJLQMYQj3SgfevSy"
-
-r = resend.Emails.send({
-  "from": "onboarding@resend.dev",
-  "to": "gabrielbarbosac2013@gmail.com",
-  "subject": "Hello World",
-  "html": "<p>Congrats on sending your <strong>first email</strong>!</p>"
-})
 
 def enviar_codigo_whatsapp(numero, codigo) -> bool:
     """
