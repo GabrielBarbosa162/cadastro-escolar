@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <title>Redefinir senha com código</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    .box { max-width: 520px; margin: 0 auto; border: 1px solid #ddd; padding: 16px; border-radius: 10px; }
+    input { width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: 1px solid #bbb; }
+    button { width: 100%; padding: 12px; border: 0; border-radius: 8px; cursor: pointer; }
+    .msg { margin: 10px 0; padding: 10px; border-radius: 8px; }
+    .err { background: #f8d7da; border: 1px solid #f5c6cb; }
+    .ok { background: #d4edda; border: 1px solid #c3e6cb; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Redefinir senha (sem e-mail)</h2>
+
+    {% if error %}
+      <div class="msg err">{{ error }}</div>
+    {% endif %}
+    {% if success %}
+      <div class="msg ok">{{ success }}</div>
+    {% endif %}
+
+    <form method="post">
+      <label>E-mail (da conta)</label>
+      <input name="email" type="email" required>
+
+      <label>Código de recuperação</label>
+      <input name="code" type="text" placeholder="EX: K7QF-29XG" required>
+
+      <label>Nova senha</label>
+      <input name="new_password" type="password" required>
+
+      <button type="submit">Redefinir senha</button>
+    </form>
+  </div>
+</body>
+</html>

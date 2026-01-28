@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <title>Seus Códigos de Recuperação</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    .box { max-width: 520px; margin: 0 auto; border: 1px solid #ddd; padding: 16px; border-radius: 10px; }
+    .warn { background: #fff3cd; border: 1px solid #ffeeba; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
+    .codes { font-size: 18px; letter-spacing: 1px; }
+    .code { padding: 10px; border: 1px dashed #999; border-radius: 8px; margin: 10px 0; text-align: center; font-weight: bold; }
+    button { width: 100%; padding: 12px; border: 0; border-radius: 8px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Guarde seus Códigos de Recuperação</h2>
+
+    <div class="warn">
+      <strong>Atenção:</strong> Estes códigos aparecem <strong>apenas uma vez</strong>.
+      Salve em um local seguro (papel, gerenciador de senhas, etc.).
+    </div>
+
+    <div class="codes">
+      {% for c in codes %}
+        <div class="code">{{ c }}</div>
+      {% endfor %}
+    </div>
+
+    <form method="post">
+      <button type="submit">Já salvei, continuar</button>
+    </form>
+  </div>
+</body>
+</html>

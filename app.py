@@ -1,5 +1,7 @@
 ﻿import os
 import requests
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask import request, render_template, redirect, url_for, flash, session
 from email.mime.text import MIMEText  # se já usa em outros lugares pode manter
 import random
 import smtplib
@@ -8,6 +10,7 @@ from datetime import datetime, date
 import subprocess
 import sys
 import shlex
+from utils.recovery_codes import gerar_3_codigos_recuperacao, salvar_codigos_no_usuario, consumir_codigo
 
 from flask import (
     Flask,
@@ -222,8 +225,28 @@ class Usuario(db.Model, UserMixin):
     ativo = db.Column(db.Boolean, nullable=False, default=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
+recovery_question = db.Column(db.String(255), nullable=True)
+recovery_answer_hash = db.Column(db.String(255), nullable=True)
+
     aluno_id = db.Column(db.Integer, db.ForeignKey("aluno.id"), nullable=True)
     aluno = db.relationship("Aluno", lazy="joined")
+
+recovery_code1 = db.Column(db.String(255), nullable=True)
+recovery_code2 = db.Column(db.String(255), nullable=True)
+recovery_code3 = db.Column(db.String(255), nullable=True)
+recovery_codes_shown = db.Column(db.Boolean, default=False)
+
+codes = gerar_3_codigos_recuperacao()
+salvar_codigos_no_usuario(user, codes)
+
+db.session.add(user)
+db.session.commit()
+
+# Guarda os códigos na sessão para mostrar UMA vez
+session["new_recovery_codes"] = codes
+session["user_id_show_codes"] = user.id
+
+return redirect("/recovery-codes")
 
     def papel_upper(self):
         return (self.papel or "").upper()
