@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <title>Sistema Escolar</title>
+  <title>{% block title %}Sistema Escolar{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <!-- Bootstrap 5 CDN (CSS) -->
@@ -43,7 +43,7 @@
               </a>
             </li>
 
-            <!-- ✅ ATIVIDADES: você disse que ALUNO/RESPONSÁVEL devem ter acesso -->
+            <!-- ✅ ATIVIDADES: você disse que ALUNO/RESPONS&Aacute;VEL devem ter acesso -->
             <li class="nav-item">
               <a class="nav-link {% if request.endpoint and 'atividades_' in request.endpoint %}active{% endif %}"
                  href="{{ url_for('atividades_listar') }}">
@@ -56,7 +56,7 @@
               <li class="nav-item">
                 <a class="nav-link {% if request.endpoint and 'series_' in request.endpoint %}active{% endif %}"
                    href="{{ url_for('series_list') }}">
-                  Séries
+                  S&eacute;ries
                 </a>
               </li>
                <li class="nav-item">
@@ -76,14 +76,14 @@
               <li class="nav-item">
                 <a class="nav-link {% if request.endpoint and 'horarios_' in request.endpoint %}active{% endif %}"
                    href="{{ url_for('horarios_list') }}">
-                  Horários
+                  Hor&aacute;rios
                 </a>
               </li>
 
               <li class="nav-item">
                 <a class="nav-link {% if request.endpoint and 'usuarios_' in request.endpoint %}active{% endif %}"
                    href="{{ url_for('usuarios_list') }}">
-                  Usuários
+                  Usu&aacute;rios
                 </a>
               </li>
             {% endif %}
@@ -122,12 +122,6 @@
       {% block content %}{% endblock %}
     </div>
   </main>
-  <li class="nav-item">
-  <a class="nav-link {% if request.endpoint and 'professores_' in request.endpoint %}active{% endif %}"
-     href="{{ url_for('professores_listar') }}">
-  </a>
-</li>
-
   <!-- Bootstrap 5 JS -->
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

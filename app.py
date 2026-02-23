@@ -1,4 +1,4 @@
-﻿import os
+import os
 import requests
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import request, render_template, redirect, url_for, flash, session
@@ -35,7 +35,7 @@ from sqlalchemy import text as sa_text
 from werkzeug.utils import secure_filename
 
 # -------------------------------------------------------------------
-# CONFIGURAÃ‡ÃƒO BÃSICA
+# CONFIGURAÇÃO BÁSICA
 # -------------------------------------------------------------------
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DB_PATH = os.path.join(BASE_DIR, "alunos.db")
@@ -80,7 +80,7 @@ class HoraStrWrapper:
 def salvar_foto(file_storage, foto_atual=None):
     """
     Salva o arquivo enviado e devolve o caminho relativo "uploads/arquivo.jpg".
-    Se nÃ£o houver arquivo novo, retorna foto_atual (mantÃ©m a existente).
+    Se não houver arquivo novo, retorna foto_atual (mantém a existente).
     """
     if not file_storage:
         return foto_atual
@@ -180,13 +180,13 @@ def enviar_codigo_whatsapp(numero, codigo) -> bool:
     Usa o script externo enviar_whatsapp.py para automatizar o WhatsApp Web
     e enviar a mensagem em background (headless, depois do primeiro login).
 
-    - numero: string com o nÃºmero (pode ter +, espaÃ§os, etc. -> serÃ¡ limpo).
-    - codigo: cÃ³digo numÃ©rico a ser enviado.
+    - numero: string com o número (pode ter +, espaços, etc. -> será limpo).
+    - codigo: código numérico a ser enviado.
 
-    Retorna True se o script terminar com exit code 0, False caso contrÃ¡rio.
+    Retorna True se o script terminar com exit code 0, False caso contrário.
     """
     numero_limpo = "".join(filter(str.isdigit, numero))
-    mensagem = f"Seu cÃ³digo de recuperaÃ§Ã£o Ã©: {codigo}"
+    mensagem = f"Seu código de recuperação é: {codigo}"
 
     # Monta comando: python enviar_whatsapp.py NUMERO "mensagem"
     cmd = f'{sys.executable} enviar_whatsapp.py {numero_limpo} "{mensagem}"'
@@ -225,28 +225,16 @@ class Usuario(db.Model, UserMixin):
     ativo = db.Column(db.Boolean, nullable=False, default=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-recovery_question = db.Column(db.String(255), nullable=True)
-recovery_answer_hash = db.Column(db.String(255), nullable=True)
+    recovery_question = db.Column(db.String(255), nullable=True)
+    recovery_answer_hash = db.Column(db.String(255), nullable=True)
 
     aluno_id = db.Column(db.Integer, db.ForeignKey("aluno.id"), nullable=True)
     aluno = db.relationship("Aluno", lazy="joined")
 
-recovery_code1 = db.Column(db.String(255), nullable=True)
-recovery_code2 = db.Column(db.String(255), nullable=True)
-recovery_code3 = db.Column(db.String(255), nullable=True)
-recovery_codes_shown = db.Column(db.Boolean, default=False)
-
-codes = gerar_3_codigos_recuperacao()
-salvar_codigos_no_usuario(user, codes)
-
-db.session.add(user)
-db.session.commit()
-
-# Guarda os códigos na sessão para mostrar UMA vez
-session["new_recovery_codes"] = codes
-session["user_id_show_codes"] = user.id
-
-return redirect("/recovery-codes")
+    recovery_code1 = db.Column(db.String(255), nullable=True)
+    recovery_code2 = db.Column(db.String(255), nullable=True)
+    recovery_code3 = db.Column(db.String(255), nullable=True)
+    recovery_codes_shown = db.Column(db.Boolean, default=False)
 
     def papel_upper(self):
         return (self.papel or "").upper()
@@ -287,7 +275,7 @@ class Professor(db.Model):
     __tablename__ = "professor"
     id = db.Column(db.Integer, primary_key=True)
 
-    # Email precisa existir em Usuario (vÃ­nculo)
+    # Email precisa existir em Usuario (vínculo)
     usuario_id = db.Column(db.Integer, db.ForeignKey("usuario.id"), nullable=False, unique=True)
     usuario = db.relationship("Usuario", lazy="joined")
 
@@ -358,7 +346,7 @@ class Atividade(db.Model):
 
 
 # -------------------------------------------------------------------
-# LOGIN / AUTENTICAÃ‡ÃƒO
+# LOGIN / AUTENTICAÇÃO
 # -------------------------------------------------------------------
 @login_manager.user_loader
 def load_user(uid):
@@ -374,7 +362,7 @@ def login():
         if user and user.senha_hash == senha and user.ativo:
             login_user(user)
             return redirect(url_for("index"))
-        flash("Credenciais invÃ¡lidas ou usuÃ¡rio inativo.", "danger")
+        flash("Credenciais inválidas ou usuário inativo.", "danger")
     return render_template("auth/login.html")
 
 
@@ -434,21 +422,21 @@ def esqueci():
 
 
 
-# /esqueci/whatsapp: tela com APENAS o campo de nÃºmero WhatsApp
+# /esqueci/whatsapp: tela com APENAS o campo de número WhatsApp
 @app.route("/esqueci/whatsapp", methods=["GET", "POST"])
 def esqueci_whatsapp():
     email = session.get("recuperacao_email")
     if not email:
-        flash("SessÃ£o expirada. Recomece o processo de recuperaÃ§Ã£o.", "warning")
+        flash("Sessão expirada. Recomece o processo de recuperação.", "warning")
         return redirect(url_for("esqueci"))
 
     if request.method == "POST":
         numero = request.form.get("whatsapp", "").strip()
         if not numero:
-            flash("Informe o nÃºmero de WhatsApp.", "danger")
+            flash("Informe o número de WhatsApp.", "danger")
             return redirect(url_for("esqueci_whatsapp"))
 
-        # Gera cÃ³digo e tenta enviar pelo WhatsApp
+        # Gera código e tenta enviar pelo WhatsApp
         codigo = random.randint(100000, 999999)
         session["recuperacao_codigo"] = str(codigo)
         session["recuperacao_modo"] = "whatsapp"
@@ -456,12 +444,12 @@ def esqueci_whatsapp():
         enviado = enviar_codigo_whatsapp(numero, codigo)
 
         if enviado:
-            flash("Um cÃ³digo foi enviado para o WhatsApp informado.", "info")
+            flash("Um código foi enviado para o WhatsApp informado.", "info")
         else:
-            # Fallback: mostra o cÃ³digo na tela (nÃ£o no terminal)
+            # Fallback: mostra o código na tela (não no terminal)
             flash(
-                f"(Modo teste) NÃ£o foi possÃ­vel enviar pelo WhatsApp. "
-                f"Use este cÃ³digo para continuar: {codigo}",
+                f"(Modo teste) Não foi possível enviar pelo WhatsApp. "
+                f"Use este código para continuar: {codigo}",
                 "warning",
             )
 
@@ -479,7 +467,7 @@ def verificar_codigo():
         if codigo_digitado == codigo_correto and codigo_correto:
             return redirect(url_for("redefinir_senha"))
 
-        flash("CÃ³digo incorreto.", "danger")
+        flash("Código incorreto.", "danger")
         return redirect(url_for("verificar_codigo"))
 
     return render_template("auth/verificar_codigo.html")
@@ -489,7 +477,7 @@ def verificar_codigo():
 def redefinir_senha():
     email = session.get("recuperacao_email")
     if not email:
-        flash("Processo de recuperaÃ§Ã£o expirado. Tente novamente.", "warning")
+        flash("Processo de recuperação expirado. Tente novamente.", "warning")
         return redirect(url_for("esqueci"))
 
     if request.method == "POST":
@@ -497,16 +485,16 @@ def redefinir_senha():
         senha2 = request.form.get("senha2")
 
         if senha1 != senha2:
-            flash("As senhas nÃ£o coincidem.", "danger")
+            flash("As senhas não coincidem.", "danger")
             return redirect(url_for("redefinir_senha"))
 
         if len(senha1) < 8 or not any(c.isdigit() for c in senha1):
-            flash("Senha deve ter no mÃ­nimo 8 caracteres e conter nÃºmeros.", "danger")
+            flash("Senha deve ter no mínimo 8 caracteres e conter números.", "danger")
             return redirect(url_for("redefinir_senha"))
 
         user = Usuario.query.filter_by(email=email).first()
         if not user:
-            flash("UsuÃ¡rio nÃ£o encontrado.", "danger")
+            flash("Usuário não encontrado.", "danger")
             return redirect(url_for("login"))
 
         user.senha_hash = senha1
@@ -516,7 +504,7 @@ def redefinir_senha():
         session.pop("recuperacao_codigo", None)
         session.pop("recuperacao_modo", None)
 
-        flash("Senha redefinida com sucesso! FaÃ§a login.", "success")
+        flash("Senha redefinida com sucesso! Faça login.", "success")
         return redirect(url_for("login"))
 
     return render_template("auth/redefinir_senha.html")
@@ -530,7 +518,7 @@ def logout():
 
 
 # -------------------------------------------------------------------
-# MIGRAÃ‡ÃƒO LEVE / SCHEMA
+# MIGRAÇÃO LEVE / SCHEMA
 # -------------------------------------------------------------------
 def _add_col_if_missing(table: str, column: str, ddl: str):
     info = db.session.execute(sa_text(f"PRAGMA table_info({table})")).mappings().all()
@@ -562,12 +550,18 @@ def ensure_schema():
 
     try:
         _add_col_if_missing("usuario", "aluno_id", "INTEGER")
+        _add_col_if_missing("usuario", "recovery_question", "TEXT")
+        _add_col_if_missing("usuario", "recovery_answer_hash", "TEXT")
+        _add_col_if_missing("usuario", "recovery_code1", "TEXT")
+        _add_col_if_missing("usuario", "recovery_code2", "TEXT")
+        _add_col_if_missing("usuario", "recovery_code3", "TEXT")
+        _add_col_if_missing("usuario", "recovery_codes_shown", "BOOLEAN DEFAULT 0")
     except Exception:
         db.session.rollback()
 
 
 # -------------------------------------------------------------------
-# PERMISSÃ•ES
+# PERMISSÕES
 # -------------------------------------------------------------------
 def can(permission: str) -> bool:
     if not current_user.is_authenticated:
@@ -605,6 +599,46 @@ def can(permission: str) -> bool:
     return False
 
 
+
+MOJIBAKE_FIXES = {
+    "Ã¡": "á", "Ã¢": "â", "Ã£": "ã", "Ã ": "à", "Ã¤": "ä",
+    "Ã": "Á", "Ã‚": "Â", "Ãƒ": "Ã", "Ã€": "À", "Ã„": "Ä",
+    "Ã©": "é", "Ãª": "ê", "Ã¨": "è", "Ã«": "ë",
+    "Ã‰": "É", "ÃŠ": "Ê", "Ãˆ": "È", "Ã‹": "Ë",
+    "Ã­": "í", "Ã¬": "ì", "Ã®": "î", "Ã¯": "ï",
+    "Ã": "Í", "ÃŒ": "Ì", "ÃŽ": "Î", "Ã": "Ï",
+    "Ã³": "ó", "Ã´": "ô", "Ãµ": "õ", "Ã²": "ò", "Ã¶": "ö",
+    "Ã“": "Ó", "Ã”": "Ô", "Ã•": "Õ", "Ã’": "Ò", "Ã–": "Ö",
+    "Ãº": "ú", "Ã¹": "ù", "Ã»": "û", "Ã¼": "ü",
+    "Ãš": "Ú", "Ã™": "Ù", "Ã›": "Û", "Ãœ": "Ü",
+    "Ã§": "ç", "Ã‡": "Ç", "Ã±": "ñ", "Ã‘": "Ñ",
+    "â€“": "–", "â€”": "—", "â€œ": "“", "â€": "”", "â€˜": "‘", "â€™": "’",
+    "Â": "",
+}
+
+
+def _fix_mojibake_html(text: str) -> str:
+    fixed = text
+    for wrong, right in MOJIBAKE_FIXES.items():
+        fixed = fixed.replace(wrong, right)
+    return fixed
+
+
+@app.after_request
+def force_utf8_html(response):
+    content_type = (response.headers.get("Content-Type") or "").lower()
+    if content_type.startswith("text/html"):
+        response.headers["Content-Type"] = "text/html; charset=utf-8"
+        try:
+            html = response.get_data(as_text=True)
+            repaired = _fix_mojibake_html(html)
+            if repaired != html:
+                response.set_data(repaired)
+        except Exception:
+            pass
+    return response
+
+
 @app.context_processor
 def inject_can():
     return dict(can=can)
@@ -620,13 +654,13 @@ def index():
 
 
 # -------------------------------------------------------------------
-# USUÃRIOS
+# USUÁRIOS
 # -------------------------------------------------------------------
 @app.route("/usuarios/", methods=["GET"])
 @login_required
 def usuarios_list():
     if not current_user.is_diretoria():
-        flash("Acesso restrito Ã  DIRETORIA.", "warning")
+        flash("Acesso restrito à DIRETORIA.", "warning")
         return redirect(url_for("index"))
 
     items = Usuario.query.order_by(Usuario.email.asc()).all()
@@ -638,7 +672,7 @@ def usuarios_list():
 @login_required
 def usuarios_novo():
     if not current_user.is_diretoria():
-        flash("Acesso restrito Ã  DIRETORIA.", "warning")
+        flash("Acesso restrito à DIRETORIA.", "warning")
         return redirect(url_for("index"))
 
     email = request.form.get("email", "").strip().lower()
@@ -648,16 +682,16 @@ def usuarios_novo():
     aluno_id = request.form.get("aluno_id")
 
     if not email or "@" not in email:
-        flash("E-mail invÃ¡lido.", "danger")
+        flash("E-mail inválido.", "danger")
         return redirect(url_for("usuarios_list"))
     if len(senha) < 8 or not any(c.isdigit() for c in senha):
-        flash("Senha deve ter 8+ caracteres e ao menos 1 dÃ­gito.", "danger")
+        flash("Senha deve ter 8+ caracteres e ao menos 1 dígito.", "danger")
         return redirect(url_for("usuarios_list"))
     if senha != senha2:
-        flash("ConfirmaÃ§Ã£o de senha nÃ£o confere.", "danger")
+        flash("Confirmação de senha não confere.", "danger")
         return redirect(url_for("usuarios_list"))
     if Usuario.query.filter_by(email=email).first():
-        flash("E-mail jÃ¡ cadastrado.", "danger")
+        flash("E-mail já cadastrado.", "danger")
         return redirect(url_for("usuarios_list"))
 
     if papel in ("RESPONSAVEL", "ALUNO") and not aluno_id:
@@ -675,7 +709,7 @@ def usuarios_novo():
     )
     db.session.add(u)
     db.session.commit()
-    flash("UsuÃ¡rio criado.", "success")
+    flash("Usuário criado.", "success")
     return redirect(url_for("usuarios_list"))
 
 
@@ -683,7 +717,7 @@ def usuarios_novo():
 @login_required
 def usuarios_editar(id):
     if not current_user.is_diretoria():
-        flash("Acesso restrito Ã  DIRETORIA.", "warning")
+        flash("Acesso restrito à DIRETORIA.", "warning")
         return redirect(url_for("index"))
 
     u = Usuario.query.get_or_404(id)
@@ -694,7 +728,7 @@ def usuarios_editar(id):
 
     if new_pass:
         if len(new_pass) < 8 or not any(c.isdigit() for c in new_pass):
-            flash("Nova senha invÃ¡lida (8+ e 1 dÃ­gito).", "danger")
+            flash("Nova senha inválida (8+ e 1 dígito).", "danger")
             return redirect(url_for("usuarios_list"))
         u.senha_hash = new_pass
 
@@ -707,7 +741,7 @@ def usuarios_editar(id):
     u.aluno_id = int(aluno_id) if aluno_id else None
 
     db.session.commit()
-    flash("UsuÃ¡rio atualizado.", "success")
+    flash("Usuário atualizado.", "success")
     return redirect(url_for("usuarios_list"))
 
 
@@ -715,15 +749,15 @@ def usuarios_editar(id):
 @login_required
 def usuarios_excluir(id):
     if not current_user.is_diretoria():
-        flash("Acesso restrito Ã  DIRETORIA.", "warning")
+        flash("Acesso restrito à DIRETORIA.", "warning")
         return redirect(url_for("index"))
     if current_user.id == id:
-        flash("VocÃª nÃ£o pode excluir a si mesmo.", "warning")
+        flash("Você não pode excluir a si mesmo.", "warning")
         return redirect(url_for("usuarios_list"))
     u = Usuario.query.get_or_404(id)
     db.session.delete(u)
     db.session.commit()
-    flash("UsuÃ¡rio removido.", "success")
+    flash("Usuário removido.", "success")
     return redirect(url_for("usuarios_list"))
 
 # -------------------------------------------------------------------
@@ -733,7 +767,7 @@ def usuarios_excluir(id):
 @login_required
 def professores_listar():
     if not current_user.is_diretoria():
-        flash("VocÃª nÃ£o tem permissÃ£o para acessar Professores.", "warning")
+        flash("Você não tem permissão para acessar Professores.", "warning")
         return redirect(url_for("index"))
 
     itens = Professor.query.order_by(Professor.nome.asc()).all()
@@ -744,7 +778,7 @@ def professores_listar():
 @login_required
 def professores_novo():
     if not current_user.is_diretoria():
-        flash("VocÃª nÃ£o tem permissÃ£o para cadastrar Professores.", "warning")
+        flash("Você não tem permissão para cadastrar Professores.", "warning")
         return redirect(url_for("index"))
 
     usuarios = Usuario.query.order_by(Usuario.email.asc()).all()
@@ -762,7 +796,7 @@ def professores_novo():
 
         u = Usuario.query.filter(sa_text("lower(email)=:e")).params(e=email).first()
         if not u:
-            flash("E-mail nÃ£o registrado.", "danger")
+            flash("E-mail não registrado.", "danger")
             return redirect(request.url)
 
             return redirect(request.url)
@@ -773,20 +807,20 @@ def professores_novo():
             try:
                 dn = datetime.strptime(dn_str, "%Y-%m-%d").date()
             except ValueError:
-                flash("Data de nascimento invÃ¡lida. Use o seletor de data.", "danger")
+                flash("Data de nascimento inválida. Use o seletor de data.", "danger")
                 return redirect(request.url)
 
-        # busca sÃ©ries selecionadas
+        # busca séries selecionadas
         sel_series = []
         if series_ids:
             try:
                 ids_int = [int(x) for x in series_ids]
                 sel_series = Serie.query.filter(Serie.id.in_(ids_int)).all()
             except ValueError:
-                flash("SeleÃ§Ã£o de sÃ©ries invÃ¡lida.", "danger")
+                flash("Seleção de séries inválida.", "danger")
                 return redirect(request.url)
 
-        # se jÃ¡ existir cadastro de professor para este usuÃ¡rio, atualiza (evita duplicar)
+        # se já existir cadastro de professor para este usuário, atualiza (evita duplicar)
         prof = Professor.query.filter_by(usuario_id=u.id).first()
         if not prof:
             prof = Professor(usuario_id=u.id, nome=nome, data_nascimento=dn)
@@ -797,7 +831,7 @@ def professores_novo():
 
         prof.series = sel_series
 
-        # transforma o usuÃ¡rio em PROFESSOR (perfil)
+        # transforma o usuário em PROFESSOR (perfil)
         u.papel = "PROFESSOR"
 
         db.session.commit()
@@ -811,7 +845,7 @@ def professores_novo():
 @login_required
 def professores_editar(id):
     if not current_user.is_diretoria():
-        flash("VocÃª nÃ£o tem permissÃ£o para editar Professores.", "warning")
+        flash("Você não tem permissão para editar Professores.", "warning")
         return redirect(url_for("index"))
 
     prof = Professor.query.get_or_404(id)
@@ -831,13 +865,13 @@ def professores_editar(id):
 
         u = Usuario.query.filter(sa_text("lower(email)=:e")).params(e=email).first()
         if not u:
-            flash("Este e-mail nÃ£o estÃ¡ cadastrado no sistema.", "danger")
+            flash("Este e-mail não está cadastrado no sistema.", "danger")
             return redirect(request.url)
 
-        # garante unicidade: um usuÃ¡rio sÃ³ pode ser um professor
+        # garante unicidade: um usuário só pode ser um professor
         outro = Professor.query.filter_by(usuario_id=u.id).first()
         if outro and outro.id != prof.id:
-            flash("Este e-mail jÃ¡ estÃ¡ vinculado a outro professor.", "danger")
+            flash("Este e-mail já está vinculado a outro professor.", "danger")
             return redirect(request.url)
 
         dn = None
@@ -845,7 +879,7 @@ def professores_editar(id):
             try:
                 dn = datetime.strptime(dn_str, "%Y-%m-%d").date()
             except ValueError:
-                flash("Data de nascimento invÃ¡lida. Use o seletor de data.", "danger")
+                flash("Data de nascimento inválida. Use o seletor de data.", "danger")
                 return redirect(request.url)
 
         sel_series = []
@@ -854,7 +888,7 @@ def professores_editar(id):
                 ids_int = [int(x) for x in series_ids]
                 sel_series = Serie.query.filter(Serie.id.in_(ids_int)).all()
             except ValueError:
-                flash("SeleÃ§Ã£o de sÃ©ries invÃ¡lida.", "danger")
+                flash("Seleção de séries inválida.", "danger")
                 return redirect(request.url)
 
         prof.usuario_id = u.id
@@ -877,7 +911,7 @@ def professores_editar(id):
 @login_required
 def escolas_list():
     if current_user.is_responsavel() or current_user.is_aluno():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     items = Escola.query.order_by(Escola.nome.asc()).all()
@@ -888,7 +922,7 @@ def escolas_list():
 @login_required
 def escolas_nova():
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     if request.method == "POST":
@@ -897,7 +931,7 @@ def escolas_nova():
             flash("Informe o nome da escola.", "danger")
             return redirect(url_for("escolas_nova"))
         if Escola.query.filter_by(nome=nome).first():
-            flash("JÃ¡ existe escola com esse nome.", "warning")
+            flash("Já existe escola com esse nome.", "warning")
             return redirect(url_for("escolas_list"))
         e = Escola(nome=nome)
         db.session.add(e)
@@ -911,7 +945,7 @@ def escolas_nova():
 @login_required
 def escolas_editar(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     e = Escola.query.get_or_404(id)
@@ -920,7 +954,7 @@ def escolas_editar(id):
         flash("Informe o nome.", "danger")
         return redirect(url_for("escolas_list"))
     if Escola.query.filter(Escola.id != id, Escola.nome == nome).first():
-        flash("JÃ¡ existe escola com esse nome.", "warning")
+        flash("Já existe escola com esse nome.", "warning")
         return redirect(url_for("escolas_list"))
     e.nome = nome
     db.session.commit()
@@ -932,24 +966,24 @@ def escolas_editar(id):
 @login_required
 def escolas_excluir(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     e = Escola.query.get_or_404(id)
     db.session.delete(e)
     db.session.commit()
-    flash("Escola excluÃ­da.", "success")
+    flash("Escola excluída.", "success")
     return redirect(url_for("escolas_list"))
 
 
 # -------------------------------------------------------------------
-# SÃ‰RIES
+# SÉRIES
 # -------------------------------------------------------------------
 @app.route("/series/")
 @login_required
 def series_list():
     if current_user.is_responsavel() or current_user.is_aluno():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     series = Serie.query.order_by(Serie.nome.asc()).all()
@@ -960,21 +994,21 @@ def series_list():
 @login_required
 def series_nova():
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     if request.method == "POST":
         nome = request.form.get("nome", "").strip()
         if not nome:
-            flash("Informe o nome da sÃ©rie.", "danger")
+            flash("Informe o nome da série.", "danger")
             return redirect(url_for("series_nova"))
         if Serie.query.filter_by(nome=nome).first():
-            flash("JÃ¡ existe sÃ©rie com esse nome.", "warning")
+            flash("Já existe série com esse nome.", "warning")
             return redirect(url_for("series_list"))
         s = Serie(nome=nome)
         db.session.add(s)
         db.session.commit()
-        flash("SÃ©rie cadastrada.", "success")
+        flash("Série cadastrada.", "success")
         return redirect(url_for("series_list"))
     return render_template("series/form.html")
 
@@ -983,7 +1017,7 @@ def series_nova():
 @login_required
 def series_editar(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     s = Serie.query.get_or_404(id)
@@ -992,11 +1026,11 @@ def series_editar(id):
         flash("Informe o nome.", "danger")
         return redirect(url_for("series_list"))
     if Serie.query.filter(Serie.id != id, Serie.nome == nome).first():
-        flash("JÃ¡ existe sÃ©rie com esse nome.", "warning")
+        flash("Já existe série com esse nome.", "warning")
         return redirect(url_for("series_list"))
     s.nome = nome
     db.session.commit()
-    flash("SÃ©rie atualizada.", "success")
+    flash("Série atualizada.", "success")
     return redirect(url_for("series_list"))
 
 
@@ -1004,29 +1038,29 @@ def series_editar(id):
 @login_required
 def series_excluir(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     s = Serie.query.get_or_404(id)
     db.session.delete(s)
     db.session.commit()
-    flash("SÃ©rie excluÃ­da.", "success")
+    flash("Série excluída.", "success")
     return redirect(url_for("series_list"))
 
 
 # -------------------------------------------------------------------
-# HORÃRIOS
+# HORÁRIOS
 # -------------------------------------------------------------------
 @app.route("/horarios/")
 @login_required
 def horarios_list():
     if current_user.is_responsavel() or current_user.is_aluno():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     items = Horario.query.order_by(Horario.hora_inicio.asc()).all()
 
-    # âœ… Alunos agrupados por horÃ¡rio
+    # ✅ Alunos agrupados por horário
     alunos = Aluno.query.order_by(Aluno.nome.asc()).all()
 
     alunos_por_horario = {}
@@ -1051,22 +1085,22 @@ def horarios_list():
 @login_required
 def horarios_novo():
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     if request.method == "POST":
         h_ini = request.form.get("hora_inicio", "").strip()
         h_fim = request.form.get("hora_fim", "").strip()
         if not _is_hhmm(h_ini) or not _is_hhmm(h_fim):
-            flash("Informe horas vÃ¡lidas no formato HH:MM.", "danger")
+            flash("Informe horas válidas no formato HH:MM.", "danger")
             return redirect(url_for("horarios_novo"))
         if h_fim <= h_ini:
-            flash("Hora fim deve ser maior que hora inÃ­cio.", "danger")
+            flash("Hora fim deve ser maior que hora início.", "danger")
             return redirect(url_for("horarios_novo"))
         h = Horario(hora_inicio=h_ini, hora_fim=h_fim)
         db.session.add(h)
         db.session.commit()
-        flash("HorÃ¡rio cadastrado.", "success")
+        flash("Horário cadastrado.", "success")
         return redirect(url_for("horarios_list"))
     return render_template("horarios/form.html")
 
@@ -1078,19 +1112,19 @@ app.add_url_rule("/horarios/novo", endpoint="horarios_new", view_func=horarios_n
 @login_required
 def horarios_editar(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     h = Horario.query.get_or_404(id)
     h_ini = request.form.get("hora_inicio", "").strip()
     h_fim = request.form.get("hora_fim", "").strip()
     if not _is_hhmm(h_ini) or not _is_hhmm(h_fim) or h_fim <= h_ini:
-        flash("Horas invÃ¡lidas.", "danger")
+        flash("Horas inválidas.", "danger")
         return redirect(url_for("horarios_list"))
     h.hora_inicio = h_ini
     h.hora_fim = h_fim
     db.session.commit()
-    flash("HorÃ¡rio atualizado.", "success")
+    flash("Horário atualizado.", "success")
     return redirect(url_for("horarios_list"))
 
 
@@ -1098,13 +1132,13 @@ def horarios_editar(id):
 @login_required
 def horarios_excluir(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     h = Horario.query.get_or_404(id)
     db.session.delete(h)
     db.session.commit()
-    flash("HorÃ¡rio excluÃ­do.", "success")
+    flash("Horário excluído.", "success")
     return redirect(url_for("horarios_list"))
 
 
@@ -1122,7 +1156,7 @@ def alunos_list():
 @login_required
 def alunos_novo():
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("alunos_list"))
 
     if request.method == "POST":
@@ -1205,7 +1239,7 @@ app.add_url_rule("/alunos/novo", endpoint="alunos_new", view_func=alunos_novo)
 @login_required
 def alunos_editar(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("alunos_list"))
 
     a = Aluno.query.get_or_404(id)
@@ -1279,13 +1313,13 @@ def alunos_editar(id):
 @login_required
 def alunos_excluir(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("alunos_list"))
 
     a = Aluno.query.get_or_404(id)
     db.session.delete(a)
     db.session.commit()
-    flash("Aluno excluÃ­do.", "success")
+    flash("Aluno excluído.", "success")
     return redirect(url_for("alunos_list"))
 
 
@@ -1298,7 +1332,7 @@ def alunos_ver(id):
         pass
     else:
         if not current_user.aluno_id or current_user.aluno_id != a.id:
-            flash("VocÃª nÃ£o tem permissÃ£o para ver os dados deste aluno.", "warning")
+            flash("Você não tem permissão para ver os dados deste aluno.", "warning")
             return redirect(url_for("alunos_list"))
 
     return render_template("alunos/ver.html", aluno=a)
@@ -1349,7 +1383,7 @@ app.add_url_rule(
 @login_required
 def atividades_nova():
     if not (current_user.is_diretoria() or current_user.is_professor()):
-        flash("VocÃª nÃ£o tem permissÃ£o para adicionar atividades.", "warning")
+        flash("Você não tem permissão para adicionar atividades.", "warning")
         return redirect(url_for("atividades_listar"))
 
     if request.method == "POST":
@@ -1360,7 +1394,7 @@ def atividades_nova():
         observacao = request.form.get("observacao")
 
         if not aluno_id or not data_str or not professor or not conteudo:
-            flash("Preencha os campos obrigatÃ³rios.", "danger")
+            flash("Preencha os campos obrigatórios.", "danger")
             return redirect(url_for("atividades_nova"))
 
         data_dt = datetime.strptime(data_str, "%Y-%m-%d").date()
@@ -1384,7 +1418,7 @@ def atividades_nova():
 @login_required
 def atividades_editar(id):
     if not current_user.is_diretoria():
-        flash("VocÃª nÃ£o tem permissÃ£o para editar atividades.", "warning")
+        flash("Você não tem permissão para editar atividades.", "warning")
         return redirect(url_for("atividades_listar"))
 
     atv = Atividade.query.get_or_404(id)
@@ -1402,9 +1436,9 @@ def atividades_editar(id):
         conteudo = (request.form.get("conteudo") or "").strip()
         observacao = request.form.get("observacao")
 
-        # âœ… Evita gravar NULL/vazio em campos NOT NULL
+        # ✅ Evita gravar NULL/vazio em campos NOT NULL
         if not professor or not conteudo:
-            flash("Preencha os campos obrigatÃ³rios: Professor e ConteÃºdo.", "danger")
+            flash("Preencha os campos obrigatórios: Professor e Conteúdo.", "danger")
             return redirect(request.url)
 
         atv.professor = professor
@@ -1424,13 +1458,13 @@ def atividades_editar(id):
 @login_required
 def atividades_excluir(id):
     if not current_user.is_diretoria():
-        flash("VocÃª nÃ£o tem permissÃ£o para excluir atividades.", "warning")
+        flash("Você não tem permissão para excluir atividades.", "warning")
         return redirect(url_for("atividades_listar"))
 
     atv = Atividade.query.get_or_404(id)
     db.session.delete(atv)
     db.session.commit()
-    flash("Atividade excluÃ­da.", "success")
+    flash("Atividade excluída.", "success")
     return redirect(url_for("atividades_listar"))
 
 
