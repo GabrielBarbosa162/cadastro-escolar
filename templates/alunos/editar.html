@@ -53,17 +53,17 @@
     </div>
 
     <div class="col-12 col-md-6">
-      <label class="form-label">Nome da Mãe</label>
+      <label class="form-label">Nome da MÃ£e</label>
       <input name="nome_mae" class="form-control" value="{{ dados.nome_mae or '' }}">
     </div>
 
     <div class="col-12 col-md-6">
-      <label class="form-label">Endereço</label>
+      <label class="form-label">EndereÃ§o</label>
       <input name="endereco" class="form-control" value="{{ dados.endereco or '' }}">
     </div>
 
     <div class="col-6 col-md-2">
-      <label class="form-label">Número</label>
+      <label class="form-label">NÃºmero</label>
       <input name="numero" class="form-control" value="{{ dados.numero or '' }}">
     </div>
 
@@ -88,7 +88,7 @@
       <label class="form-label">Escola</label>
       {% if escolas %}
       <select class="form-select" name="escola">
-        <option value="">Selecione…</option>
+        <option value="">Selecioneâ€¦</option>
         {% for e in escolas %}
           <option value="{{ e.nome }}" {% if aluno.escola==e.nome %}selected{% endif %}>{{ e.nome }}</option>
         {% endfor %}
@@ -99,24 +99,24 @@
     </div>
 
     <div class="col-12 col-md-4">
-      <label class="form-label">Série</label>
+      <label class="form-label">SÃ©rie</label>
       {% if series %}
       <select class="form-select" name="serie">
-        <option value="">Selecione…</option>
+        <option value="">Selecioneâ€¦</option>
         {% for s in series %}
           <option value="{{ s.nome }}" {% if dados.serie==s.nome %}selected{% endif %}>{{ s.nome }}</option>
         {% endfor %}
       </select>
       {% else %}
-      <input name="serie" class="form-control" value="{{ dados.serie or '' }}" placeholder="Informe a série">
+      <input name="serie" class="form-control" value="{{ dados.serie or '' }}" placeholder="Informe a sÃ©rie">
       {% endif %}
     </div>
 
     <div class="col-12 col-md-4">
-      <label class="form-label">Horário da aula</label>
+      <label class="form-label">HorÃ¡rio da aula</label>
       {% if horarios %}
       <select class="form-select" name="horario_sel">
-        <option value="">Selecione…</option>
+        <option value="">Selecioneâ€¦</option>
         {% for h in horarios %}
           <option value="{{ h.label }}" {% if aluno.horario==h.label %}selected{% endif %}>{{ h.label }}</option>
         {% endfor %}
@@ -129,7 +129,7 @@
     </div>
 
     <div class="col-12 col-md-6">
-      <label class="form-label">Telefone da Mãe (para WhatsApp)</label>
+      <label class="form-label">Telefone da MÃ£e (para WhatsApp)</label>
       <input name="telefone_mae" class="form-control" value="{{ aluno.telefone_mae or '' }}">
     </div>
 
@@ -143,7 +143,7 @@
       </div>
       <div class="form-check form-check-inline">
         <input class="form-check-input" type="radio" name="dificuldade" id="difN" value="nao" {% if dados.dificuldade!='sim' %}checked{% endif %}>
-        <label class="form-check-label" for="difN">Não</label>
+        <label class="form-check-label" for="difN">NÃ£o</label>
       </div>
     </div>
 
@@ -160,7 +160,7 @@
       </div>
       <div class="form-check form-check-inline">
         <input class="form-check-input" type="radio" name="medicamento_controlado" id="medN" value="nao" {% if dados.medicamento_controlado!='sim' %}checked{% endif %}>
-        <label class="form-check-label" for="medN">Não</label>
+        <label class="form-check-label" for="medN">NÃ£o</label>
       </div>
     </div>
 
@@ -170,7 +170,7 @@
     </div>
 
     <div class="col-12 col-md-3">
-      <label class="form-label d-block">Matutino (Manhã)</label>
+      <label class="form-label d-block">Matutino (ManhÃ£)</label>
       <div class="form-check">
         <input class="form-check-input" type="checkbox" name="matutino_sim" id="matutino"
                {% if dados.matutino_sim %}checked{% endif %}>
@@ -179,7 +179,7 @@
     </div>
 
     <div class="col-12 col-md-3">
-      <label class="form-label">Horário (manhã)</label>
+      <label class="form-label">HorÃ¡rio (manhÃ£)</label>
       <input name="horario_matutino" class="form-control" value="{{ dados.horario_matutino or '' }}">
     </div>
 
@@ -193,22 +193,22 @@
     </div>
 
     <div class="col-12 col-md-3">
-      <label class="form-label">Horário (tarde)</label>
+      <label class="form-label">HorÃ¡rio (tarde)</label>
       <input name="horario_vespertino" class="form-control" value="{{ dados.horario_vespertino or '' }}">
     </div>
 
     <div class="col-12 col-md-3">
-      <label class="form-label">Início das aulas</label>
+      <label class="form-label">InÃ­cio das aulas</label>
       <input name="inicio_aulas" class="form-control" placeholder="dd/mm/aaaa" value="{{ dados.inicio_aulas or '' }}">
     </div>
 
     <div class="col-12 col-md-6">
       <label class="form-label">Mensalidade</label>
       <select name="mensalidade" class="form-select">
-        <option value="">Selecione…</option>
-        <option value="170,00" {% if dados.mensalidade=='170,00' %}selected{% endif %}>Pré 1 a 5º ano — 170,00 R$</option>
-        <option value="180,00" {% if dados.mensalidade=='180,00' %}selected{% endif %}>6º a 7º ano — 180,00 R$</option>
-        <option value="190,00" {% if dados.mensalidade=='190,00' %}selected{% endif %}>8º a 9º ano — 190,00 R$</option>
+        <option value="">Selecioneâ€¦</option>
+        <option value="170,00" {% if dados.mensalidade=='170,00' %}selected{% endif %}>PrÃ© 1 a 5Âº ano â€” 170,00 R$</option>
+        <option value="180,00" {% if dados.mensalidade=='180,00' %}selected{% endif %}>6Âº a 7Âº ano â€” 180,00 R$</option>
+        <option value="190,00" {% if dados.mensalidade=='190,00' %}selected{% endif %}>8Âº a 9Âº ano â€” 190,00 R$</option>
       </select>
     </div>
 
@@ -224,7 +224,7 @@
 
     <div class="col-12 text-end mt-3">
       <a class="btn btn-outline-light" href="{{ url_for('alunos_listar') }}">Cancelar</a>
-      <button class="btn btn-light">Salvar alterações</button>
+      <button class="btn btn-light">Salvar alteraÃ§Ãµes</button>
     </div>
   </form>
 </div>

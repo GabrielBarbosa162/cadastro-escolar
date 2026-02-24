@@ -17,7 +17,7 @@
     <div class="col-md-3">
       <label class="form-label">Sexo</label>
       <select name="sexo" class="form-select">
-        <option value="">—</option>
+        <option value="">â€”</option>
         <option value="M" {{ 'selected' if aluno and aluno.sexo=='M' else '' }}>Masculino</option>
         <option value="F" {{ 'selected' if aluno and aluno.sexo=='F' else '' }}>Feminino</option>
       </select>
@@ -39,7 +39,7 @@
              value="{{ aluno.nome_pai if aluno else '' }}">
     </div>
     <div class="col-md-3">
-      <label class="form-label">Nome da mãe</label>
+      <label class="form-label">Nome da mÃ£e</label>
       <input type="text" name="nome_mae" class="form-control"
              value="{{ aluno.nome_mae if aluno else '' }}">
     </div>
@@ -47,7 +47,7 @@
     <div class="col-md-4">
       <label class="form-label">Escola</label>
       <select name="escola_id" class="form-select">
-        <option value="">—</option>
+        <option value="">â€”</option>
         {% for e in escolas %}
         <option value="{{ e.id }}" {% if aluno and aluno.escola_id==e.id %}selected{% endif %}>{{ e.nome }}</option>
         {% endfor %}
@@ -55,9 +55,9 @@
     </div>
 
     <div class="col-md-4">
-      <label class="form-label">Série</label>
+      <label class="form-label">SÃ©rie</label>
       <select name="serie_id" class="form-select">
-        <option value="">—</option>
+        <option value="">â€”</option>
         {% for s in series %}
         <option value="{{ s.id }}" {% if aluno and aluno.serie_id==s.id %}selected{% endif %}>{{ s.nome }}</option>
         {% endfor %}
@@ -65,9 +65,9 @@
     </div>
 
     <div class="col-md-4">
-      <label class="form-label">Horário</label>
+      <label class="form-label">HorÃ¡rio</label>
       <select name="horario" class="form-select">
-        <option value="">—</option>
+        <option value="">â€”</option>
         {% for h in horarios %}
         <option value="{{ h }}" {% if aluno and aluno.horario==h %}selected{% endif %}>{{ h }}</option>
         {% endfor %}

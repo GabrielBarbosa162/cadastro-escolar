@@ -24,12 +24,12 @@
         <input type="date" name="data_atividade" class="form-control" value="{{ ('' ) }}" />
       </div>
       <div class="col-12">
-        <label class="form-label">Conteúdo</label>
+        <label class="form-label">ConteÃºdo</label>
         <textarea name="conteudo" class="form-control" rows="2" required placeholder="O que o aluno estudou hoje..."></textarea>
       </div>
       <div class="col-12">
-        <label class="form-label">Observação</label>
-        <textarea name="observacao" class="form-control" rows="2" placeholder="Avaliação/comentários do professor..."></textarea>
+        <label class="form-label">ObservaÃ§Ã£o</label>
+        <textarea name="observacao" class="form-control" rows="2" placeholder="AvaliaÃ§Ã£o/comentÃ¡rios do professor..."></textarea>
       </div>
       <div class="col-12">
         <button class="btn btn-primary">Salvar atividade</button>
@@ -47,9 +47,9 @@
           <tr>
             <th style="width:25%">Aluno</th>
             <th style="width:15%">Data</th>
-            <th style="width:35%">Conteúdo</th>
+            <th style="width:35%">ConteÃºdo</th>
             <th style="width:10%">Obs</th>
-            <th style="width:15%" class="text-end">Ações</th>
+            <th style="width:15%" class="text-end">AÃ§Ãµes</th>
           </tr>
         </thead>
         <tbody>
@@ -66,7 +66,7 @@
                 <td>{{ at.data_atividade.strftime('%d/%m/%Y') }}</td>
                 <td class="text-wrap">{{ at.conteudo }}</td>
                 <td class="text-truncate" style="max-width: 160px;">
-                  {{ at.observacao or '—' }}
+                  {{ at.observacao or 'â€”' }}
                 </td>
                 <td class="text-end">
                   <div class="btn-group btn-group-sm">

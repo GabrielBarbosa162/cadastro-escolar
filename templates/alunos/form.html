@@ -16,11 +16,11 @@
 
 <form method="post" enctype="multipart/form-data" class="row g-4">
 
-  <!-- ===================== IDENTIFICAÇÃO ===================== -->
+  <!-- ===================== IDENTIFICAÃ‡ÃƒO ===================== -->
   <div class="col-12">
     <div class="card bg-dark text-light border-secondary shadow-sm">
       <div class="card-header border-secondary">
-        <h5 class="mb-0">Identificação</h5>
+        <h5 class="mb-0">IdentificaÃ§Ã£o</h5>
       </div>
       <div class="card-body row g-3">
         <div class="col-md-6">
@@ -65,11 +65,11 @@
     </div>
   </div>
 
-  <!-- ===================== FILIAÇÃO E CONTATOS ===================== -->
+  <!-- ===================== FILIAÃ‡ÃƒO E CONTATOS ===================== -->
   <div class="col-12">
     <div class="card bg-dark text-light border-secondary shadow-sm">
       <div class="card-header border-secondary">
-        <h5 class="mb-0">Filiação e Contatos</h5>
+        <h5 class="mb-0">FiliaÃ§Ã£o e Contatos</h5>
       </div>
       <div class="card-body row g-3">
         <div class="col-md-6">
@@ -79,19 +79,19 @@
         </div>
 
         <div class="col-md-6">
-          <label class="form-label">Nome da Mãe</label>
+          <label class="form-label">Nome da MÃ£e</label>
           <input type="text" name="nome_mae" class="form-control"
                  value="{{ aluno.nome_mae if aluno else '' }}">
         </div>
 
         <div class="col-md-6">
-          <label class="form-label">Endereço</label>
+          <label class="form-label">EndereÃ§o</label>
           <input type="text" name="endereco" class="form-control"
                  value="{{ aluno.endereco if aluno else '' }}">
         </div>
 
         <div class="col-md-2">
-          <label class="form-label">Número</label>
+          <label class="form-label">NÃºmero</label>
           <input type="text" name="numero" class="form-control"
                  value="{{ aluno.numero if aluno else '' }}">
         </div>
@@ -117,11 +117,11 @@
     </div>
   </div>
 
-  <!-- ===================== VÍNCULO ESCOLAR ===================== -->
+  <!-- ===================== VÃNCULO ESCOLAR ===================== -->
   <div class="col-12">
     <div class="card bg-dark text-light border-secondary shadow-sm">
       <div class="card-header border-secondary">
-        <h5 class="mb-0">Vínculo Escolar</h5>
+        <h5 class="mb-0">VÃ­nculo Escolar</h5>
       </div>
       <div class="card-body row g-3">
         <div class="col-md-4">
@@ -138,7 +138,7 @@
         </div>
 
         <div class="col-md-4">
-          <label class="form-label">Série</label>
+          <label class="form-label">SÃ©rie</label>
           <select name="serie_id" class="form-select">
             <option value="">Selecione</option>
             {% for s in series %}
@@ -151,29 +151,29 @@
         </div>
 
         <div class="col-md-4">
-          <label class="form-label">Horário (tabela)</label>
+          <label class="form-label">HorÃ¡rio (tabela)</label>
           <select name="horario_id" class="form-select">
             <option value="">Selecione</option>
             {% for h in horarios %}
               <option value="{{ h.id }}"
                 {% if aluno and aluno.horario_id == h.id %}selected{% endif %}>
-                {{ h.hora_inicio }} — {{ h.hora_fim }}
+                {{ h.hora_inicio }} â€” {{ h.hora_fim }}
               </option>
             {% endfor %}
           </select>
           <small class="text-muted d-block mt-1">
-            Selecione apenas pela tabela de horários cadastrada.
+            Selecione apenas pela tabela de horÃ¡rios cadastrada.
           </small>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ===================== CONDIÇÕES E OBSERVAÇÕES ===================== -->
+  <!-- ===================== CONDIÃ‡Ã•ES E OBSERVAÃ‡Ã•ES ===================== -->
   <div class="col-12">
     <div class="card bg-dark text-light border-secondary shadow-sm">
       <div class="card-header border-secondary">
-        <h5 class="mb-0">Condições e Observações</h5>
+        <h5 class="mb-0">CondiÃ§Ãµes e ObservaÃ§Ãµes</h5>
       </div>
       <div class="card-body row g-3">
 
@@ -188,7 +188,7 @@
             <input type="radio" class="btn-check" name="tem_dificuldade"
                    id="dif_nao" value=""
                    {% if aluno and not aluno.tem_dificuldade %}checked{% endif %}>
-            <label class="btn btn-outline-light btn-sm" for="dif_nao">Não</label>
+            <label class="btn btn-outline-light btn-sm" for="dif_nao">NÃ£o</label>
           </div>
         </div>
 
@@ -209,7 +209,7 @@
             <input type="radio" class="btn-check" name="toma_medicamento"
                    id="med_nao" value=""
                    {% if aluno and not aluno.toma_medicamento %}checked{% endif %}>
-            <label class="btn btn-outline-light btn-sm" for="med_nao">Não</label>
+            <label class="btn btn-outline-light btn-sm" for="med_nao">NÃ£o</label>
           </div>
         </div>
 
@@ -220,7 +220,7 @@
         </div>
 
         <div class="col-md-3">
-          <label class="form-label">Início das aulas</label>
+          <label class="form-label">InÃ­cio das aulas</label>
           <input type="date" name="inicio_aulas" class="form-control"
                  value="{{ aluno.inicio_aulas.strftime('%Y-%m-%d') if aluno and aluno.inicio_aulas else '' }}">
         </div>
@@ -232,10 +232,10 @@
 
           <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="mensalidade_opcao"
-                   id="mensal_pre" value="Pré 1 a 5 ano - 170,00R$"
-                   {% if 'Pré 1' in mensal or '170,00' in mensal %}checked{% endif %}>
+                   id="mensal_pre" value="PrÃ© 1 a 5 ano - 170,00R$"
+                   {% if 'PrÃ© 1' in mensal or '170,00' in mensal %}checked{% endif %}>
             <label class="form-check-label" for="mensal_pre">
-              Pré 1 á 5 ano — R$ 170,00
+              PrÃ© 1 Ã¡ 5 ano â€” R$ 170,00
             </label>
           </div>
 
@@ -244,7 +244,7 @@
                    id="mensal_6a7" value="6 ano a 7 ano - 180,00R$"
                    {% if '6 ano' in mensal or '180,00' in mensal %}checked{% endif %}>
             <label class="form-check-label" for="mensal_6a7">
-              6º ano á 7º ano — R$ 180,00
+              6Âº ano Ã¡ 7Âº ano â€” R$ 180,00
             </label>
           </div>
 
@@ -253,12 +253,12 @@
                    id="mensal_8a9" value="8 ano a 9 ano - 190,00R$"
                    {% if '8 ano' in mensal or '190,00' in mensal %}checked{% endif %}>
             <label class="form-check-label" for="mensal_8a9">
-              8º ano á 9º ano — R$ 190,00
+              8Âº ano Ã¡ 9Âº ano â€” R$ 190,00
             </label>
           </div>
 
           <small class="text-muted d-block mt-1">
-            Selecione apenas uma opção.
+            Selecione apenas uma opÃ§Ã£o.
           </small>
         </div>
       </div>
@@ -289,7 +289,7 @@
     </div>
   </div>
 
-  <!-- ===================== BOTÕES ===================== -->
+  <!-- ===================== BOTÃ•ES ===================== -->
   <div class="col-12 d-flex justify-content-start gap-2 mt-2 mb-4">
     <button type="submit" class="btn btn-success">
       Salvar

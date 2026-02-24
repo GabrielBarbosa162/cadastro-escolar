@@ -3,8 +3,8 @@
 
 <div class="page-title-row mb-3">
   <div>
-    <h2>Usuários</h2>
-    <div class="subtitle">Gerencie acessos por perfil e vínculo com alunos.</div>
+    <h2>UsuÃ¡rios</h2>
+    <div class="subtitle">Gerencie acessos por perfil e vÃ­nculo com alunos.</div>
   </div>
 
   <div class="d-flex align-items-center gap-2">
@@ -14,7 +14,7 @@
             data-bs-target="#formNovoUsuario"
             aria-expanded="false"
             aria-controls="formNovoUsuario">
-      Novo Usuário
+      Novo UsuÃ¡rio
     </button>
   </div>
 </div>
@@ -22,9 +22,9 @@
 <div class="collapse mb-4" id="formNovoUsuario">
   <section class="card bg-dark border-secondary">
     <div class="card-body">
-      <h5 class="card-title mb-3">Cadastrar novo usuário</h5>
+      <h5 class="card-title mb-3">Cadastrar novo usuÃ¡rio</h5>
       <p class="text-muted small mb-3">
-        Perfis <strong>Responsável</strong> e <strong>Aluno</strong> exigem seleção de um aluno vinculado.
+        Perfis <strong>ResponsÃ¡vel</strong> e <strong>Aluno</strong> exigem seleÃ§Ã£o de um aluno vinculado.
       </p>
 
       <form method="post" action="{{ url_for('usuarios_novo') }}" class="row g-3">
@@ -48,7 +48,7 @@
           <select name="papel" class="form-select" required>
             <option value="DIRETORIA">Diretoria</option>
             <option value="PROFESSOR">Professor</option>
-            <option value="RESPONSAVEL">Responsável</option>
+            <option value="RESPONSAVEL">ResponsÃ¡vel</option>
             <option value="ALUNO">Aluno</option>
           </select>
         </div>
@@ -62,12 +62,12 @@
             {% endfor %}
           </select>
           <div class="form-text">
-            Obrigatório para perfis <strong>Responsável</strong> e <strong>Aluno</strong>.
+            ObrigatÃ³rio para perfis <strong>ResponsÃ¡vel</strong> e <strong>Aluno</strong>.
           </div>
         </div>
 
         <div class="col-12 text-end">
-          <button type="submit" class="btn btn-success">Salvar Usuário</button>
+          <button type="submit" class="btn btn-success">Salvar UsuÃ¡rio</button>
         </div>
       </form>
     </div>
@@ -76,7 +76,7 @@
 
 <section class="card bg-dark border-secondary">
   <div class="card-body">
-    <h5 class="card-title mb-3">Usuários cadastrados</h5>
+    <h5 class="card-title mb-3">UsuÃ¡rios cadastrados</h5>
 
     {% if items %}
       <div class="table-responsive">
@@ -87,7 +87,7 @@
               <th>Perfil</th>
               <th>Aluno vinculado</th>
               <th>Ativo</th>
-              <th style="width: 270px;">Ações</th>
+              <th style="width: 270px;">AÃ§Ãµes</th>
             </tr>
           </thead>
           <tbody>
@@ -96,7 +96,7 @@
               <td>{{ u.email }}</td>
               <td>{{ u.papel_upper() }}</td>
               <td>{{ u.aluno.nome if u.aluno else '-' }}</td>
-              <td>{{ 'Sim' if u.ativo else 'Não' }}</td>
+              <td>{{ 'Sim' if u.ativo else 'NÃ£o' }}</td>
               <td>
                 <form method="post"
                       action="{{ url_for('usuarios_editar', id=u.id) }}"
@@ -106,7 +106,7 @@
                     <select name="papel" class="form-select form-select-sm">
                       <option value="DIRETORIA" {{ 'selected' if u.papel_upper()=='DIRETORIA' else '' }}>Diretoria</option>
                       <option value="PROFESSOR" {{ 'selected' if u.papel_upper()=='PROFESSOR' else '' }}>Professor</option>
-                      <option value="RESPONSAVEL" {{ 'selected' if u.papel_upper()=='RESPONSAVEL' else '' }}>Responsável</option>
+                      <option value="RESPONSAVEL" {{ 'selected' if u.papel_upper()=='RESPONSAVEL' else '' }}>ResponsÃ¡vel</option>
                       <option value="ALUNO" {{ 'selected' if u.papel_upper()=='ALUNO' else '' }}>Aluno</option>
                     </select>
                   </div>
@@ -142,7 +142,7 @@
                 <form method="post"
                       action="{{ url_for('usuarios_excluir', id=u.id) }}"
                       class="mt-1"
-                      onsubmit="return confirm('Confirma excluir este usuário?');">
+                      onsubmit="return confirm('Confirma excluir este usuÃ¡rio?');">
                   <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
                 </form>
               </td>
@@ -152,7 +152,7 @@
         </table>
       </div>
     {% else %}
-      <p class="text-muted mb-0">Nenhum usuário cadastrado.</p>
+      <p class="text-muted mb-0">Nenhum usuÃ¡rio cadastrado.</p>
     {% endif %}
   </div>
 </section>

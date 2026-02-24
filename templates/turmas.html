@@ -15,16 +15,16 @@
           <div class="col-12">
             <label class="form-label">Escola</label>
             <select class="form-select" name="escola_id" required>
-              <option value="">— Selecione —</option>
+              <option value="">â€” Selecione â€”</option>
               {% for e in escolas %}
                 <option value="{{ e.id }}">{{ e.nome }}</option>
               {% endfor %}
             </select>
           </div>
           <div class="col-12">
-            <label class="form-label">Série</label>
+            <label class="form-label">SÃ©rie</label>
             <select class="form-select" name="serie_id" required>
-              <option value="">— Selecione —</option>
+              <option value="">â€” Selecione â€”</option>
               {% for s in series %}
                 <option value="{{ s.id }}">{{ s.nome }}</option>
               {% endfor %}
@@ -36,7 +36,7 @@
           </div>
           <div class="col-4">
             <label class="form-label">Turno</label>
-            <input type="text" class="form-control" name="turno" placeholder="Manhã/Tarde/Noite">
+            <input type="text" class="form-control" name="turno" placeholder="ManhÃ£/Tarde/Noite">
           </div>
           <div class="col-12 d-flex gap-2">
             <button class="btn btn-primary"><i class="bi bi-plus-lg"></i> Cadastrar</button>
@@ -58,10 +58,10 @@
             <thead class="table-light">
               <tr>
                 <th>Escola</th>
-                <th>Série</th>
+                <th>SÃ©rie</th>
                 <th>Nome</th>
                 <th>Turno</th>
-                <th class="text-end">Ações</th>
+                <th class="text-end">AÃ§Ãµes</th>
               </tr>
             </thead>
             <tbody>
@@ -69,8 +69,8 @@
                 <tr>
                   <td>{{ t.escola.nome }}</td>
                   <td>{{ t.serie.nome }}</td>
-                  <td>{{ t.nome or '—' }}</td>
-                  <td>{{ t.turno or '—' }}</td>
+                  <td>{{ t.nome or 'â€”' }}</td>
+                  <td>{{ t.turno or 'â€”' }}</td>
                   <td class="text-end">
                     <form method="post" action="{{ url_for('excluir_turma', turma_id=t.id) }}"
                           onsubmit="return confirm('Excluir esta turma?');" class="d-inline">

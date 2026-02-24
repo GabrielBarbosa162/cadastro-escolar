@@ -12,26 +12,26 @@
     <div class="col-12 col-lg-6">
       <label class="form-label">Escola *</label>
       <select name="escola_id" class="form-select" required>
-        <option value="">— Selecione —</option>
+        <option value="">â€” Selecione â€”</option>
         {% for e in escolas %}<option value="{{ e.id }}">{{ e.nome }}</option>{% endfor %}
       </select>
     </div>
     <div class="col-12 col-lg-6">
-      <label class="form-label">Série *</label>
+      <label class="form-label">SÃ©rie *</label>
       <select name="serie_id" class="form-select" required>
-        <option value="">— Selecione —</option>
+        <option value="">â€” Selecione â€”</option>
         {% for s in series %}<option value="{{ s.id }}">{{ s.nome }}</option>{% endfor %}
       </select>
     </div>
     <div class="col-12 col-lg-6">
       <label class="form-label">Nome da turma</label>
-      <input name="nome" class="form-control" placeholder="Ex.: Turma A, 5ºB, Infantil II...">
+      <input name="nome" class="form-control" placeholder="Ex.: Turma A, 5ÂºB, Infantil II...">
     </div>
     <div class="col-12 col-lg-6">
       <label class="form-label">Turno</label>
       <select name="turno" class="form-select">
-        <option value="">—</option>
-        <option>Manhã</option><option>Tarde</option><option>Noite</option><option>Integral</option>
+        <option value="">â€”</option>
+        <option>ManhÃ£</option><option>Tarde</option><option>Noite</option><option>Integral</option>
       </select>
     </div>
     <div class="col-12 d-flex gap-2">

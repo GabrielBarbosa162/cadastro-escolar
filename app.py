@@ -1,16 +1,8 @@
-﻿import os
-import requests
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask import request, render_template, redirect, url_for, flash, session
-from email.mime.text import MIMEText  # se já usa em outros lugares pode manter
+# app.py
+import os
 import random
-import smtplib
-from email.mime.text import MIMEText
+import secrets
 from datetime import datetime, date
-import subprocess
-import sys
-import shlex
-from utils.recovery_codes import gerar_3_codigos_recuperacao, salvar_codigos_no_usuario, consumir_codigo
 
 from flask import (
     Flask,
@@ -33,15 +25,18 @@ from flask_login import (
 )
 from sqlalchemy import text as sa_text
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+
 
 # -------------------------------------------------------------------
-# CONFIGURAÃ‡ÃƒO BÃSICA
+# CONFIGURAÇÃO BÁSICA
 # -------------------------------------------------------------------
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DB_PATH = os.path.join(BASE_DIR, "alunos.db")
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "dev-secret"
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret")
+
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -50,14 +45,12 @@ UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-app.config["SMTP_SERVER"] = "smtp.gmail.com"
-app.config["SMTP_PORT"] = 465
-app.config["SMTP_USER"] = "amos.carvalho@gmail.com"
-app.config["SMTP_PASS"] = "zhswmywmylvkrcnw"
-app.config["SMTP_FROM"] = "amos.carvalho@gmail.com"
-
-
-
+# SMTP (opcional) - NÃO coloque senha fixa no código.
+app.config["SMTP_SERVER"] = os.getenv("SMTP_SERVER", "")
+app.config["SMTP_PORT"] = int(os.getenv("SMTP_PORT", "465") or "465")
+app.config["SMTP_USER"] = os.getenv("SMTP_USER", "")
+app.config["SMTP_PASS"] = os.getenv("SMTP_PASS", "")
+app.config["SMTP_FROM"] = os.getenv("SMTP_FROM", "") or app.config["SMTP_USER"]
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -69,7 +62,6 @@ login_manager.login_view = "login"
 # -------------------------------------------------------------------
 class HoraStrWrapper:
     """Wrapper simples para permitir .strftime('%H:%M') em strings HH:MM."""
-
     def __init__(self, text):
         self.text = text or ""
 
@@ -77,10 +69,17 @@ class HoraStrWrapper:
         return self.text
 
 
+def _is_hhmm(val: str) -> bool:
+    if not val or len(val) != 5 or val[2] != ":":
+        return False
+    hh, mm = val.split(":")
+    return hh.isdigit() and mm.isdigit() and 0 <= int(hh) <= 23 and 0 <= int(mm) <= 59
+
+
 def salvar_foto(file_storage, foto_atual=None):
     """
     Salva o arquivo enviado e devolve o caminho relativo "uploads/arquivo.jpg".
-    Se nÃ£o houver arquivo novo, retorna foto_atual (mantÃ©m a existente).
+    Se não houver arquivo novo, retorna foto_atual (mantém a existente).
     """
     if not file_storage:
         return foto_atual
@@ -94,123 +93,53 @@ def salvar_foto(file_storage, foto_atual=None):
     return f"uploads/{filename}"
 
 
-def enviar_codigo_email(email, codigo) -> bool:
-    from email.mime.text import MIMEText
-    import smtplib
-
-    msg = MIMEText(f"Seu código para redefinição de senha é: {codigo}")
-    msg["Subject"] = "Recuperação de senha - Sistema Escolar"
-    msg["From"] = app.config["SMTP_FROM"]
-    msg["To"] = email
-
-    try:
-        servidor = smtplib.SMTP_SSL(
-            app.config["SMTP_SERVER"],
-            app.config["SMTP_PORT"],
-            timeout=20
-        )
-        servidor.login(
-            app.config["SMTP_USER"],
-            app.config["SMTP_PASS"]
-        )
-        servidor.sendmail(
-            app.config["SMTP_USER"],
-            [email],
-            msg.as_string()
-        )
-        servidor.quit()
-        return True
-    except Exception as e:
-        print("Erro ao enviar e-mail:", e)
-        return False
-
-
-
-def enviar_email_generico(destinatarios, assunto, mensagem) -> bool:
+def _senha_ok(valor_salvo: str, senha_digitada: str) -> bool:
     """
-    Envia e-mail genérico via Resend (API HTTP).
-    destinatarios pode ser string com ; ou , ou lista.
+    Compatível com:
+    - senha em texto (sistema antigo)
+    - senha em hash (sistema novo)
     """
-    api_key = os.getenv("RESEND_API_KEY", "").strip()
-    remetente = os.getenv("RESEND_FROM", "Sistema Escolar <onboarding@resend.dev>").strip()
-
-    if not api_key:
-        print("RESEND: faltando RESEND_API_KEY nas variáveis de ambiente.")
+    if not valor_salvo:
         return False
+    if valor_salvo.startswith("pbkdf2:") or valor_salvo.startswith("scrypt:"):
+        return check_password_hash(valor_salvo, senha_digitada)
+    # fallback legado
+    return valor_salvo == senha_digitada
 
-    if isinstance(destinatarios, str):
-        d = destinatarios.replace(";", ",")
-        lista = [x.strip() for x in d.split(",") if x.strip()]
-    else:
-        lista = [str(x).strip() for x in destinatarios if str(x).strip()]
 
-    if not lista:
+def _set_senha(user, senha_plana: str):
+    """Sempre grava hash no banco (novo padrão)."""
+    user.senha_hash = generate_password_hash(senha_plana)
+
+
+# -------------------------------------------------------------------
+# CÓDIGOS DE RECUPERAÇÃO (3) - 100% grátis (sem e-mail/whatsapp)
+# -------------------------------------------------------------------
+def gerar_3_codigos_recuperacao():
+    # 3 códigos curtos e fáceis de salvar
+    # token_urlsafe(8) dá um texto ~11-12 chars
+    return [secrets.token_urlsafe(8) for _ in range(3)]
+
+
+def salvar_codigos_no_usuario(user, codes):
+    # salva como hash
+    user.recovery_code1 = generate_password_hash(codes[0])
+    user.recovery_code2 = generate_password_hash(codes[1])
+    user.recovery_code3 = generate_password_hash(codes[2])
+    user.recovery_codes_shown = True
+
+
+def consumir_codigo(user, codigo_digitado: str) -> bool:
+    if not codigo_digitado:
         return False
+    codigo_digitado = codigo_digitado.strip()
 
-    try:
-        r = requests.post(
-            "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "from": remetente,
-                "to": lista,
-                "subject": assunto,
-                "text": mensagem,
-            },
-            timeout=20,
-        )
-
-        if r.status_code in (200, 201):
+    for campo in ("recovery_code1", "recovery_code2", "recovery_code3"):
+        hash_salvo = getattr(user, campo)
+        if hash_salvo and check_password_hash(hash_salvo, codigo_digitado):
+            setattr(user, campo, None)  # consome (invalida)
             return True
-
-        print("Erro Resend:", r.status_code, r.text)
-        return False
-
-    except Exception as e:
-        print("Erro ao enviar e-mail (Resend):", e)
-        return False
-
-
-
-def enviar_codigo_whatsapp(numero, codigo) -> bool:
-    """
-    Usa o script externo enviar_whatsapp.py para automatizar o WhatsApp Web
-    e enviar a mensagem em background (headless, depois do primeiro login).
-
-    - numero: string com o nÃºmero (pode ter +, espaÃ§os, etc. -> serÃ¡ limpo).
-    - codigo: cÃ³digo numÃ©rico a ser enviado.
-
-    Retorna True se o script terminar com exit code 0, False caso contrÃ¡rio.
-    """
-    numero_limpo = "".join(filter(str.isdigit, numero))
-    mensagem = f"Seu cÃ³digo de recuperaÃ§Ã£o Ã©: {codigo}"
-
-    # Monta comando: python enviar_whatsapp.py NUMERO "mensagem"
-    cmd = f'{sys.executable} enviar_whatsapp.py {numero_limpo} "{mensagem}"'
-
-    try:
-        resultado = subprocess.run(
-            shlex.split(cmd),
-            capture_output=True,
-            # text=True,
-            timeout=180,
-        )
-        print("STDOUT enviar_whatsapp:", resultado.stdout)
-        print("STDERR enviar_whatsapp:", resultado.stderr)
-        return resultado.returncode == 0
-    except Exception as e:
-        print("Erro ao chamar enviar_whatsapp.py:", e)
-        return False
-
-
-def _is_hhmm(val: str) -> bool:
-    if not val or len(val) != 5 or val[2] != ":":
-        return False
-    hh, mm = val.split(":")
-    return hh.isdigit() and mm.isdigit() and 0 <= int(hh) <= 23 and 0 <= int(mm) <= 59
+    return False
 
 
 # -------------------------------------------------------------------
@@ -218,35 +147,26 @@ def _is_hhmm(val: str) -> bool:
 # -------------------------------------------------------------------
 class Usuario(db.Model, UserMixin):
     __tablename__ = "usuario"
+
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
+
+    # ATENÇÃO: no seu sistema antigo isso pode estar em texto.
+    # Mantemos compatibilidade no login, mas daqui pra frente gravamos hash.
     senha_hash = db.Column(db.String(255), nullable=False)
+
     papel = db.Column(db.String(30), nullable=False, default="ALUNO")
     ativo = db.Column(db.Boolean, nullable=False, default=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-recovery_question = db.Column(db.String(255), nullable=True)
-recovery_answer_hash = db.Column(db.String(255), nullable=True)
-
     aluno_id = db.Column(db.Integer, db.ForeignKey("aluno.id"), nullable=True)
     aluno = db.relationship("Aluno", lazy="joined")
 
-recovery_code1 = db.Column(db.String(255), nullable=True)
-recovery_code2 = db.Column(db.String(255), nullable=True)
-recovery_code3 = db.Column(db.String(255), nullable=True)
-recovery_codes_shown = db.Column(db.Boolean, default=False)
-
-codes = gerar_3_codigos_recuperacao()
-salvar_codigos_no_usuario(user, codes)
-
-db.session.add(user)
-db.session.commit()
-
-# Guarda os códigos na sessão para mostrar UMA vez
-session["new_recovery_codes"] = codes
-session["user_id_show_codes"] = user.id
-
-return redirect("/recovery-codes")
+    # --- RECOVERY CODES ---
+    recovery_code1 = db.Column(db.String(255), nullable=True)
+    recovery_code2 = db.Column(db.String(255), nullable=True)
+    recovery_code3 = db.Column(db.String(255), nullable=True)
+    recovery_codes_shown = db.Column(db.Boolean, nullable=False, default=False)
 
     def papel_upper(self):
         return (self.papel or "").upper()
@@ -274,6 +194,8 @@ class Serie(db.Model):
     __tablename__ = "serie"
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(120), nullable=False, unique=True)
+
+
 # -----------------------------
 # PROFESSOR (cadastro separado)
 # -----------------------------
@@ -283,11 +205,11 @@ professor_serie = db.Table(
     db.Column("serie_id", db.Integer, db.ForeignKey("serie.id"), primary_key=True),
 )
 
+
 class Professor(db.Model):
     __tablename__ = "professor"
     id = db.Column(db.Integer, primary_key=True)
 
-    # Email precisa existir em Usuario (vÃ­nculo)
     usuario_id = db.Column(db.Integer, db.ForeignKey("usuario.id"), nullable=False, unique=True)
     usuario = db.relationship("Usuario", lazy="joined")
 
@@ -304,7 +226,7 @@ class Horario(db.Model):
     __tablename__ = "horario"
     id = db.Column(db.Integer, primary_key=True)
     hora_inicio = db.Column(db.String(5), nullable=False)  # HH:MM
-    hora_fim = db.Column(db.String(5), nullable=False)      # HH:MM
+    hora_fim = db.Column(db.String(5), nullable=False)     # HH:MM
 
 
 class Aluno(db.Model):
@@ -358,7 +280,7 @@ class Atividade(db.Model):
 
 
 # -------------------------------------------------------------------
-# LOGIN / AUTENTICAÃ‡ÃƒO
+# LOGIN / AUTENTICAÇÃO
 # -------------------------------------------------------------------
 @login_manager.user_loader
 def load_user(uid):
@@ -371,155 +293,13 @@ def login():
         email = request.form.get("email", "").strip().lower()
         senha = request.form.get("senha", "")
         user = Usuario.query.filter_by(email=email).first()
-        if user and user.senha_hash == senha and user.ativo:
+
+        if user and user.ativo and _senha_ok(user.senha_hash, senha):
             login_user(user)
             return redirect(url_for("index"))
-        flash("Credenciais invÃ¡lidas ou usuÃ¡rio inativo.", "danger")
+
+        flash("Credenciais inválidas ou usuário inativo.", "danger")
     return render_template("auth/login.html")
-
-
-# -------------------------------------------------------------------
-# RECUPERAÇÃO DE SENHA
-# -------------------------------------------------------------------
-# /esqueci: pede e-mail + escolha E-MAIL ou WHATSAPP
-@app.route("/esqueci", methods=["GET", "POST"])
-def esqueci():
-    if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
-        metodo = request.form.get("metodo", "email")  # 'email' ou 'whatsapp'
-
-        # valida e-mail
-        if not email:
-            flash("Informe um e-mail.", "warning")
-            return redirect(url_for("esqueci"))
-
-        user = Usuario.query.filter_by(email=email).first()
-        if not user:
-            flash("E-mail não encontrado no sistema.", "danger")
-            return redirect(url_for("esqueci"))
-
-        # guarda o e-mail para as próximas etapas
-        session["recuperacao_email"] = email
-
-        if metodo == "email":
-            # gera código e tenta enviar por E-MAIL
-            codigo = random.randint(100000, 999999)
-            session["recuperacao_codigo"] = str(codigo)
-            session["recuperacao_modo"] = "email"
-
-            enviado = enviar_codigo_email(email, str(codigo))
-
-            if enviado:
-                flash("Enviamos um código para o seu e-mail.", "success")
-            else:
-                # Fallback: mostra o código na tela (não no terminal)
-                flash(
-                    f"(Modo teste) Não foi possível enviar o e-mail. "
-                    f"Use este código para continuar: {codigo}",
-                    "warning",
-                )
-
-            return redirect(url_for("verificar_codigo"))
-
-        elif metodo == "whatsapp":
-            # Vai para a tela que pede APENAS o número do WhatsApp
-            session["recuperacao_modo"] = "whatsapp"
-            return redirect(url_for("esqueci_whatsapp"))
-
-        else:
-            flash("Método inválido.", "danger")
-            return redirect(url_for("esqueci"))
-
-    return render_template("auth/esqueci.html")
-
-
-
-# /esqueci/whatsapp: tela com APENAS o campo de nÃºmero WhatsApp
-@app.route("/esqueci/whatsapp", methods=["GET", "POST"])
-def esqueci_whatsapp():
-    email = session.get("recuperacao_email")
-    if not email:
-        flash("SessÃ£o expirada. Recomece o processo de recuperaÃ§Ã£o.", "warning")
-        return redirect(url_for("esqueci"))
-
-    if request.method == "POST":
-        numero = request.form.get("whatsapp", "").strip()
-        if not numero:
-            flash("Informe o nÃºmero de WhatsApp.", "danger")
-            return redirect(url_for("esqueci_whatsapp"))
-
-        # Gera cÃ³digo e tenta enviar pelo WhatsApp
-        codigo = random.randint(100000, 999999)
-        session["recuperacao_codigo"] = str(codigo)
-        session["recuperacao_modo"] = "whatsapp"
-
-        enviado = enviar_codigo_whatsapp(numero, codigo)
-
-        if enviado:
-            flash("Um cÃ³digo foi enviado para o WhatsApp informado.", "info")
-        else:
-            # Fallback: mostra o cÃ³digo na tela (nÃ£o no terminal)
-            flash(
-                f"(Modo teste) NÃ£o foi possÃ­vel enviar pelo WhatsApp. "
-                f"Use este cÃ³digo para continuar: {codigo}",
-                "warning",
-            )
-
-        return redirect(url_for("verificar_codigo"))
-
-    return render_template("auth/esqueci_whatsapp.html")
-
-
-@app.route("/verificar-codigo", methods=["GET", "POST"])
-def verificar_codigo():
-    if request.method == "POST":
-        codigo_digitado = request.form.get("codigo", "").strip()
-        codigo_correto = session.get("recuperacao_codigo")
-
-        if codigo_digitado == codigo_correto and codigo_correto:
-            return redirect(url_for("redefinir_senha"))
-
-        flash("CÃ³digo incorreto.", "danger")
-        return redirect(url_for("verificar_codigo"))
-
-    return render_template("auth/verificar_codigo.html")
-
-
-@app.route("/redefinir-senha", methods=["GET", "POST"])
-def redefinir_senha():
-    email = session.get("recuperacao_email")
-    if not email:
-        flash("Processo de recuperaÃ§Ã£o expirado. Tente novamente.", "warning")
-        return redirect(url_for("esqueci"))
-
-    if request.method == "POST":
-        senha1 = request.form.get("senha1")
-        senha2 = request.form.get("senha2")
-
-        if senha1 != senha2:
-            flash("As senhas nÃ£o coincidem.", "danger")
-            return redirect(url_for("redefinir_senha"))
-
-        if len(senha1) < 8 or not any(c.isdigit() for c in senha1):
-            flash("Senha deve ter no mÃ­nimo 8 caracteres e conter nÃºmeros.", "danger")
-            return redirect(url_for("redefinir_senha"))
-
-        user = Usuario.query.filter_by(email=email).first()
-        if not user:
-            flash("UsuÃ¡rio nÃ£o encontrado.", "danger")
-            return redirect(url_for("login"))
-
-        user.senha_hash = senha1
-        db.session.commit()
-
-        session.pop("recuperacao_email", None)
-        session.pop("recuperacao_codigo", None)
-        session.pop("recuperacao_modo", None)
-
-        flash("Senha redefinida com sucesso! FaÃ§a login.", "success")
-        return redirect(url_for("login"))
-
-    return render_template("auth/redefinir_senha.html")
 
 
 @app.route("/logout", methods=["POST"])
@@ -530,7 +310,102 @@ def logout():
 
 
 # -------------------------------------------------------------------
-# MIGRAÃ‡ÃƒO LEVE / SCHEMA
+# RECUPERAÇÃO DE SENHA (100% grátis via códigos)
+# -------------------------------------------------------------------
+@app.route("/esqueci/codigo", methods=["GET", "POST"])
+def esqueci_codigo():
+    """
+    Fluxo:
+    1) usuário informa email + 1 recovery code
+    2) se OK, consome o código e libera redefinir senha
+    """
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        codigo = request.form.get("codigo", "").strip()
+
+        if not email or not codigo:
+            flash("Informe e-mail e um código de recuperação.", "warning")
+            return redirect(url_for("esqueci_codigo"))
+
+        user = Usuario.query.filter_by(email=email).first()
+        if not user:
+            flash("E-mail não encontrado.", "danger")
+            return redirect(url_for("esqueci_codigo"))
+
+        ok = consumir_codigo(user, codigo)
+        if not ok:
+            flash("Código inválido ou já usado.", "danger")
+            return redirect(url_for("esqueci_codigo"))
+
+        db.session.commit()
+
+        session["recuperacao_email"] = email
+        session["recuperacao_modo"] = "recovery_code"
+        flash("Código aceito. Agora defina sua nova senha.", "success")
+        return redirect(url_for("redefinir_senha"))
+
+    return render_template("auth/esqueci_codigo.html")
+
+
+@app.route("/redefinir-senha", methods=["GET", "POST"])
+def redefinir_senha():
+    email = session.get("recuperacao_email")
+    if not email:
+        flash("Processo de recuperação expirado. Tente novamente.", "warning")
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        senha1 = request.form.get("senha1", "")
+        senha2 = request.form.get("senha2", "")
+
+        if senha1 != senha2:
+            flash("As senhas não coincidem.", "danger")
+            return redirect(url_for("redefinir_senha"))
+
+        if len(senha1) < 8 or not any(c.isdigit() for c in senha1):
+            flash("Senha deve ter no mínimo 8 caracteres e conter números.", "danger")
+            return redirect(url_for("redefinir_senha"))
+
+        user = Usuario.query.filter_by(email=email).first()
+        if not user:
+            flash("Usuário não encontrado.", "danger")
+            return redirect(url_for("login"))
+
+        _set_senha(user, senha1)
+        db.session.commit()
+
+        session.pop("recuperacao_email", None)
+        session.pop("recuperacao_modo", None)
+
+        flash("Senha redefinida com sucesso! Faça login.", "success")
+        return redirect(url_for("login"))
+
+    return render_template("auth/redefinir_senha.html")
+
+
+@app.route("/recovery-codes", methods=["GET"])
+@login_required
+def recovery_codes():
+    """
+    Mostra os 3 códigos UMA ÚNICA VEZ (vêm via session após criação do usuário).
+    """
+    codes = session.get("new_recovery_codes")
+    uid = session.get("user_id_show_codes")
+
+    if not codes or not uid:
+        flash("Nenhum código novo para mostrar.", "warning")
+        return redirect(url_for("index"))
+
+    # permite mostrar para a diretoria (quando cria outro usuário) também
+    # mas só se ela acabou de criar e veio com session preenchida.
+    session.pop("new_recovery_codes", None)
+    session.pop("user_id_show_codes", None)
+
+    return render_template("auth/recovery_codes.html", codes=codes)
+
+
+# -------------------------------------------------------------------
+# MIGRAÇÃO LEVE / SCHEMA (SQLite)
 # -------------------------------------------------------------------
 def _add_col_if_missing(table: str, column: str, ddl: str):
     info = db.session.execute(sa_text(f"PRAGMA table_info({table})")).mappings().all()
@@ -541,6 +416,7 @@ def _add_col_if_missing(table: str, column: str, ddl: str):
 
 
 def ensure_schema():
+    # Atividade
     try:
         _add_col_if_missing("atividade", "data", "DATE")
         _add_col_if_missing("atividade", "professor", "TEXT")
@@ -549,25 +425,32 @@ def ensure_schema():
     except Exception:
         db.session.rollback()
 
+    # Horário
     try:
         _add_col_if_missing("horario", "hora_inicio", "TEXT")
         _add_col_if_missing("horario", "hora_fim", "TEXT")
     except Exception:
         db.session.rollback()
 
+    # Escola
     try:
         _add_col_if_missing("escola", "nome", "TEXT")
     except Exception:
         db.session.rollback()
 
+    # Usuário
     try:
         _add_col_if_missing("usuario", "aluno_id", "INTEGER")
+        _add_col_if_missing("usuario", "recovery_code1", "TEXT")
+        _add_col_if_missing("usuario", "recovery_code2", "TEXT")
+        _add_col_if_missing("usuario", "recovery_code3", "TEXT")
+        _add_col_if_missing("usuario", "recovery_codes_shown", "BOOLEAN")
     except Exception:
         db.session.rollback()
 
 
 # -------------------------------------------------------------------
-# PERMISSÃ•ES
+# PERMISSÕES
 # -------------------------------------------------------------------
 def can(permission: str) -> bool:
     if not current_user.is_authenticated:
@@ -578,23 +461,14 @@ def can(permission: str) -> bool:
     if role == "DIRETORIA":
         return True
 
-    if permission == "ver_usuarios":
-        return False
-
-    if permission == "gerenciar_usuarios":
+    if permission in ("ver_usuarios", "gerenciar_usuarios", "alunos_crud", "atividades_editar"):
         return False
 
     if permission == "gerenciar_estrutura":
         return role == "DIRETORIA"
 
-    if permission == "alunos_crud":
-        return role == "DIRETORIA"
-
     if permission == "atividades_criar":
         return role in ("DIRETORIA", "PROFESSOR")
-
-    if permission == "atividades_editar":
-        return role == "DIRETORIA"
 
     if permission == "ver_tudo":
         return role in ("DIRETORIA", "PROFESSOR")
@@ -620,13 +494,13 @@ def index():
 
 
 # -------------------------------------------------------------------
-# USUÃRIOS
+# USUÁRIOS
 # -------------------------------------------------------------------
 @app.route("/usuarios/", methods=["GET"])
 @login_required
 def usuarios_list():
     if not current_user.is_diretoria():
-        flash("Acesso restrito Ã  DIRETORIA.", "warning")
+        flash("Acesso restrito à DIRETORIA.", "warning")
         return redirect(url_for("index"))
 
     items = Usuario.query.order_by(Usuario.email.asc()).all()
@@ -638,7 +512,7 @@ def usuarios_list():
 @login_required
 def usuarios_novo():
     if not current_user.is_diretoria():
-        flash("Acesso restrito Ã  DIRETORIA.", "warning")
+        flash("Acesso restrito à DIRETORIA.", "warning")
         return redirect(url_for("index"))
 
     email = request.form.get("email", "").strip().lower()
@@ -648,16 +522,16 @@ def usuarios_novo():
     aluno_id = request.form.get("aluno_id")
 
     if not email or "@" not in email:
-        flash("E-mail invÃ¡lido.", "danger")
+        flash("E-mail inválido.", "danger")
         return redirect(url_for("usuarios_list"))
     if len(senha) < 8 or not any(c.isdigit() for c in senha):
-        flash("Senha deve ter 8+ caracteres e ao menos 1 dÃ­gito.", "danger")
+        flash("Senha deve ter 8+ caracteres e ao menos 1 dígito.", "danger")
         return redirect(url_for("usuarios_list"))
     if senha != senha2:
-        flash("ConfirmaÃ§Ã£o de senha nÃ£o confere.", "danger")
+        flash("Confirmação de senha não confere.", "danger")
         return redirect(url_for("usuarios_list"))
     if Usuario.query.filter_by(email=email).first():
-        flash("E-mail jÃ¡ cadastrado.", "danger")
+        flash("E-mail já cadastrado.", "danger")
         return redirect(url_for("usuarios_list"))
 
     if papel in ("RESPONSAVEL", "ALUNO") and not aluno_id:
@@ -668,22 +542,33 @@ def usuarios_novo():
 
     u = Usuario(
         email=email,
-        senha_hash=senha,
         papel=papel,
         ativo=True,
         aluno_id=aluno_id_int,
     )
+    _set_senha(u, senha)
+
     db.session.add(u)
     db.session.commit()
-    flash("UsuÃ¡rio criado.", "success")
-    return redirect(url_for("usuarios_list"))
+
+    # Gera 3 códigos e salva no usuário (hash no banco)
+    codes = gerar_3_codigos_recuperacao()
+    salvar_codigos_no_usuario(u, codes)
+    db.session.commit()
+
+    # Guarda os códigos na sessão para mostrar UMA vez
+    session["new_recovery_codes"] = codes
+    session["user_id_show_codes"] = u.id
+
+    flash("Usuário criado. Anote os códigos de recuperação (aparecem uma única vez).", "success")
+    return redirect("/recovery-codes")
 
 
 @app.route("/usuarios/<int:id>/editar", methods=["POST"])
 @login_required
 def usuarios_editar(id):
     if not current_user.is_diretoria():
-        flash("Acesso restrito Ã  DIRETORIA.", "warning")
+        flash("Acesso restrito à DIRETORIA.", "warning")
         return redirect(url_for("index"))
 
     u = Usuario.query.get_or_404(id)
@@ -694,9 +579,9 @@ def usuarios_editar(id):
 
     if new_pass:
         if len(new_pass) < 8 or not any(c.isdigit() for c in new_pass):
-            flash("Nova senha invÃ¡lida (8+ e 1 dÃ­gito).", "danger")
+            flash("Nova senha inválida (8+ e 1 dígito).", "danger")
             return redirect(url_for("usuarios_list"))
-        u.senha_hash = new_pass
+        _set_senha(u, new_pass)
 
     if papel in ("RESPONSAVEL", "ALUNO") and not aluno_id:
         flash("Selecione o aluno vinculado para esse perfil.", "danger")
@@ -707,7 +592,7 @@ def usuarios_editar(id):
     u.aluno_id = int(aluno_id) if aluno_id else None
 
     db.session.commit()
-    flash("UsuÃ¡rio atualizado.", "success")
+    flash("Usuário atualizado.", "success")
     return redirect(url_for("usuarios_list"))
 
 
@@ -715,16 +600,17 @@ def usuarios_editar(id):
 @login_required
 def usuarios_excluir(id):
     if not current_user.is_diretoria():
-        flash("Acesso restrito Ã  DIRETORIA.", "warning")
+        flash("Acesso restrito à DIRETORIA.", "warning")
         return redirect(url_for("index"))
     if current_user.id == id:
-        flash("VocÃª nÃ£o pode excluir a si mesmo.", "warning")
+        flash("Você não pode excluir a si mesmo.", "warning")
         return redirect(url_for("usuarios_list"))
     u = Usuario.query.get_or_404(id)
     db.session.delete(u)
     db.session.commit()
-    flash("UsuÃ¡rio removido.", "success")
+    flash("Usuário removido.", "success")
     return redirect(url_for("usuarios_list"))
+
 
 # -------------------------------------------------------------------
 # PROFESSORES (somente Diretoria)
@@ -733,7 +619,7 @@ def usuarios_excluir(id):
 @login_required
 def professores_listar():
     if not current_user.is_diretoria():
-        flash("VocÃª nÃ£o tem permissÃ£o para acessar Professores.", "warning")
+        flash("Você não tem permissão para acessar Professores.", "warning")
         return redirect(url_for("index"))
 
     itens = Professor.query.order_by(Professor.nome.asc()).all()
@@ -744,7 +630,7 @@ def professores_listar():
 @login_required
 def professores_novo():
     if not current_user.is_diretoria():
-        flash("VocÃª nÃ£o tem permissÃ£o para cadastrar Professores.", "warning")
+        flash("Você não tem permissão para cadastrar Professores.", "warning")
         return redirect(url_for("index"))
 
     usuarios = Usuario.query.order_by(Usuario.email.asc()).all()
@@ -762,9 +648,7 @@ def professores_novo():
 
         u = Usuario.query.filter(sa_text("lower(email)=:e")).params(e=email).first()
         if not u:
-            flash("E-mail nÃ£o registrado.", "danger")
-            return redirect(request.url)
-
+            flash("E-mail não registrado.", "danger")
             return redirect(request.url)
 
         # data nascimento (opcional)
@@ -773,20 +657,19 @@ def professores_novo():
             try:
                 dn = datetime.strptime(dn_str, "%Y-%m-%d").date()
             except ValueError:
-                flash("Data de nascimento invÃ¡lida. Use o seletor de data.", "danger")
+                flash("Data de nascimento inválida. Use o seletor de data.", "danger")
                 return redirect(request.url)
 
-        # busca sÃ©ries selecionadas
+        # séries selecionadas
         sel_series = []
         if series_ids:
             try:
                 ids_int = [int(x) for x in series_ids]
                 sel_series = Serie.query.filter(Serie.id.in_(ids_int)).all()
             except ValueError:
-                flash("SeleÃ§Ã£o de sÃ©ries invÃ¡lida.", "danger")
+                flash("Seleção de séries inválida.", "danger")
                 return redirect(request.url)
 
-        # se jÃ¡ existir cadastro de professor para este usuÃ¡rio, atualiza (evita duplicar)
         prof = Professor.query.filter_by(usuario_id=u.id).first()
         if not prof:
             prof = Professor(usuario_id=u.id, nome=nome, data_nascimento=dn)
@@ -796,8 +679,6 @@ def professores_novo():
             prof.data_nascimento = dn
 
         prof.series = sel_series
-
-        # transforma o usuÃ¡rio em PROFESSOR (perfil)
         u.papel = "PROFESSOR"
 
         db.session.commit()
@@ -811,7 +692,7 @@ def professores_novo():
 @login_required
 def professores_editar(id):
     if not current_user.is_diretoria():
-        flash("VocÃª nÃ£o tem permissÃ£o para editar Professores.", "warning")
+        flash("Você não tem permissão para editar Professores.", "warning")
         return redirect(url_for("index"))
 
     prof = Professor.query.get_or_404(id)
@@ -831,13 +712,12 @@ def professores_editar(id):
 
         u = Usuario.query.filter(sa_text("lower(email)=:e")).params(e=email).first()
         if not u:
-            flash("Este e-mail nÃ£o estÃ¡ cadastrado no sistema.", "danger")
+            flash("Este e-mail não está cadastrado no sistema.", "danger")
             return redirect(request.url)
 
-        # garante unicidade: um usuÃ¡rio sÃ³ pode ser um professor
         outro = Professor.query.filter_by(usuario_id=u.id).first()
         if outro and outro.id != prof.id:
-            flash("Este e-mail jÃ¡ estÃ¡ vinculado a outro professor.", "danger")
+            flash("Este e-mail já está vinculado a outro professor.", "danger")
             return redirect(request.url)
 
         dn = None
@@ -845,7 +725,7 @@ def professores_editar(id):
             try:
                 dn = datetime.strptime(dn_str, "%Y-%m-%d").date()
             except ValueError:
-                flash("Data de nascimento invÃ¡lida. Use o seletor de data.", "danger")
+                flash("Data de nascimento inválida. Use o seletor de data.", "danger")
                 return redirect(request.url)
 
         sel_series = []
@@ -854,7 +734,7 @@ def professores_editar(id):
                 ids_int = [int(x) for x in series_ids]
                 sel_series = Serie.query.filter(Serie.id.in_(ids_int)).all()
             except ValueError:
-                flash("SeleÃ§Ã£o de sÃ©ries invÃ¡lida.", "danger")
+                flash("Seleção de séries inválida.", "danger")
                 return redirect(request.url)
 
         prof.usuario_id = u.id
@@ -870,6 +750,7 @@ def professores_editar(id):
 
     return render_template("professores/form.html", usuarios=usuarios, series=series, item=prof)
 
+
 # -------------------------------------------------------------------
 # ESCOLAS
 # -------------------------------------------------------------------
@@ -877,7 +758,7 @@ def professores_editar(id):
 @login_required
 def escolas_list():
     if current_user.is_responsavel() or current_user.is_aluno():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     items = Escola.query.order_by(Escola.nome.asc()).all()
@@ -888,7 +769,7 @@ def escolas_list():
 @login_required
 def escolas_nova():
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     if request.method == "POST":
@@ -897,7 +778,7 @@ def escolas_nova():
             flash("Informe o nome da escola.", "danger")
             return redirect(url_for("escolas_nova"))
         if Escola.query.filter_by(nome=nome).first():
-            flash("JÃ¡ existe escola com esse nome.", "warning")
+            flash("Já existe escola com esse nome.", "warning")
             return redirect(url_for("escolas_list"))
         e = Escola(nome=nome)
         db.session.add(e)
@@ -911,7 +792,7 @@ def escolas_nova():
 @login_required
 def escolas_editar(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     e = Escola.query.get_or_404(id)
@@ -920,7 +801,7 @@ def escolas_editar(id):
         flash("Informe o nome.", "danger")
         return redirect(url_for("escolas_list"))
     if Escola.query.filter(Escola.id != id, Escola.nome == nome).first():
-        flash("JÃ¡ existe escola com esse nome.", "warning")
+        flash("Já existe escola com esse nome.", "warning")
         return redirect(url_for("escolas_list"))
     e.nome = nome
     db.session.commit()
@@ -932,24 +813,24 @@ def escolas_editar(id):
 @login_required
 def escolas_excluir(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     e = Escola.query.get_or_404(id)
     db.session.delete(e)
     db.session.commit()
-    flash("Escola excluÃ­da.", "success")
+    flash("Escola excluída.", "success")
     return redirect(url_for("escolas_list"))
 
 
 # -------------------------------------------------------------------
-# SÃ‰RIES
+# SÉRIES
 # -------------------------------------------------------------------
 @app.route("/series/")
 @login_required
 def series_list():
     if current_user.is_responsavel() or current_user.is_aluno():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     series = Serie.query.order_by(Serie.nome.asc()).all()
@@ -960,21 +841,21 @@ def series_list():
 @login_required
 def series_nova():
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     if request.method == "POST":
         nome = request.form.get("nome", "").strip()
         if not nome:
-            flash("Informe o nome da sÃ©rie.", "danger")
+            flash("Informe o nome da série.", "danger")
             return redirect(url_for("series_nova"))
         if Serie.query.filter_by(nome=nome).first():
-            flash("JÃ¡ existe sÃ©rie com esse nome.", "warning")
+            flash("Já existe série com esse nome.", "warning")
             return redirect(url_for("series_list"))
         s = Serie(nome=nome)
         db.session.add(s)
         db.session.commit()
-        flash("SÃ©rie cadastrada.", "success")
+        flash("Série cadastrada.", "success")
         return redirect(url_for("series_list"))
     return render_template("series/form.html")
 
@@ -983,7 +864,7 @@ def series_nova():
 @login_required
 def series_editar(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     s = Serie.query.get_or_404(id)
@@ -992,11 +873,11 @@ def series_editar(id):
         flash("Informe o nome.", "danger")
         return redirect(url_for("series_list"))
     if Serie.query.filter(Serie.id != id, Serie.nome == nome).first():
-        flash("JÃ¡ existe sÃ©rie com esse nome.", "warning")
+        flash("Já existe série com esse nome.", "warning")
         return redirect(url_for("series_list"))
     s.nome = nome
     db.session.commit()
-    flash("SÃ©rie atualizada.", "success")
+    flash("Série atualizada.", "success")
     return redirect(url_for("series_list"))
 
 
@@ -1004,29 +885,27 @@ def series_editar(id):
 @login_required
 def series_excluir(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     s = Serie.query.get_or_404(id)
     db.session.delete(s)
     db.session.commit()
-    flash("SÃ©rie excluÃ­da.", "success")
+    flash("Série excluída.", "success")
     return redirect(url_for("series_list"))
 
 
 # -------------------------------------------------------------------
-# HORÃRIOS
+# HORÁRIOS
 # -------------------------------------------------------------------
 @app.route("/horarios/")
 @login_required
 def horarios_list():
     if current_user.is_responsavel() or current_user.is_aluno():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     items = Horario.query.order_by(Horario.hora_inicio.asc()).all()
-
-    # âœ… Alunos agrupados por horÃ¡rio
     alunos = Aluno.query.order_by(Aluno.nome.asc()).all()
 
     alunos_por_horario = {}
@@ -1046,51 +925,49 @@ def horarios_list():
     )
 
 
-
 @app.route("/horarios/novo", methods=["GET", "POST"])
 @login_required
 def horarios_novo():
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     if request.method == "POST":
         h_ini = request.form.get("hora_inicio", "").strip()
         h_fim = request.form.get("hora_fim", "").strip()
         if not _is_hhmm(h_ini) or not _is_hhmm(h_fim):
-            flash("Informe horas vÃ¡lidas no formato HH:MM.", "danger")
+            flash("Informe horas válidas no formato HH:MM.", "danger")
             return redirect(url_for("horarios_novo"))
         if h_fim <= h_ini:
-            flash("Hora fim deve ser maior que hora inÃ­cio.", "danger")
+            flash("Hora fim deve ser maior que hora início.", "danger")
             return redirect(url_for("horarios_novo"))
+
         h = Horario(hora_inicio=h_ini, hora_fim=h_fim)
         db.session.add(h)
         db.session.commit()
-        flash("HorÃ¡rio cadastrado.", "success")
+        flash("Horário cadastrado.", "success")
         return redirect(url_for("horarios_list"))
+
     return render_template("horarios/form.html")
-
-
-app.add_url_rule("/horarios/novo", endpoint="horarios_new", view_func=horarios_novo)
 
 
 @app.route("/horarios/<int:id>/editar", methods=["POST"])
 @login_required
 def horarios_editar(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     h = Horario.query.get_or_404(id)
     h_ini = request.form.get("hora_inicio", "").strip()
     h_fim = request.form.get("hora_fim", "").strip()
     if not _is_hhmm(h_ini) or not _is_hhmm(h_fim) or h_fim <= h_ini:
-        flash("Horas invÃ¡lidas.", "danger")
+        flash("Horas inválidas.", "danger")
         return redirect(url_for("horarios_list"))
     h.hora_inicio = h_ini
     h.hora_fim = h_fim
     db.session.commit()
-    flash("HorÃ¡rio atualizado.", "success")
+    flash("Horário atualizado.", "success")
     return redirect(url_for("horarios_list"))
 
 
@@ -1098,13 +975,13 @@ def horarios_editar(id):
 @login_required
 def horarios_excluir(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("index"))
 
     h = Horario.query.get_or_404(id)
     db.session.delete(h)
     db.session.commit()
-    flash("HorÃ¡rio excluÃ­do.", "success")
+    flash("Horário excluído.", "success")
     return redirect(url_for("horarios_list"))
 
 
@@ -1122,7 +999,7 @@ def alunos_list():
 @login_required
 def alunos_novo():
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("alunos_list"))
 
     if request.method == "POST":
@@ -1166,9 +1043,7 @@ def alunos_novo():
             foto_path=foto_path,
             naturalidade=naturalidade,
             nacionalidade=nacionalidade,
-            data_nascimento=datetime.strptime(data_nasc, "%Y-%m-%d").date()
-            if data_nasc
-            else None,
+            data_nascimento=datetime.strptime(data_nasc, "%Y-%m-%d").date() if data_nasc else None,
             idade=int(idade) if idade else None,
             sexo=sexo,
             nome_pai=nome_pai,
@@ -1180,9 +1055,7 @@ def alunos_novo():
             qual_dificuldade=qual_dif,
             toma_medicamento=toma_med,
             qual_medicamento=qual_med,
-            inicio_aulas=datetime.strptime(inicio_aulas, "%Y-%m-%d").date()
-            if inicio_aulas
-            else None,
+            inicio_aulas=datetime.strptime(inicio_aulas, "%Y-%m-%d").date() if inicio_aulas else None,
             mensalidade_opcao=mensalidade_opcao,
         )
         db.session.add(a)
@@ -1193,35 +1066,24 @@ def alunos_novo():
     escolas = Escola.query.order_by(Escola.nome.asc()).all()
     series = Serie.query.order_by(Serie.nome.asc()).all()
     horarios = Horario.query.order_by(Horario.hora_inicio.asc()).all()
-    return render_template(
-        "alunos/form.html", escolas=escolas, series=series, horarios=horarios
-    )
-
-
-app.add_url_rule("/alunos/novo", endpoint="alunos_new", view_func=alunos_novo)
+    return render_template("alunos/form.html", escolas=escolas, series=series, horarios=horarios)
 
 
 @app.route("/alunos/<int:id>/editar", methods=["GET", "POST"])
 @login_required
 def alunos_editar(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("alunos_list"))
 
     a = Aluno.query.get_or_404(id)
+
     if request.method == "POST":
-        a.nome = request.form.get("nome", a.nome).strip()
-        a.escola_id = (
-            int(request.form.get("escola_id")) if request.form.get("escola_id") else None
-        )
-        a.serie_id = (
-            int(request.form.get("serie_id")) if request.form.get("serie_id") else None
-        )
-        a.horario_id = (
-            int(request.form.get("horario_id"))
-            if request.form.get("horario_id")
-            else None
-        )
+        a.nome = (request.form.get("nome", a.nome) or "").strip()
+        a.escola_id = int(request.form.get("escola_id")) if request.form.get("escola_id") else None
+        a.serie_id = int(request.form.get("serie_id")) if request.form.get("serie_id") else None
+        a.horario_id = int(request.form.get("horario_id")) if request.form.get("horario_id") else None
+
         a.telefone_cel = request.form.get("telefone_cel")
         a.telefone_fixo = request.form.get("telefone_fixo")
         a.observacoes = request.form.get("observacoes")
@@ -1231,32 +1093,29 @@ def alunos_editar(id):
 
         a.naturalidade = request.form.get("naturalidade")
         a.nacionalidade = request.form.get("nacionalidade")
+
         data_nasc = request.form.get("data_nascimento")
-        a.data_nascimento = (
-            datetime.strptime(data_nasc, "%Y-%m-%d").date() if data_nasc else None
-        )
+        a.data_nascimento = datetime.strptime(data_nasc, "%Y-%m-%d").date() if data_nasc else None
+
         idade = request.form.get("idade")
         a.idade = int(idade) if idade else None
+
         a.sexo = request.form.get("sexo")
         a.nome_pai = request.form.get("nome_pai")
         a.nome_mae = request.form.get("nome_mae")
         a.endereco = request.form.get("endereco")
         a.numero = request.form.get("numero")
         a.bairro = request.form.get("bairro")
-        a.tem_dificuldade = (
-            True if request.form.get("tem_dificuldade") == "on" else False
-        )
+
+        a.tem_dificuldade = True if request.form.get("tem_dificuldade") == "on" else False
         a.qual_dificuldade = request.form.get("qual_dificuldade")
-        a.toma_medicamento = (
-            True if request.form.get("toma_medicamento") == "on" else False
-        )
+
+        a.toma_medicamento = True if request.form.get("toma_medicamento") == "on" else False
         a.qual_medicamento = request.form.get("qual_medicamento")
+
         inicio_aulas = request.form.get("inicio_aulas")
-        a.inicio_aulas = (
-            datetime.strptime(inicio_aulas, "%Y-%m-%d").date()
-            if inicio_aulas
-            else None
-        )
+        a.inicio_aulas = datetime.strptime(inicio_aulas, "%Y-%m-%d").date() if inicio_aulas else None
+
         a.mensalidade_opcao = request.form.get("mensalidade_opcao")
 
         db.session.commit()
@@ -1266,6 +1125,7 @@ def alunos_editar(id):
     escolas = Escola.query.order_by(Escola.nome.asc()).all()
     series = Serie.query.order_by(Serie.nome.asc()).all()
     horarios = Horario.query.order_by(Horario.hora_inicio.asc()).all()
+
     return render_template(
         "alunos/form.html",
         aluno=a,
@@ -1279,13 +1139,13 @@ def alunos_editar(id):
 @login_required
 def alunos_excluir(id):
     if not current_user.is_diretoria():
-        flash("Acesso nÃ£o autorizado.", "warning")
+        flash("Acesso não autorizado.", "warning")
         return redirect(url_for("alunos_list"))
 
     a = Aluno.query.get_or_404(id)
     db.session.delete(a)
     db.session.commit()
-    flash("Aluno excluÃ­do.", "success")
+    flash("Aluno excluído.", "success")
     return redirect(url_for("alunos_list"))
 
 
@@ -1298,7 +1158,7 @@ def alunos_ver(id):
         pass
     else:
         if not current_user.aluno_id or current_user.aluno_id != a.id:
-            flash("VocÃª nÃ£o tem permissÃ£o para ver os dados deste aluno.", "warning")
+            flash("Você não tem permissão para ver os dados deste aluno.", "warning")
             return redirect(url_for("alunos_list"))
 
     return render_template("alunos/ver.html", aluno=a)
@@ -1323,9 +1183,7 @@ def alunos_search():
 @login_required
 def atividades_listar():
     if current_user.is_diretoria() or current_user.is_professor():
-        itens = Atividade.query.order_by(
-            Atividade.data.desc(), Atividade.id.desc()
-        ).all()
+        itens = Atividade.query.order_by(Atividade.data.desc(), Atividade.id.desc()).all()
     else:
         if not current_user.aluno_id:
             itens = []
@@ -1340,27 +1198,22 @@ def atividades_listar():
     return render_template("atividades/listar.html", atividades=itens, alunos=alunos)
 
 
-app.add_url_rule(
-    "/atividades/", endpoint="atividades_list", view_func=atividades_listar
-)
-
-
 @app.route("/atividades/novo", methods=["GET", "POST"])
 @login_required
 def atividades_nova():
     if not (current_user.is_diretoria() or current_user.is_professor()):
-        flash("VocÃª nÃ£o tem permissÃ£o para adicionar atividades.", "warning")
+        flash("Você não tem permissão para adicionar atividades.", "warning")
         return redirect(url_for("atividades_listar"))
 
     if request.method == "POST":
         aluno_id = request.form.get("aluno_id")
         data_str = request.form.get("data")
-        professor = request.form.get("professor")
-        conteudo = request.form.get("conteudo")
+        professor = (request.form.get("professor") or "").strip()
+        conteudo = (request.form.get("conteudo") or "").strip()
         observacao = request.form.get("observacao")
 
         if not aluno_id or not data_str or not professor or not conteudo:
-            flash("Preencha os campos obrigatÃ³rios.", "danger")
+            flash("Preencha os campos obrigatórios.", "danger")
             return redirect(url_for("atividades_nova"))
 
         data_dt = datetime.strptime(data_str, "%Y-%m-%d").date()
@@ -1384,7 +1237,7 @@ def atividades_nova():
 @login_required
 def atividades_editar(id):
     if not current_user.is_diretoria():
-        flash("VocÃª nÃ£o tem permissÃ£o para editar atividades.", "warning")
+        flash("Você não tem permissão para editar atividades.", "warning")
         return redirect(url_for("atividades_listar"))
 
     atv = Atividade.query.get_or_404(id)
@@ -1393,18 +1246,15 @@ def atividades_editar(id):
         atv.aluno_id = int(request.form.get("aluno_id"))
 
         data_str = request.form.get("data")
-        atv.data = (
-            datetime.strptime(data_str, "%D/%m/%Y").date() if False else
-            (datetime.strptime(data_str, "%Y-%m-%d").date() if data_str else atv.data)
-        )
+        if data_str:
+            atv.data = datetime.strptime(data_str, "%Y-%m-%d").date()
 
         professor = (request.form.get("professor") or "").strip()
         conteudo = (request.form.get("conteudo") or "").strip()
         observacao = request.form.get("observacao")
 
-        # âœ… Evita gravar NULL/vazio em campos NOT NULL
         if not professor or not conteudo:
-            flash("Preencha os campos obrigatÃ³rios: Professor e ConteÃºdo.", "danger")
+            flash("Preencha os campos obrigatórios: Professor e Conteúdo.", "danger")
             return redirect(request.url)
 
         atv.professor = professor
@@ -1419,18 +1269,17 @@ def atividades_editar(id):
     return render_template("atividades/form.html", item=atv, alunos=alunos)
 
 
-
 @app.route("/atividades/<int:id>/excluir", methods=["POST"])
 @login_required
 def atividades_excluir(id):
     if not current_user.is_diretoria():
-        flash("VocÃª nÃ£o tem permissÃ£o para excluir atividades.", "warning")
+        flash("Você não tem permissão para excluir atividades.", "warning")
         return redirect(url_for("atividades_listar"))
 
     atv = Atividade.query.get_or_404(id)
     db.session.delete(atv)
     db.session.commit()
-    flash("Atividade excluÃ­da.", "success")
+    flash("Atividade excluída.", "success")
     return redirect(url_for("atividades_listar"))
 
 
@@ -1441,10 +1290,10 @@ def seed_admin():
     if not Usuario.query.filter_by(email="admin@escola.com").first():
         u = Usuario(
             email="admin@escola.com",
-            senha_hash="Trocar123",
             papel="DIRETORIA",
             ativo=True,
         )
+        _set_senha(u, "Trocar123")
         db.session.add(u)
         db.session.commit()
 
@@ -1458,5 +1307,3 @@ if __name__ == "__main__":
         ensure_schema()
         seed_admin()
     app.run(debug=True)
-
-

@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
-{% block title %}Usuários{% endblock %}
+{% block title %}UsuÃ¡rios{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-3">
-  <h1 class="h4 mb-0">Usuários</h1>
+  <h1 class="h4 mb-0">UsuÃ¡rios</h1>
   <button class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#formNovoUsuario">
-    Novo Usuário
+    Novo UsuÃ¡rio
   </button>
 </div>
 
@@ -20,7 +20,7 @@
         <div class="col-12 col-md-3">
           <label class="form-label">Senha</label>
           <input type="password" class="form-control" name="senha" minlength="8" required>
-          <div class="form-text">Mín. 8 caracteres e 1 dígito</div>
+          <div class="form-text">MÃ­n. 8 caracteres e 1 dÃ­gito</div>
         </div>
         <div class="col-12 col-md-3">
           <label class="form-label">Confirmar Senha</label>
@@ -31,7 +31,7 @@
           <select name="papel" class="form-select">
             <option value="DIRETORIA">Diretoria</option>
             <option value="PROFESSOR">Professor</option>
-            <option value="RESPONSAVEL">Responsável</option>
+            <option value="RESPONSAVEL">ResponsÃ¡vel</option>
             <option value="ALUNO">Aluno</option>
           </select>
         </div>
@@ -52,7 +52,7 @@
             <th>E-mail</th>
             <th>Perfil</th>
             <th>Status</th>
-            <th class="table-actions text-end">Ações</th>
+            <th class="table-actions text-end">AÃ§Ãµes</th>
           </tr>
         </thead>
         <tbody>
@@ -79,7 +79,7 @@
               <!-- Excluir -->
               <form method="post" action="{{ url_for('usuarios_excluir', id=u.id) }}"
                     class="d-inline"
-                    onsubmit="return confirm('Confirmar exclusão?');">
+                    onsubmit="return confirm('Confirmar exclusÃ£o?');">
                 <button class="btn btn-sm btn-outline-danger">Excluir</button>
               </form>
             </td>
@@ -92,7 +92,7 @@
                   <select name="papel" class="form-select">
                     <option value="DIRETORIA" {{ 'selected' if u.papel=='DIRETORIA' }}>Diretoria</option>
                     <option value="PROFESSOR" {{ 'selected' if u.papel=='PROFESSOR' }}>Professor</option>
-                    <option value="RESPONSAVEL" {{ 'selected' if u.papel=='RESPONSAVEL' }}>Responsável</option>
+                    <option value="RESPONSAVEL" {{ 'selected' if u.papel=='RESPONSAVEL' }}>ResponsÃ¡vel</option>
                     <option value="ALUNO" {{ 'selected' if u.papel=='ALUNO' }}>Aluno</option>
                   </select>
                 </div>
@@ -114,7 +114,7 @@
             </td>
           </tr>
           {% else %}
-          <tr><td colspan="4" class="text-center text-light-50 py-4">Nenhum usuário encontrado.</td></tr>
+          <tr><td colspan="4" class="text-center text-light-50 py-4">Nenhum usuÃ¡rio encontrado.</td></tr>
           {% endfor %}
         </tbody>
       </table>

@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
-{% block title %}Horários{% endblock %}
+{% block title %}HorÃ¡rios{% endblock %}
 {% block content %}
 <div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="m-0">Horários</h3>
-    <a href="{{ url_for('horarios_novo') }}" class="btn btn-light">Novo Horário</a>
+    <h3 class="m-0">HorÃ¡rios</h3>
+    <a href="{{ url_for('horarios_novo') }}" class="btn btn-light">Novo HorÃ¡rio</a>
   </div>
 
   {% if horarios %}
@@ -17,7 +17,7 @@
             <p class="card-text text-secondary small">Cadastrado em {{ h.criado_em.strftime('%d/%m/%Y %H:%M') }}</p>
             <div class="mt-auto">
               <a class="btn btn-sm btn-outline-light" href="{{ url_for('horarios_editar', id=h.id) }}">Editar</a>
-              <form method="post" action="{{ url_for('horarios_excluir', id=h.id) }}" class="d-inline" onsubmit="return confirm('Excluir este horário?');">
+              <form method="post" action="{{ url_for('horarios_excluir', id=h.id) }}" class="d-inline" onsubmit="return confirm('Excluir este horÃ¡rio?');">
                 <button class="btn btn-sm btn-outline-danger">Excluir</button>
               </form>
             </div>
@@ -27,7 +27,7 @@
       {% endfor %}
     </div>
   {% else %}
-    <div class="alert alert-secondary">Nenhum horário cadastrado.</div>
+    <div class="alert alert-secondary">Nenhum horÃ¡rio cadastrado.</div>
   {% endif %}
 </div>
 {% endblock %}

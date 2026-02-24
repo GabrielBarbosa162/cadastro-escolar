@@ -17,7 +17,7 @@
         <div class="col-md-4">
           <label class="form-label">Aluno</label>
           <select name="aluno_id" class="form-select" required>
-            <option value="">Selecione…</option>
+            <option value="">Selecioneâ€¦</option>
             {% for a in alunos %}
             <option value="{{ a.id }}">{{ a.nome }}</option>
             {% endfor %}
@@ -32,11 +32,11 @@
           <input type="text" name="professor" class="form-control" required />
         </div>
         <div class="col-12">
-          <label class="form-label">Conteúdo (a estudar/estudado)</label>
+          <label class="form-label">ConteÃºdo (a estudar/estudado)</label>
           <textarea name="conteudo" class="form-control" rows="3" required></textarea>
         </div>
         <div class="col-12">
-          <label class="form-label">Observação (opcional)</label>
+          <label class="form-label">ObservaÃ§Ã£o (opcional)</label>
           <textarea name="observacao" class="form-control" rows="2"></textarea>
         </div>
         <div class="col-12 text-end">
@@ -56,9 +56,9 @@
           <th>Data</th>
           <th>Aluno</th>
           <th>Professor</th>
-          <th>Conteúdo</th>
-          <th>Observação</th>
-          <th class="text-end">Ações</th>
+          <th>ConteÃºdo</th>
+          <th>ObservaÃ§Ã£o</th>
+          <th class="text-end">AÃ§Ãµes</th>
         </tr>
       </thead>
       <tbody>

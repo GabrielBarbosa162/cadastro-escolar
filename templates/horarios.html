@@ -1,17 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Quadro de horários{% endblock %}
+{% block title %}Quadro de horÃ¡rios{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h4 class="mb-0">Quadro de horários</h4>
+  <h4 class="mb-0">Quadro de horÃ¡rios</h4>
 </div>
 
-<!-- Formulário de novo horário (aparece aqui nesta página) -->
+<!-- FormulÃ¡rio de novo horÃ¡rio (aparece aqui nesta pÃ¡gina) -->
 <div class="card mb-3">
   <div class="card-body">
     <form class="row g-2 align-items-end" method="post" action="{{ url_for('horario_novo') }}">
       <div class="col-auto">
-        <label class="form-label">Hora início</label>
+        <label class="form-label">Hora inÃ­cio</label>
         <input type="time" class="form-control" name="inicio" required>
       </div>
       <div class="col-auto">
@@ -19,16 +19,16 @@
         <input type="time" class="form-control" name="fim" required>
       </div>
       <div class="col-auto pt-2">
-        <button class="btn btn-primary mt-4">+ Cadastrar horário</button>
+        <button class="btn btn-primary mt-4">+ Cadastrar horÃ¡rio</button>
       </div>
       <div class="col-12">
-        <small class="text-muted">A hora fim deve ser maior que a hora início.</small>
+        <small class="text-muted">A hora fim deve ser maior que a hora inÃ­cio.</small>
       </div>
     </form>
   </div>
 </div>
 
-<!-- Colunas (kanban) por horário -->
+<!-- Colunas (kanban) por horÃ¡rio -->
 <div class="kanban">
   {% for col in colunas %}
     <div class="kanban-col">
@@ -38,7 +38,7 @@
           <div class="border rounded p-2 mb-2">
             <div class="fw-semibold">{{ a.nome }}</div>
             <div class="small text-muted">
-              {{ a.escola.nome if a.escola else "—" }} • {{ a.serie.nome if a.serie else "—" }}
+              {{ a.escola.nome if a.escola else "â€”" }} â€¢ {{ a.serie.nome if a.serie else "â€”" }}
             </div>
           </div>
         {% else %}

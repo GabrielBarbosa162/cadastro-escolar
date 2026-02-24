@@ -13,7 +13,7 @@
       <form method="post" class="row g-3" autocomplete="off">
 
         <div class="col-12 col-md-6">
-          <label class="form-label">E-mail (já cadastrado no sistema)</label>
+          <label class="form-label">E-mail (jÃ¡ cadastrado no sistema)</label>
           <input
             name="email"
             type="email"
@@ -22,7 +22,7 @@
             placeholder="ex: professor@escola.com"
             value="{{ item.usuario.email if item and item.usuario else '' }}"
           >
-          <small class="text-secondary">O e-mail precisa existir em Usuários.</small>
+          <small class="text-secondary">O e-mail precisa existir em UsuÃ¡rios.</small>
         </div>
 
         <div class="col-12 col-md-6">
@@ -37,7 +37,7 @@
         </div>
 
         <div class="col-12">
-          <label class="form-label">Séries responsáveis</label>
+          <label class="form-label">SÃ©ries responsÃ¡veis</label>
 
           {% set selecionadas = (item.series | map(attribute='id') | list) if item else [] %}
 
@@ -63,12 +63,12 @@
               </div>
 
               {% if not series %}
-                <div class="text-secondary">Nenhuma série cadastrada.</div>
+                <div class="text-secondary">Nenhuma sÃ©rie cadastrada.</div>
               {% endif %}
             </div>
           </div>
 
-          <small class="text-secondary">Clique para marcar/desmarcar (não precisa Ctrl).</small>
+          <small class="text-secondary">Clique para marcar/desmarcar (nÃ£o precisa Ctrl).</small>
         </div>
 
         <div class="col-12 text-end">

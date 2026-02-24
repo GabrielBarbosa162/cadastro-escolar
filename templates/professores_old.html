@@ -18,16 +18,16 @@
           <th>Sexo</th>
           <th>Nascimento</th>
           <th>Idade</th>
-          <th class="text-end">Ações</th>
+          <th class="text-end">AÃ§Ãµes</th>
         </tr>
       </thead>
       <tbody>
         {% for p in professores %}
           <tr>
             <td class="fw-semibold">{{ p.nome_completo }}</td>
-            <td>{{ 'Masculino' if p.sexo=='M' else ('Feminino' if p.sexo=='F' else '—') }}</td>
+            <td>{{ 'Masculino' if p.sexo=='M' else ('Feminino' if p.sexo=='F' else 'â€”') }}</td>
             <td>{{ p.data_nascimento.strftime('%d/%m/%Y') }}</td>
-            <td>{{ p.idade if p.idade is not none else '—' }}</td>
+            <td>{{ p.idade if p.idade is not none else 'â€”' }}</td>
             <td class="text-end">
               <a class="btn btn-sm btn-outline-primary" href="{{ url_for('editar_professor', prof_id=p.id) }}">
                 <i class="bi bi-pencil"></i> Editar

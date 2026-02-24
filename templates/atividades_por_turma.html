@@ -3,7 +3,7 @@
 
 <div class="d-flex align-items-center mb-3">
   <a href="{{ url_for('lista_turmas') }}" class="btn btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
-  <h2 class="mb-0">Atividade por turma (aluno específico)</h2>
+  <h2 class="mb-0">Atividade por turma (aluno especÃ­fico)</h2>
 </div>
 <hr>
 
@@ -14,10 +14,10 @@
         <div class="col-12 col-md-6">
           <label class="form-label">Turma</label>
           <select name="turma_id" id="turma_id" class="form-select" required>
-            <option value="">— Selecione —</option>
+            <option value="">â€” Selecione â€”</option>
             {% for t in turmas %}
               <option value="{{ t.id }}">
-                {{ t.escola.nome }} • {{ t.serie.nome }}{% if t.nome %} • {{ t.nome }}{% endif %}{% if t.turno %} • {{ t.turno }}{% endif %}
+                {{ t.escola.nome }} â€¢ {{ t.serie.nome }}{% if t.nome %} â€¢ {{ t.nome }}{% endif %}{% if t.turno %} â€¢ {{ t.turno }}{% endif %}
               </option>
             {% endfor %}
           </select>
@@ -26,7 +26,7 @@
         <div class="col-12 col-md-6">
           <label class="form-label">Aluno da turma</label>
           <select name="aluno_id" id="aluno_id" class="form-select" required disabled>
-            <option value="">— selecione a turma primeiro —</option>
+            <option value="">â€” selecione a turma primeiro â€”</option>
           </select>
         </div>
 
@@ -36,12 +36,12 @@
         </div>
 
         <div class="col-12">
-          <label class="form-label">Conteúdo (o que estudou)</label>
+          <label class="form-label">ConteÃºdo (o que estudou)</label>
           <textarea name="conteudo" class="form-control" rows="3" required></textarea>
         </div>
 
         <div class="col-12">
-          <label class="form-label">Observação do professor</label>
+          <label class="form-label">ObservaÃ§Ã£o do professor</label>
           <textarea name="observacao" class="form-control" rows="3" required></textarea>
         </div>
 
@@ -58,16 +58,16 @@
     const alunoSel = document.getElementById('aluno_id');
 
     turmaSel.addEventListener('change', async () => {
-      alunoSel.innerHTML = '<option>Carregando…</option>';
+      alunoSel.innerHTML = '<option>Carregandoâ€¦</option>';
       alunoSel.disabled = true;
       const id = turmaSel.value;
       if (!id) {
-        alunoSel.innerHTML = '<option>— selecione a turma primeiro —</option>';
+        alunoSel.innerHTML = '<option>â€” selecione a turma primeiro â€”</option>';
         return;
       }
       const res = await fetch(`/turmas/${id}/alunos.json`);
       const data = await res.json();
-      alunoSel.innerHTML = '<option value="">— Selecione —</option>';
+      alunoSel.innerHTML = '<option value="">â€” Selecione â€”</option>';
       data.forEach(a => {
         const opt = document.createElement('option');
         opt.value = a.id; opt.textContent = a.nome;
@@ -82,14 +82,14 @@
 
   <div class="card border-0 shadow-sm">
     <div class="card-body">
-      <h5 class="card-title">Ações</h5>
+      <h5 class="card-title">AÃ§Ãµes</h5>
       <div class="d-flex gap-2">
         {% if whatsapp %}
           <a class="btn btn-success" target="_blank" href="{{ whatsapp }}"><i class="bi bi-whatsapp"></i> Enviar WhatsApp</a>
         {% else %}
           <span class="text-muted">Sem telefone para WhatsApp.</span>
         {% endif %}
-        <a class="btn btn-outline-primary" href="{{ url_for('atividade_por_turma_aluno') }}">Lançar outra</a>
+        <a class="btn btn-outline-primary" href="{{ url_for('atividade_por_turma_aluno') }}">LanÃ§ar outra</a>
         <a class="btn btn-outline-secondary" href="{{ url_for('lista_atividades') }}">Ver lista de atividades</a>
       </div>
     </div>

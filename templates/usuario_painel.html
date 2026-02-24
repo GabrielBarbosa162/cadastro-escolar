@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Painel do Usuário{% endblock %}
+{% block title %}Painel do UsuÃ¡rio{% endblock %}
 {% block content %}
 <div class="container py-4">
   <h3 class="mb-3">Painel: {{ user.email }}</h3>
@@ -10,9 +10,9 @@
         <div class="d-flex justify-content-between">
           <div>
             <div class="fw-semibold">{{ cod }}</div>
-            <div class="text-secondary small">Tem permissão?</div>
+            <div class="text-secondary small">Tem permissÃ£o?</div>
           </div>
-          <div class="badge {{ 'bg-success' if val else 'bg-secondary' }}">{{ 'Sim' if val else 'Não' }}</div>
+          <div class="badge {{ 'bg-success' if val else 'bg-secondary' }}">{{ 'Sim' if val else 'NÃ£o' }}</div>
         </div>
       </div>
     </div>

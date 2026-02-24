@@ -15,7 +15,7 @@
         <div class="col-12 col-md-6">
           <label class="form-label">Nome do aluno</label>
           <select class="form-select" name="aluno_id" id="aluno_id" required>
-            <option value="">— Selecione —</option>
+            <option value="">â€” Selecione â€”</option>
             {% for al in alunos %}
               <option
                 value="{{ al.id }}"
@@ -34,33 +34,33 @@
                  value="{{ a.data_atividade.isoformat() if a and a.data_atividade else '' }}">
         </div>
 
-        <!-- Botão WhatsApp Web -->
+        <!-- BotÃ£o WhatsApp Web -->
         <div class="col-6 col-md-3 d-flex align-items-end">
           <a href="#" class="btn btn-success w-100" id="btnWhatsapp" target="_blank" rel="noopener">
             <i class="bi bi-whatsapp me-1"></i> WhatsApp Web
           </a>
         </div>
 
-        <!-- Título / Nome da atividade -->
+        <!-- TÃ­tulo / Nome da atividade -->
         <div class="col-12 col-md-6">
-          <label class="form-label">Nome da atividade (título)</label>
+          <label class="form-label">Nome da atividade (tÃ­tulo)</label>
           <input class="form-control" name="nome" id="nome"
-                 placeholder="Ex.: Revisão de Matemática"
+                 placeholder="Ex.: RevisÃ£o de MatemÃ¡tica"
                  required value="{{ a.nome if a else '' }}">
         </div>
 
-        <!-- Conteúdo estudado -->
+        <!-- ConteÃºdo estudado -->
         <div class="col-12">
-          <label class="form-label">Conteúdo estudado</label>
+          <label class="form-label">ConteÃºdo estudado</label>
           <textarea class="form-control" name="conteudo" id="conteudo" rows="3"
-                    placeholder="Descreva o conteúdo trabalhado...">{{ a.conteudo if a else '' }}</textarea>
+                    placeholder="Descreva o conteÃºdo trabalhado...">{{ a.conteudo if a else '' }}</textarea>
         </div>
 
-        <!-- Observação -->
+        <!-- ObservaÃ§Ã£o -->
         <div class="col-12">
-          <label class="form-label">Observação</label>
+          <label class="form-label">ObservaÃ§Ã£o</label>
           <textarea class="form-control" name="observacao" id="observacao" rows="3"
-                    placeholder="Observações adicionais...">{{ a.observacao if a else '' }}</textarea>
+                    placeholder="ObservaÃ§Ãµes adicionais...">{{ a.observacao if a else '' }}</textarea>
         </div>
 
       </div>
@@ -107,7 +107,7 @@
         `*Atividade:* ${nome.value || ''}\n` +
         `*Aluno:* ${alunoNome}\n` +
         `*Data:* ${dataTxt}\n` +
-        `*Conteúdo:* ${conteudo.value || ''}\n` +
+        `*ConteÃºdo:* ${conteudo.value || ''}\n` +
         `*Obs.:* ${observacao.value || ''}`;
 
       const phoneRaw = alunoOpt ? alunoOpt.getAttribute('data-phone') : '';

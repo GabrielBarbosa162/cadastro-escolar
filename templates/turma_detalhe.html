@@ -2,7 +2,7 @@
 {% block content %}
 
 <div class="d-flex align-items-center mb-3">
-  <h2 class="mb-0">Turma: {{ turma.nome or '—' }}</h2>
+  <h2 class="mb-0">Turma: {{ turma.nome or 'â€”' }}</h2>
 </div>
 <hr>
 
@@ -25,11 +25,11 @@
 
   <div class="col-12 col-lg-6">
     <div class="card-soft p-4 h-100">
-      <h5 class="mb-3">Adicionar aluno à turma</h5>
+      <h5 class="mb-3">Adicionar aluno Ã  turma</h5>
       <form method="post" action="{{ url_for('turma_adicionar_aluno', turma_id=turma.id) }}" class="row g-2">
         <div class="col-12">
           <select name="aluno_id" class="form-select" required>
-            <option value="">— Selecione um aluno —</option>
+            <option value="">â€” Selecione um aluno â€”</option>
             {% for e in elegiveis %}
               <option value="{{ e.id }}">{{ e.nome_completo }}</option>
             {% endfor %}

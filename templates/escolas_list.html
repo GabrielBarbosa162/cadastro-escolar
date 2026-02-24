@@ -23,14 +23,14 @@
           <tr>
             <th>Nome</th>
             <th style="width:180px">Criada em</th>
-            <th class="text-end" style="width:140px">Ações</th>
+            <th class="text-end" style="width:140px">AÃ§Ãµes</th>
           </tr>
         </thead>
         <tbody>
           {% for it in itens %}
             <tr>
               <td class="fw-semibold">{{ it.nome }}</td>
-              <td class="text-secondary">{{ it.criado_em.strftime('%d/%m/%Y %H:%M') if it.criado_em else '—' }}</td>
+              <td class="text-secondary">{{ it.criado_em.strftime('%d/%m/%Y %H:%M') if it.criado_em else 'â€”' }}</td>
               <td class="text-end">
                 <div class="btn-group btn-group-sm">
                   <a href="{{ url_for('escolas.editar', id=it.id) }}" class="btn btn-outline-light" title="Editar">

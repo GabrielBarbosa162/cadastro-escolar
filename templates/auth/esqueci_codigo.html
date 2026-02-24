@@ -2,10 +2,10 @@
 <html lang="pt-br">
 <head>
   <meta charset="utf-8">
-  <title>RecuperaÃ§Ã£o de senha</title>
+  <title>Recuperação de senha</title>
 </head>
 <body>
-  <h2>RecuperaÃ§Ã£o de senha</h2>
+  <h2>Recuperação de senha</h2>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -21,10 +21,10 @@
     <label>E-mail:</label><br>
     <input type="email" name="email" required><br><br>
 
-    <label>CÃ³digo de recuperaÃ§Ã£o (um dos 3):</label><br>
+    <label>Código de recuperação (um dos 3):</label><br>
     <input type="text" name="codigo" required><br><br>
 
-    <button type="submit">Validar cÃ³digo</button>
+    <button type="submit">Validar código</button>
   </form>
 
   <p><a href="{{ url_for('login') }}">Voltar para o login</a></p>

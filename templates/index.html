@@ -9,7 +9,7 @@
 
   <div class="row g-3">
 
-    {# ✅ ALUNOS: TODOS podem acessar (lista) #}
+    {# âœ… ALUNOS: TODOS podem acessar (lista) #}
     <div class="col-12 col-md-4">
       <a href="{{ url_for('alunos_list') }}" class="text-decoration-none">
         <div class="card h-100">
@@ -21,26 +21,26 @@
       </a>
     </div>
 
-    {# ✅ ATIVIDADES: mantendo para todos os perfis logados (ajusto se você quiser restringir) #}
+    {# âœ… ATIVIDADES: mantendo para todos os perfis logados (ajusto se vocÃª quiser restringir) #}
     <div class="col-12 col-md-4">
       <a href="{{ url_for('atividades_listar') }}" class="text-decoration-none">
         <div class="card h-100">
           <div class="card-body">
             <h5 class="mb-1">Atividades</h5>
-            <div class="text-muted">Conteúdo e observações</div>
+            <div class="text-muted">ConteÃºdo e observaÃ§Ãµes</div>
           </div>
         </div>
       </a>
     </div>
 
-    {# ✅ Áreas administrativas: somente DIRETORIA #}
+    {# âœ… Ãreas administrativas: somente DIRETORIA #}
     {% if papel == 'DIRETORIA' %}
       <div class="col-12 col-md-4">
         <a href="{{ url_for('series_list') }}" class="text-decoration-none">
           <div class="card h-100">
             <div class="card-body">
-              <h5 class="mb-1">Séries</h5>
-              <div class="text-muted">Cadastre e edite séries</div>
+              <h5 class="mb-1">SÃ©ries</h5>
+              <div class="text-muted">Cadastre e edite sÃ©ries</div>
             </div>
           </div>
         </a>
@@ -50,7 +50,7 @@
     <div class="card h-100">
       <div class="card-body">
         <h5 class="mb-1">Professores</h5>
-        <div class="text-muted">Cadastro e séries responsáveis</div>
+        <div class="text-muted">Cadastro e sÃ©ries responsÃ¡veis</div>
       </div>
     </div>
   </a>
@@ -61,7 +61,7 @@
           <div class="card h-100">
             <div class="card-body">
               <h5 class="mb-1">Escolas</h5>
-              <div class="text-muted">Unidades e instituições</div>
+              <div class="text-muted">Unidades e instituiÃ§Ãµes</div>
             </div>
           </div>
         </a>
@@ -71,8 +71,8 @@
         <a href="{{ url_for('horarios_list') }}" class="text-decoration-none">
           <div class="card h-100">
             <div class="card-body">
-              <h5 class="mb-1">Horários</h5>
-              <div class="text-muted">Faixas de aula (início/fim)</div>
+              <h5 class="mb-1">HorÃ¡rios</h5>
+              <div class="text-muted">Faixas de aula (inÃ­cio/fim)</div>
             </div>
           </div>
         </a>
@@ -82,7 +82,7 @@
         <a href="{{ url_for('usuarios_list') }}" class="text-decoration-none">
           <div class="card h-100">
             <div class="card-body">
-              <h5 class="mb-1">Usuários</h5>
+              <h5 class="mb-1">UsuÃ¡rios</h5>
               <div class="text-muted">Controle de acesso</div>
             </div>
           </div>

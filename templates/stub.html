@@ -4,7 +4,7 @@
 {% block content %}
 <div class="container-fluid py-3">
 
-  {# ====== DETECÇÃO DO PAPEL E CONTEXTO ====== #}
+  {# ====== DETECÃ‡ÃƒO DO PAPEL E CONTEXTO ====== #}
   {% set papel =
         (current_user.papel if current_user is defined and current_user.papel is not none else
         (current_user.role if current_user is defined and current_user.role is not none else
@@ -15,7 +15,7 @@
   {# context: informe na rota algo como context='alunos' | 'escolas' | 'series' | 'atividades' | 'horarios' | 'turmas' | 'usuarios' #}
   {% set ctx = (context or page_context or page or '')|lower %}
 
-  {# ====== MAPA DE ENDPOINTS E RÓTULOS PADRÃO DO BOTÃO NOVO ====== #}
+  {# ====== MAPA DE ENDPOINTS E RÃ“TULOS PADRÃƒO DO BOTÃƒO NOVO ====== #}
   {% set endpoints = {
     'alunos':     'alunos.novo',
     'escolas':    'escolas.novo',
@@ -29,14 +29,14 @@
   {% set labels = {
     'alunos':     'Cadastrar aluno',
     'escolas':    'Adicionar nova escola',
-    'series':     'Adicionar nova série',
+    'series':     'Adicionar nova sÃ©rie',
     'atividades': 'Adicionar atividade',
-    'horarios':   'Adicionar novo horário',
+    'horarios':   'Adicionar novo horÃ¡rio',
     'turmas':     'Adicionar turma',
-    'usuarios':   'Novo usuário'
+    'usuarios':   'Novo usuÃ¡rio'
   } %}
 
-  {# Tenta descobrir automaticamente o new_url se não vier da rota #}
+  {# Tenta descobrir automaticamente o new_url se nÃ£o vier da rota #}
   {% set auto_new_url = None %}
   {% if not new_url and ctx in endpoints %}
     {% set _endpoint = endpoints[ctx] %}
@@ -44,10 +44,10 @@
   {% endif %}
   {% set resolved_new_url = new_url or auto_new_url %}
 
-  {# Label automático caso não venha da rota #}
+  {# Label automÃ¡tico caso nÃ£o venha da rota #}
   {% set resolved_new_label = new_label or labels.get(ctx, 'Novo') %}
 
-  {# ====== REGRA DE PERMISSÃO PADRÃO ====== #}
+  {# ====== REGRA DE PERMISSÃƒO PADRÃƒO ====== #}
   {% if can_create is defined %}
     {% set permitir_criar = can_create %}
   {% else %}
@@ -57,14 +57,14 @@
     %}
   {% endif %}
 
-  <!-- Cabeçalho -->
+  <!-- CabeÃ§alho -->
   <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
       <h3 class="mb-0">{{ header or title or page_title or "Painel" }}</h3>
       {% if subtitle %}<small class="text-secondary">{{ subtitle }}</small>{% endif %}
     </div>
 
-    {# Só depende de ter rota e permissão #}
+    {# SÃ³ depende de ter rota e permissÃ£o #}
     {% if resolved_new_url and permitir_criar %}
       <a href="{{ resolved_new_url }}" class="btn btn-primary">
         <i class="bi bi-plus-circle me-1"></i> {{ resolved_new_label }}
@@ -130,11 +130,11 @@
             <thead>
               <tr>
                 <th>Nome</th>
-                <th>Série</th>
+                <th>SÃ©rie</th>
                 <th>Turma</th>
-                <th>Responsável</th>
-                <th>Atualização</th>
-                <th class="text-end">Ações</th>
+                <th>ResponsÃ¡vel</th>
+                <th>AtualizaÃ§Ã£o</th>
+                <th class="text-end">AÃ§Ãµes</th>
               </tr>
             </thead>
             <tbody>
@@ -169,7 +169,7 @@
       </div>
     </div>
 
-  {# ===================== LISTAS: USUÁRIOS ===================== #}
+  {# ===================== LISTAS: USUÃRIOS ===================== #}
   {% elif usuarios is defined %}
     <div class="card border-0 shadow-sm rounded-3">
       <div class="card-body p-0">
@@ -181,8 +181,8 @@
                 <th>Email</th>
                 <th>Papel</th>
                 <th>Ativo?</th>
-                <th>Último Login</th>
-                <th class="text-end">Ações</th>
+                <th>Ãšltimo Login</th>
+                <th class="text-end">AÃ§Ãµes</th>
               </tr>
             </thead>
             <tbody>
@@ -191,14 +191,14 @@
                   <td>{{ u.nome or u.name }}</td>
                   <td>{{ u.email }}</td>
                   <td><span class="badge bg-secondary">{{ u.papel or u.role }}</span></td>
-                  <td>{{ "Sim" if (u.ativo if u.ativo is not none else u.is_active) else "Não" }}</td>
+                  <td>{{ "Sim" if (u.ativo if u.ativo is not none else u.is_active) else "NÃ£o" }}</td>
                   <td><small class="text-secondary">{{ u.ultimo_login or u.last_login }}</small></td>
                   <td class="text-end">
                     <div class="btn-group">
                       <a class="btn btn-sm btn-outline-info" href="{{ url_for('usuarios.painel', id=u.id) if url_for is defined else '#' }}"><i class="bi bi-person"></i></a>
                       {% if papel == 'DIRETORIA' %}
                         <a class="btn btn-sm btn-outline-warning" href="{{ url_for('usuarios.editar', id=u.id) if url_for is defined else '#' }}"><i class="bi bi-pencil"></i></a>
-                        <form method="post" action="{{ url_for('usuarios.excluir', id=u.id) if url_for is defined else '#' }}" onsubmit="return confirm('Excluir este usuário?')">
+                        <form method="post" action="{{ url_for('usuarios.excluir', id=u.id) if url_for is defined else '#' }}" onsubmit="return confirm('Excluir este usuÃ¡rio?')">
                           {% if csrf_token is defined %}{{ csrf_token() }}{% endif %}
                           <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                         </form>
@@ -207,7 +207,7 @@
                   </td>
                 </tr>
               {% else %}
-                <tr><td colspan="6" class="text-center text-secondary py-4">Nenhum usuário encontrado.</td></tr>
+                <tr><td colspan="6" class="text-center text-secondary py-4">Nenhum usuÃ¡rio encontrado.</td></tr>
               {% endfor %}
             </tbody>
           </table>
@@ -225,7 +225,7 @@
               <div class="d-flex justify-content-between align-items-start">
                 <div>
                   <h5 class="mb-0">{{ t.nome }}</h5>
-                  <small class="text-secondary">Série: {{ t.serie.nome if t.serie is defined else t.serie }}</small>
+                  <small class="text-secondary">SÃ©rie: {{ t.serie.nome if t.serie is defined else t.serie }}</small>
                 </div>
                 <span class="badge bg-dark">{{ (t.alunos|length) if t.alunos is defined else (t.qtd_alunos or 0) }} alunos</span>
               </div>
@@ -252,11 +252,11 @@
           <table class="table table-dark table-hover align-middle mb-0">
             <thead>
               <tr>
-                <th>Título</th>
+                <th>TÃ­tulo</th>
                 <th>Turma</th>
                 <th>Entrega</th>
                 <th>Criada por</th>
-                <th class="text-end">Ações</th>
+                <th class="text-end">AÃ§Ãµes</th>
               </tr>
             </thead>
             <tbody>
@@ -288,7 +288,7 @@
       </div>
     </div>
 
-  {# ===================== QUADRO DE HORÁRIOS ===================== #}
+  {# ===================== QUADRO DE HORÃRIOS ===================== #}
   {% elif horarios is defined %}
     <div class="card border-0 shadow-sm rounded-3">
       <div class="card-body">
@@ -298,7 +298,7 @@
             <div class="table-responsive">
               <table class="table table-dark table-sm align-middle">
                 <thead><tr>
-                  <th>Dia</th><th>Início</th><th>Fim</th><th>Disciplina</th><th>Professor</th>
+                  <th>Dia</th><th>InÃ­cio</th><th>Fim</th><th>Disciplina</th><th>Professor</th>
                 </tr></thead>
                 <tbody>
                   {% for h in blocos %}
@@ -315,7 +315,7 @@
             </div>
           </div>
         {% else %}
-          <div class="text-secondary">Sem horários cadastrados.</div>
+          <div class="text-secondary">Sem horÃ¡rios cadastrados.</div>
         {% endfor %}
       </div>
     </div>
@@ -346,7 +346,7 @@
       {% else %}
         <div class="col-12">
           <div class="alert alert-secondary mb-0">
-            Painel carregado. Esta tela agora é real e pronta para receber os dados da rota.
+            Painel carregado. Esta tela agora Ã© real e pronta para receber os dados da rota.
           </div>
         </div>
       {% endif %}
