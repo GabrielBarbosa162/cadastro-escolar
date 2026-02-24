@@ -2,7 +2,7 @@
 {% block content %}
 
 <div class="d-flex align-items-center mb-3">
-  <a href="{{ url_for('home') }}" class="btn btn-outline-secondary me-2" title="Início">
+  <a href="{{ url_for('home') }}" class="btn btn-outline-secondary me-2" title="In&iacute;cio">
     <i class="bi bi-house"></i>
   </a>
   <h2 class="mb-0">{{ 'Editar Atividade' if atividade.id else 'Nova Atividade' }}</h2>
@@ -43,13 +43,13 @@
       </div>
 
       <div class="col-12">
-        <label class="form-label">Observação do professor <span class="text-danger">*</span></label>
+        <label class="form-label">Observa&ccedil;&atilde;o do professor <span class="text-danger">*</span></label>
         <textarea name="observacao" class="form-control" rows="4" required>{{ atividade.observacao }}</textarea>
       </div>
 
       <div class="col-12 d-flex gap-2 mt-2">
         <button type="submit" class="btn btn-primary">
-          <i class="bi bi-check2-circle"></i> {{ 'Salvar alterações' if atividade.id else 'Registrar' }}
+          <i class="bi bi-check2-circle"></i> {{ 'Salvar altera&ccedil;&otilde;es' if atividade.id else 'Registrar' }}
         </button>
         <a href="{{ url_for('lista_atividades') }}" class="btn btn-outline-secondary">Voltar para a lista</a>
 

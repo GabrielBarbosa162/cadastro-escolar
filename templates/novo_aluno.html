@@ -39,7 +39,7 @@
              value="{{ aluno.nome_pai if aluno else '' }}">
     </div>
     <div class="col-md-3">
-      <label class="form-label">Nome da mãe</label>
+      <label class="form-label">Nome da m&atilde;e</label>
       <input type="text" name="nome_mae" class="form-control"
              value="{{ aluno.nome_mae if aluno else '' }}">
     </div>
@@ -55,7 +55,7 @@
     </div>
 
     <div class="col-md-4">
-      <label class="form-label">Série</label>
+      <label class="form-label">S&eacute;rie</label>
       <select name="serie_id" class="form-select">
         <option value="">—</option>
         {% for s in series %}
@@ -65,7 +65,7 @@
     </div>
 
     <div class="col-md-4">
-      <label class="form-label">Horário</label>
+      <label class="form-label">Hor&aacute;rio</label>
       <select name="horario" class="form-select">
         <option value="">—</option>
         {% for h in horarios %}

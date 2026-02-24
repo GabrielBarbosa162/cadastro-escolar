@@ -600,42 +600,11 @@ def can(permission: str) -> bool:
 
 
 
-MOJIBAKE_FIXES = {
-    "Ã¡": "á", "Ã¢": "â", "Ã£": "ã", "Ã ": "à", "Ã¤": "ä",
-    "Ã": "Á", "Ã‚": "Â", "Ãƒ": "Ã", "Ã€": "À", "Ã„": "Ä",
-    "Ã©": "é", "Ãª": "ê", "Ã¨": "è", "Ã«": "ë",
-    "Ã‰": "É", "ÃŠ": "Ê", "Ãˆ": "È", "Ã‹": "Ë",
-    "Ã­": "í", "Ã¬": "ì", "Ã®": "î", "Ã¯": "ï",
-    "Ã": "Í", "ÃŒ": "Ì", "ÃŽ": "Î", "Ã": "Ï",
-    "Ã³": "ó", "Ã´": "ô", "Ãµ": "õ", "Ã²": "ò", "Ã¶": "ö",
-    "Ã“": "Ó", "Ã”": "Ô", "Ã•": "Õ", "Ã’": "Ò", "Ã–": "Ö",
-    "Ãº": "ú", "Ã¹": "ù", "Ã»": "û", "Ã¼": "ü",
-    "Ãš": "Ú", "Ã™": "Ù", "Ã›": "Û", "Ãœ": "Ü",
-    "Ã§": "ç", "Ã‡": "Ç", "Ã±": "ñ", "Ã‘": "Ñ",
-    "â€“": "–", "â€”": "—", "â€œ": "“", "â€": "”", "â€˜": "‘", "â€™": "’",
-    "Â": "",
-}
-
-
-def _fix_mojibake_html(text: str) -> str:
-    fixed = text
-    for wrong, right in MOJIBAKE_FIXES.items():
-        fixed = fixed.replace(wrong, right)
-    return fixed
-
-
 @app.after_request
 def force_utf8_html(response):
     content_type = (response.headers.get("Content-Type") or "").lower()
     if content_type.startswith("text/html"):
         response.headers["Content-Type"] = "text/html; charset=utf-8"
-        try:
-            html = response.get_data(as_text=True)
-            repaired = _fix_mojibake_html(html)
-            if repaired != html:
-                response.set_data(repaired)
-        except Exception:
-            pass
     return response
 
 

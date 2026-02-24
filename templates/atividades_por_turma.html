@@ -3,7 +3,7 @@
 
 <div class="d-flex align-items-center mb-3">
   <a href="{{ url_for('lista_turmas') }}" class="btn btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
-  <h2 class="mb-0">Atividade por turma (aluno específico)</h2>
+  <h2 class="mb-0">Atividade por turma (aluno espec&iacute;fico)</h2>
 </div>
 <hr>
 
@@ -36,12 +36,12 @@
         </div>
 
         <div class="col-12">
-          <label class="form-label">Conteúdo (o que estudou)</label>
+          <label class="form-label">Conte&uacute;do (o que estudou)</label>
           <textarea name="conteudo" class="form-control" rows="3" required></textarea>
         </div>
 
         <div class="col-12">
-          <label class="form-label">Observação do professor</label>
+          <label class="form-label">Observa&ccedil;&atilde;o do professor</label>
           <textarea name="observacao" class="form-control" rows="3" required></textarea>
         </div>
 
@@ -82,14 +82,14 @@
 
   <div class="card border-0 shadow-sm">
     <div class="card-body">
-      <h5 class="card-title">Ações</h5>
+      <h5 class="card-title">A&ccedil;&otilde;es</h5>
       <div class="d-flex gap-2">
         {% if whatsapp %}
           <a class="btn btn-success" target="_blank" href="{{ whatsapp }}"><i class="bi bi-whatsapp"></i> Enviar WhatsApp</a>
         {% else %}
           <span class="text-muted">Sem telefone para WhatsApp.</span>
         {% endif %}
-        <a class="btn btn-outline-primary" href="{{ url_for('atividade_por_turma_aluno') }}">Lançar outra</a>
+        <a class="btn btn-outline-primary" href="{{ url_for('atividade_por_turma_aluno') }}">Lan&ccedil;ar outra</a>
         <a class="btn btn-outline-secondary" href="{{ url_for('lista_atividades') }}">Ver lista de atividades</a>
       </div>
     </div>

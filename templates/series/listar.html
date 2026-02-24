@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-3">
-  <h3 class="mb-0">Séries</h3>
+  <h3 class="mb-0">S&eacute;ries</h3>
   {% if can('SERIE_CRIAR') %}
   <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#novaSerie" aria-expanded="false">
-    Nova Série
+    Nova S&eacute;rie
   </button>
   {% endif %}
 </div>
@@ -15,7 +15,7 @@
     <div class="card-body">
       <form method="post" action="{{ url_for('series_nova') }}" class="row g-3">
         <div class="col-md-8">
-          <label class="form-label">Nome da Série</label>
+          <label class="form-label">Nome da S&eacute;rie</label>
           <input type="text" name="nome" class="form-control" required maxlength="120" />
         </div>
         <div class="col-12 text-end">
@@ -33,7 +33,7 @@
       <thead>
         <tr>
           <th>Nome</th>
-          <th class="text-end">Ações</th>
+          <th class="text-end">A&ccedil;&otilde;es</th>
         </tr>
       </thead>
       <tbody>
@@ -45,7 +45,7 @@
             <button class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#editarSerie{{ s.id }}">Editar</button>
             {% endif %}
             {% if can('SERIE_EXCLUIR') %}
-            <form class="d-inline" method="post" action="{{ url_for('series_excluir', id=s.id) }}" onsubmit="return confirm('Excluir esta série?');">
+            <form class="d-inline" method="post" action="{{ url_for('series_excluir', id=s.id) }}" onsubmit="return confirm('Excluir esta s&eacute;rie?');">
               <button class="btn btn-sm btn-outline-danger">Excluir</button>
             </form>
             {% endif %}
@@ -53,12 +53,12 @@
         </tr>
 
         {% if can('SERIE_EDITAR') %}
-        <!-- Modal Editar Série -->
+        <!-- Modal Editar S&eacute;rie -->
         <div class="modal fade" id="editarSerie{{ s.id }}" tabindex="-1" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content bg-dark text-light border-secondary">
               <div class="modal-header">
-                <h5 class="modal-title">Editar Série</h5>
+                <h5 class="modal-title">Editar S&eacute;rie</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
               </div>
               <form method="post" action="{{ url_for('series_editar', id=s.id) }}">
@@ -79,7 +79,7 @@
         {% endif %}
         {% else %}
         <tr>
-          <td colspan="2" class="text-center text-secondary py-4">Nenhuma série cadastrada.</td>
+          <td colspan="2" class="text-center text-secondary py-4">Nenhuma s&eacute;rie cadastrada.</td>
         </tr>
         {% endfor %}
       </tbody>

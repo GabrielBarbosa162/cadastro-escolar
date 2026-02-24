@@ -5,12 +5,12 @@
   <a href="{{ url_for('lista_atividades') }}" class="btn btn-outline-secondary me-2">
     <i class="bi bi-arrow-left"></i>
   </a>
-  <h2 class="mb-0">Lançar atividade para turma</h2>
+  <h2 class="mb-0">Lan&ccedil;ar atividade para turma</h2>
 </div>
 <hr>
 
 {% if step == 1 %}
-  <!-- Etapa 1: escolher turma + data + conteúdo -->
+  <!-- Etapa 1: escolher turma + data + conte&uacute;do -->
   <div class="card border-0 shadow-sm">
     <div class="card-body">
       <form method="post" class="row g-3">
@@ -27,7 +27,7 @@
         </div>
 
         <div class="col-md-3">
-          <label class="form-label">Série <span class="text-danger">*</span></label>
+          <label class="form-label">S&eacute;rie <span class="text-danger">*</span></label>
           <select name="serie_id" class="form-select" required>
             <option value="">— Selecione —</option>
             {% for s in series %}
@@ -42,12 +42,12 @@
         </div>
 
         <div class="col-12">
-          <label class="form-label">Conteúdo (o que toda a turma estudou) <span class="text-danger">*</span></label>
+          <label class="form-label">Conte&uacute;do (o que toda a turma estudou) <span class="text-danger">*</span></label>
           <textarea name="conteudo" class="form-control" rows="4" required>{{ form.conteudo }}</textarea>
         </div>
 
         <div class="col-12 d-flex gap-2">
-          <button class="btn btn-primary"><i class="bi bi-people-fill"></i> Avançar para avaliações</button>
+          <button class="btn btn-primary"><i class="bi bi-people-fill"></i> Avan&ccedil;ar para avalia&ccedil;&otilde;es</button>
           <a href="{{ url_for('lista_atividades') }}" class="btn btn-outline-secondary">Cancelar</a>
         </div>
       </form>
@@ -55,7 +55,7 @@
   </div>
 
 {% elif step == 2 %}
-  <!-- Etapa 2: avaliações individuais -->
+  <!-- Etapa 2: avalia&ccedil;&otilde;es individuais -->
   <div class="card border-0 shadow-sm">
     <div class="card-body">
       <form method="post" class="row g-3">
@@ -67,9 +67,9 @@
 
         <div class="col-12">
           <div class="alert alert-info">
-            <div><strong>Turma:</strong> Escola #{{ turma.escola_id }} • Série #{{ turma.serie_id }}</div>
+            <div><strong>Turma:</strong> Escola #{{ turma.escola_id }} • S&eacute;rie #{{ turma.serie_id }}</div>
             <div><strong>Data:</strong> {{ turma.data }}</div>
-            <div><strong>Conteúdo:</strong> {{ turma.conteudo }}</div>
+            <div><strong>Conte&uacute;do:</strong> {{ turma.conteudo }}</div>
           </div>
         </div>
 
@@ -79,7 +79,7 @@
               <thead class="table-light">
                 <tr>
                   <th>Aluno</th>
-                  <th style="width: 55%">Observação do professor (avaliação individual)</th>
+                  <th style="width: 55%">Observa&ccedil;&atilde;o do professor (avalia&ccedil;&atilde;o individual)</th>
                 </tr>
               </thead>
               <tbody>
@@ -89,7 +89,7 @@
                       {{ a.nome_completo }}
                       <div class="small text-muted">
                         {% if a.tel_pai %}Pai: {{ a.tel_pai }}{% endif %}
-                        {% if a.tel_mae %} | Mãe: {{ a.tel_mae }}{% endif %}
+                        {% if a.tel_mae %} | M&atilde;e: {{ a.tel_mae }}{% endif %}
                       </div>
                     </td>
                     <td>
@@ -151,7 +151,7 @@
                       <i class="bi bi-whatsapp"></i> Enviar
                     </a>
                   {% else %}
-                    <span class="text-muted">Indisponível</span>
+                    <span class="text-muted">Indispon&iacute;vel</span>
                   {% endif %}
                 </td>
               </tr>
@@ -162,7 +162,7 @@
 
       <div class="mt-3 d-flex gap-2">
         <a href="{{ url_for('atividades_turma') }}" class="btn btn-outline-primary">
-          <i class="bi bi-people-fill"></i> Lançar outra turma
+          <i class="bi bi-people-fill"></i> Lan&ccedil;ar outra turma
         </a>
         <a href="{{ url_for('lista_atividades') }}" class="btn btn-primary">Ir para Atividades</a>
       </div>

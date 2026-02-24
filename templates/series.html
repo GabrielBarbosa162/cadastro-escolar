@@ -1,17 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Séries{% endblock %}
+{% block title %}S&eacute;ries{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h4 class="mb-0">Séries</h4>
+  <h4 class="mb-0">S&eacute;ries</h4>
 </div>
 
 <form class="row g-2 mb-3" method="post" action="{{ url_for('series_nova') }}">
   <div class="col-sm-8 col-md-6 col-lg-4">
-    <input name="nome" class="form-control" placeholder="Nome da série" required>
+    <input name="nome" class="form-control" placeholder="Nome da s&eacute;rie" required>
   </div>
   <div class="col-auto">
-    <button class="btn btn-primary">+ Cadastrar série</button>
+    <button class="btn btn-primary">+ Cadastrar s&eacute;rie</button>
   </div>
 </form>
 
@@ -20,7 +20,7 @@
     <thead>
       <tr>
         <th>Nome</th>
-        <th style="width:140px;">Ações</th>
+        <th style="width:140px;">A&ccedil;&otilde;es</th>
       </tr>
     </thead>
     <tbody>
@@ -30,14 +30,14 @@
         <td>
           <form method="post"
                 action="{{ url_for('series_excluir', serie_id=s.id) }}"
-                onsubmit="return confirm('Excluir a série \"{{ s.nome }}\"?');">
+                onsubmit="return confirm('Excluir a s&eacute;rie \"{{ s.nome }}\"?');">
             <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
           </form>
         </td>
       </tr>
       {% else %}
       <tr>
-        <td colspan="2" class="text-center text-muted">Nenhuma série cadastrada.</td>
+        <td colspan="2" class="text-center text-muted">Nenhuma s&eacute;rie cadastrada.</td>
       </tr>
       {% endfor %}
     </tbody>

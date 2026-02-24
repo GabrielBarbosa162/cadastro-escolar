@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Quadro de horários{% endblock %}
+{% block title %}Quadro de hor&aacute;rios{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h4 class="mb-0">Quadro de horários</h4>
+  <h4 class="mb-0">Quadro de hor&aacute;rios</h4>
   <div>
-    <a href="{{ url_for('horario_novo') }}" class="btn btn-primary">+ Novo horário</a>
+    <a href="{{ url_for('horario_novo') }}" class="btn btn-primary">+ Novo hor&aacute;rio</a>
   </div>
 </div>
 
@@ -14,10 +14,10 @@
     <div class="col-md-4 mb-3">
       <div class="card bg-dark text-white h-100">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>{{ h.inicio }} às {{ h.fim }}</strong>
+          <strong>{{ h.inicio }} &agrave;s {{ h.fim }}</strong>
           <form method="post"
                 action="{{ url_for('horario_excluir', horario_id=h.id) }}"
-                onsubmit="return confirm('Excluir horário {{ h.inicio }} às {{ h.fim }}?');"
+                onsubmit="return confirm('Excluir hor&aacute;rio {{ h.inicio }} &agrave;s {{ h.fim }}?');"
                 class="d-inline">
             <button class="btn btn-sm btn-outline-danger">Excluir</button>
           </form>
@@ -41,13 +41,13 @@
               {% endfor %}
             </ul>
           {% else %}
-            <p class="text-muted mb-0">Nenhum aluno neste horário.</p>
+            <p class="text-muted mb-0">Nenhum aluno neste hor&aacute;rio.</p>
           {% endif %}
         </div>
       </div>
     </div>
   {% else %}
-    <p class="text-center">Nenhum horário cadastrado.</p>
+    <p class="text-center">Nenhum hor&aacute;rio cadastrado.</p>
   {% endfor %}
 </div>
 {% endblock %}

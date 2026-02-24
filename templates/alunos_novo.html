@@ -38,12 +38,12 @@
       </div>
 
       <div class="col-12 col-lg-6">
-        <label class="form-label">Endereço</label>
+        <label class="form-label">Endere&ccedil;o</label>
         <input name="endereco" class="form-control">
       </div>
 
       <div class="col-4 col-lg-2">
-        <label class="form-label">Número</label>
+        <label class="form-label">N&uacute;mero</label>
         <input name="numero" class="form-control">
       </div>
       <div class="col-8 col-lg-4">
@@ -52,7 +52,7 @@
       </div>
 
       <div class="col-6 col-lg-3">
-        <label class="form-label">Telefone mãe</label>
+        <label class="form-label">Telefone m&atilde;e</label>
         <input name="telefone_mae" class="form-control" placeholder="(00) 00000-0000">
       </div>
       <div class="col-6 col-lg-3">
@@ -66,7 +66,7 @@
 
       <div class="col-12"><hr class="border-secondary"></div>
 
-      <!-- ESCOLA / SÉRIE / HORÁRIO / MENSALIDADE (listas vindas do backend) -->
+      <!-- ESCOLA / S&Eacute;RIE / HOR&Aacute;RIO / MENSALIDADE (listas vindas do backend) -->
       <div class="col-12 col-lg-3">
         <label class="form-label">Escola</label>
         <select name="escola_id" class="form-select" required>
@@ -75,14 +75,14 @@
       </div>
 
       <div class="col-12 col-lg-3">
-        <label class="form-label">Série</label>
+        <label class="form-label">S&eacute;rie</label>
         <select name="serie_id" class="form-select" required>
           {% for s in series %}<option value="{{ s.id }}">{{ s.nome }}</option>{% endfor %}
         </select>
       </div>
 
       <div class="col-12 col-lg-3">
-        <label class="form-label">Horário</label>
+        <label class="form-label">Hor&aacute;rio</label>
         <select name="horario_id" class="form-select" required>
           {% for h in horarios %}<option value="{{ h.id }}">{{ h.label or (h.hora_inicio ~ ' - ' ~ h.hora_fim) }}</option>{% endfor %}
         </select>
@@ -102,7 +102,7 @@
         <input name="nome_pai" class="form-control">
       </div>
       <div class="col-12 col-lg-6">
-        <label class="form-label">Nome da Mãe</label>
+        <label class="form-label">Nome da M&atilde;e</label>
         <input name="nome_mae" class="form-control">
       </div>
 
@@ -110,7 +110,7 @@
         <label class="form-label">Algum tipo de dificuldade?</label>
         <div class="input-group">
           <select name="dificuldade" class="form-select">
-            <option value="NAO">Não</option>
+            <option value="NAO">N&atilde;o</option>
             <option value="SIM">Sim</option>
           </select>
           <input name="dificuldade_qual" class="form-control" placeholder="Qual? (opcional)">
@@ -121,7 +121,7 @@
         <label class="form-label">Medicamento controlado?</label>
         <div class="input-group">
           <select name="medicamento_controlado" class="form-select">
-            <option value="NAO">Não</option>
+            <option value="NAO">N&atilde;o</option>
             <option value="SIM">Sim</option>
           </select>
           <input name="medicamento_qual" class="form-control" placeholder="Qual? (opcional)">
@@ -129,7 +129,7 @@
       </div>
 
       <div class="col-12 col-lg-4">
-        <label class="form-label">Início das aulas</label>
+        <label class="form-label">In&iacute;cio das aulas</label>
         <input type="date" class="form-control" name="inicio_aulas">
       </div>
 

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Verificar Código{% endblock %}
+{% block title %}Verificar C&oacute;digo{% endblock %}
 
 {% block content %}
 
@@ -7,14 +7,14 @@
   <div class="card bg-dark text-light border-secondary shadow-sm" style="width: 420px;">
     <div class="card-body">
 
-      <h4 class="mb-3 text-center">Verificar Código</h4>
+      <h4 class="mb-3 text-center">Verificar C&oacute;digo</h4>
       <p class="text-muted text-center mb-4">
-        Digite o código que você recebeu para continuar a redefinição de senha.
+        Digite o c&oacute;digo que voc&ecirc; recebeu para continuar a redefini&ccedil;&atilde;o de senha.
       </p>
 
       <form method="post">
         <div class="mb-3">
-          <label class="form-label">Código</label>
+          <label class="form-label">C&oacute;digo</label>
           <input type="text"
                  name="codigo"
                  class="form-control"
@@ -24,13 +24,13 @@
         </div>
 
         <button class="btn btn-success w-100 py-2">
-          Validar código
+          Validar c&oacute;digo
         </button>
       </form>
 
       <div class="text-center mt-3">
         <a href="{{ url_for('esqueci') }}" class="text-muted">
-          &larr; Recomeçar o processo
+          &larr; Recome&ccedil;ar o processo
         </a>
       </div>
 

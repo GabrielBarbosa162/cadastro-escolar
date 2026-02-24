@@ -39,16 +39,16 @@
         <input class="form-control" name="nome_pai">
       </div>
       <div class="col-md-6">
-        <label class="form-label">Nome da Mãe</label>
+        <label class="form-label">Nome da M&atilde;e</label>
         <input class="form-control" name="nome_mae">
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Endereço</label>
+        <label class="form-label">Endere&ccedil;o</label>
         <input class="form-control" name="endereco">
       </div>
       <div class="col-md-2">
-        <label class="form-label">Número</label>
+        <label class="form-label">N&uacute;mero</label>
         <input class="form-control" name="numero">
       </div>
       <div class="col-md-4">
@@ -73,14 +73,14 @@
         </select>
       </div>
       <div class="col-md-4">
-        <label class="form-label">Série</label>
+        <label class="form-label">S&eacute;rie</label>
         <select class="form-select" name="serie_id">
           <option value="">Selecione</option>
           {% for s in series %}<option value="{{ s.id }}">{{ s.nome }}</option>{% endfor %}
         </select>
       </div>
       <div class="col-md-4">
-        <label class="form-label">Horário (tabela)</label>
+        <label class="form-label">Hor&aacute;rio (tabela)</label>
         <select class="form-select" name="horario_id">
           <option value="">Selecione</option>
           {% for h in horarios %}
@@ -94,7 +94,7 @@
         <select class="form-select" name="tem_dificuldade">
           <option value="">Selecione</option>
           <option value="S">Sim</option>
-          <option value="N">Não</option>
+          <option value="N">N&atilde;o</option>
         </select>
       </div>
       <div class="col-md-8">
@@ -107,7 +107,7 @@
         <select class="form-select" name="toma_medicamento">
           <option value="">Selecione</option>
           <option value="S">Sim</option>
-          <option value="N">Não</option>
+          <option value="N">N&atilde;o</option>
         </select>
       </div>
       <div class="col-md-8">
@@ -116,21 +116,21 @@
       </div>
 
       <div class="col-md-4">
-        <label class="form-label">Início das aulas</label>
+        <label class="form-label">In&iacute;cio das aulas</label>
         <input type="date" class="form-control" name="inicio_aulas">
       </div>
       <div class="col-md-8">
         <label class="form-label">Mensalidade</label>
         <select class="form-select" name="mensalidade_opcao">
           <option value="">Selecione</option>
-          <option value="PRE1_5_170">Pré 1 a 5º ano — R$ 170,00</option>
-          <option value="6_7_180">6º a 7º ano — R$ 180,00</option>
-          <option value="8_9_190">8º a 9º ano — R$ 190,00</option>
+          <option value="PRE1_5_170">Pr&eacute; 1 a 5&ordm; ano — R$ 170,00</option>
+          <option value="6_7_180">6&ordm; a 7&ordm; ano — R$ 180,00</option>
+          <option value="8_9_190">8&ordm; a 9&ordm; ano — R$ 190,00</option>
         </select>
       </div>
 
       <div class="col-12">
-        <label class="form-label">Observações</label>
+        <label class="form-label">Observa&ccedil;&otilde;es</label>
         <textarea class="form-control" rows="3" name="observacoes"></textarea>
       </div>
       <div class="col-md-6">

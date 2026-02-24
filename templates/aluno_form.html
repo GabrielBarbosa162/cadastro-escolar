@@ -12,7 +12,7 @@
             <input type="text" name="nome" class="form-control" required value="{{ aluno.nome if aluno else '' }}">
           </div>
           <div class="col-md-6">
-            <label class="form-label">Telefone da mãe</label>
+            <label class="form-label">Telefone da m&atilde;e</label>
             <input type="text" name="telefone_mae" class="form-control" value="{{ aluno.telefone_mae if aluno else '' }}" placeholder="(xx) xxxxx-xxxx">
           </div>
 
@@ -26,7 +26,7 @@
             </select>
           </div>
           <div class="col-md-4">
-            <label class="form-label">Série</label>
+            <label class="form-label">S&eacute;rie</label>
             <select name="serie_id" class="form-select">
               <option value="">Selecione</option>
               {% for s in series %}
@@ -35,7 +35,7 @@
             </select>
           </div>
           <div class="col-md-4">
-            <label class="form-label">Horário</label>
+            <label class="form-label">Hor&aacute;rio</label>
             <select name="horario_id" class="form-select">
               <option value="">Selecione</option>
               {% for h in horarios %}
@@ -52,7 +52,7 @@
 
           <div class="col-12 d-flex justify-content-end gap-2">
             <a href="{{ url_for('alunos.listar') }}" class="btn btn-outline-light">Voltar</a>
-            <button class="btn btn-light">{{ 'Salvar alterações' if aluno else 'Cadastrar aluno' }}</button>
+            <button class="btn btn-light">{{ 'Salvar altera&ccedil;&otilde;es' if aluno else 'Cadastrar aluno' }}</button>
           </div>
         </div>
       </form>

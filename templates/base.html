@@ -13,7 +13,7 @@
     crossorigin="anonymous"
   >
 
-  <!-- Estilo próprio -->
+  <!-- Estilo pr&oacute;prio -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="app-body">
@@ -43,7 +43,7 @@
               </a>
             </li>
 
-            <!-- ✅ ATIVIDADES: você disse que ALUNO/RESPONS&Aacute;VEL devem ter acesso -->
+            <!-- ✅ ATIVIDADES: voc&ecirc; disse que ALUNO/RESPONS&Aacute;VEL devem ter acesso -->
             <li class="nav-item">
               <a class="nav-link {% if request.endpoint and 'atividades_' in request.endpoint %}active{% endif %}"
                  href="{{ url_for('atividades_listar') }}">

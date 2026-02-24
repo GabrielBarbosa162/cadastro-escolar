@@ -22,8 +22,8 @@
               <th>NOME</th>
               <th>E-MAIL</th>
               <th style="width:160px">NASCIMENTO</th>
-              <th>SÉRIES</th>
-              <th class="text-end" style="width:120px">AÇÕES</th>
+              <th>S&Eacute;RIES</th>
+              <th class="text-end" style="width:120px">A&Ccedil;&Otilde;ES</th>
             </tr>
           </thead>
 
@@ -41,14 +41,14 @@
                 </td>
 
                 <td class="text-secondary">
-                  {# Formato bonito: "1º ao 9º" quando nomes forem tipo 1º,2º... #}
+                  {# Formato bonito: "1&ordm; ao 9&ordm;" quando nomes forem tipo 1&ordm;,2&ordm;... #}
                   {% set nomes = (p.series | map(attribute='nome') | list) if p.series else [] %}
                   {% set ns = namespace(nums=[], ok=true) %}
 
                   {% for n in nomes %}
                     {% set t = (n|string)|trim %}
                     {% if t and (t[0].isdigit()) %}
-                      {# pega o número inicial (até 2 dígitos) #}
+                      {# pega o n&uacute;mero inicial (at&eacute; 2 d&iacute;gitos) #}
                       {% if t|length >= 2 and t[0].isdigit() and t[1].isdigit() %}
                         {% set num = (t[0:2])|int %}
                       {% else %}
@@ -63,7 +63,7 @@
                   {% if ns.nums and ns.ok %}
                     {% set mn = ns.nums|min %}
                     {% set mx = ns.nums|max %}
-                    {{ mn }}º{% if mx != mn %} ao {{ mx }}º{% endif %}
+                    {{ mn }}&ordm;{% if mx != mn %} ao {{ mx }}&ordm;{% endif %}
                   {% else %}
                     {{ p.series_str() or '—' }}
                   {% endif %}

@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
-{% block title %}Séries{% endblock %}
+{% block title %}S&eacute;ries{% endblock %}
 {% block content %}
 <div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="mb-0">Séries</h3>
+    <h3 class="mb-0">S&eacute;ries</h3>
     <a href="{{ url_for('series.novo') }}" class="btn btn-primary">
-      <i class="bi bi-plus-circle me-1"></i> Nova Série
+      <i class="bi bi-plus-circle me-1"></i> Nova S&eacute;rie
     </a>
   </div>
 
@@ -23,7 +23,7 @@
           <tr>
             <th>Nome</th>
             <th style="width:180px">Criada em</th>
-            <th class="text-end" style="width:140px">Ações</th>
+            <th class="text-end" style="width:140px">A&ccedil;&otilde;es</th>
           </tr>
         </thead>
         <tbody>
@@ -37,7 +37,7 @@
                     <i class="bi bi-pencil-square"></i>
                   </a>
                   <form method="post" action="{{ url_for('series.excluir', id=it.id) }}"
-                        onsubmit="return confirm('Excluir esta série?');">
+                        onsubmit="return confirm('Excluir esta s&eacute;rie?');">
                     <button class="btn btn-outline-danger" title="Excluir">
                       <i class="bi bi-trash"></i>
                     </button>
@@ -46,7 +46,7 @@
               </td>
             </tr>
           {% else %}
-            <tr><td colspan="3" class="text-center text-secondary py-4">Nenhuma série cadastrada.</td></tr>
+            <tr><td colspan="3" class="text-center text-secondary py-4">Nenhuma s&eacute;rie cadastrada.</td></tr>
           {% endfor %}
         </tbody>
       </table>

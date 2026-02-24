@@ -1,15 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Horários{% endblock %}
+{% block title %}Hor&aacute;rios{% endblock %}
 
 {% block content %}
 <div class="container py-4">
 
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="mb-0">Horários</h3>
+    <h3 class="mb-0">Hor&aacute;rios</h3>
 
     {% if current_user.is_diretoria() %}
       <a href="{{ url_for('horarios_novo') }}" class="btn btn-primary">
-        Novo Horário
+        Novo Hor&aacute;rio
       </a>
     {% endif %}
   </div>
@@ -21,9 +21,9 @@
         <table class="table table-dark align-middle mb-0">
           <thead>
             <tr>
-              <th style="width:220px">Horário</th>
+              <th style="width:220px">Hor&aacute;rio</th>
               {% if current_user.is_diretoria() %}
-                <th class="text-end" style="width:260px">Ações</th>
+                <th class="text-end" style="width:260px">A&ccedil;&otilde;es</th>
               {% endif %}
             </tr>
           </thead>
@@ -38,7 +38,7 @@
                 {% if current_user.is_diretoria() %}
                   <td class="text-end">
 
-                    <!-- Botões -->
+                    <!-- Bot&otilde;es -->
                     <div class="d-inline-flex gap-2 align-items-center">
                       <button
                         type="button"
@@ -50,12 +50,12 @@
                       <form method="post"
                             action="{{ url_for('horarios_excluir', id=h.id) }}"
                             class="d-inline"
-                            onsubmit="return confirm('Excluir este horário?');">
+                            onsubmit="return confirm('Excluir este hor&aacute;rio?');">
                         <button class="btn btn-outline-danger btn-sm" type="submit">Excluir</button>
                       </form>
                     </div>
 
-                    <!-- Área de edição (começa escondida) -->
+                    <!-- &Aacute;rea de edi&ccedil;&atilde;o (come&ccedil;a escondida) -->
                     <div class="mt-2 d-none editar-box" id="editar-box-{{ h.id }}">
                       <form method="post"
                             action="{{ url_for('horarios_editar', id=h.id) }}"
@@ -65,7 +65,7 @@
                                style="width:130px"
                                name="hora_inicio"
                                value="{{ h.hora_inicio }}"
-                               placeholder="Início"
+                               placeholder="In&iacute;cio"
                                required>
 
                         <input class="form-control form-control-sm"
@@ -92,7 +92,7 @@
               <tr>
                 <td colspan="{{ 2 if current_user.is_diretoria() else 1 }}"
                     class="text-center text-secondary py-4">
-                  Nenhum horário cadastrado.
+                  Nenhum hor&aacute;rio cadastrado.
                 </td>
               </tr>
             {% endfor %}
@@ -103,8 +103,8 @@
     </div>
   </div>
 
-  <!-- Quadros / Cards com alunos por horário -->
-  <h5 class="mb-3">Alunos por horário</h5>
+  <!-- Quadros / Cards com alunos por hor&aacute;rio -->
+  <h5 class="mb-3">Alunos por hor&aacute;rio</h5>
 
   <style>
     /* item da lista no card */
@@ -122,7 +122,7 @@
       color: #ffffff !important;
     }
 
-    /* subtítulos (série/escola) em branco suave */
+    /* subt&iacute;tulos (s&eacute;rie/escola) em branco suave */
     .card .small.text-secondary,
     .card .text-secondary {
       color: rgba(255, 255, 255, 0.75) !important;
@@ -153,7 +153,7 @@
                 {% endfor %}
               </div>
             {% else %}
-              <div class="text-secondary">Nenhum aluno neste horário.</div>
+              <div class="text-secondary">Nenhum aluno neste hor&aacute;rio.</div>
             {% endif %}
           </div>
         </div>
@@ -165,7 +165,7 @@
         <div class="card">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <div class="fw-semibold">Sem horário definido</div>
+              <div class="fw-semibold">Sem hor&aacute;rio definido</div>
               {# ✅ removido: quantidade #}
             </div>
 
@@ -192,7 +192,7 @@
 </div>
 
 <script>
-  // Mostrar/ocultar campos de edição ao clicar em "Editar"
+  // Mostrar/ocultar campos de edi&ccedil;&atilde;o ao clicar em "Editar"
   document.querySelectorAll('.btn-editar-horario').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-id');
@@ -205,7 +205,7 @@
     });
   });
 
-  // Cancelar edição
+  // Cancelar edi&ccedil;&atilde;o
   document.querySelectorAll('.btn-cancelar-edicao').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-id');
